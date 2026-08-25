@@ -7,12 +7,15 @@ import {
   UserRound,
 } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { mobileTabBarStyle, mobileTabLabelStyle } from '@/components/mobile';
 import { useTheme } from '@/theme';
 
 export default function ClientTabsLayout() {
   const { t } = useTranslation();
   const { colors, typography } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -20,20 +23,10 @@ export default function ClientTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.borderSubtle,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 6,
-          paddingTop: 6,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
+        tabBarStyle: mobileTabBarStyle(colors, insets.bottom),
         tabBarLabelStyle: {
+          ...mobileTabLabelStyle,
           fontFamily: typography.caption.fontFamily,
-          fontSize: 10,
-          fontWeight: '600',
         },
       }}
     >
@@ -41,22 +34,26 @@ export default function ClientTabsLayout() {
         name="index"
         options={{
           title: t('tabs.home'),
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size - 2} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Home color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
+          ),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: t('tabs.search'),
-          tabBarIcon: ({ color, size }) => <Search color={color} size={size - 2} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Search color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
+          ),
         }}
       />
       <Tabs.Screen
         name="appointments"
         options={{
           title: t('tabs.appointments'),
-          tabBarIcon: ({ color, size }) => (
-            <CalendarDays color={color} size={size - 2} strokeWidth={1.75} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <CalendarDays color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
           ),
         }}
       />
@@ -64,15 +61,17 @@ export default function ClientTabsLayout() {
         name="favorites"
         options={{
           title: t('tabs.favorites'),
-          tabBarIcon: ({ color, size }) => <Heart color={color} size={size - 2} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Heart color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: ({ color, size }) => (
-            <UserRound color={color} size={size - 2} strokeWidth={1.75} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <UserRound color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
           ),
         }}
       />

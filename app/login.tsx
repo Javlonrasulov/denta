@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Globe, Moon, Sun } from '@/components/icons';
+import { Globe, Moon, Sun, Eye, EyeOff } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Text } from '@/components/ui/Text';
@@ -23,7 +23,7 @@ const LOCALES: { code: LocaleCode; label: string }[] = [
 export default function LoginScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { colors, spacing, radius, shadows, isDark } = useTheme();
+  const { colors, spacing, radius, shadows, isDark, iconSizes } = useTheme();
   const isAuthenticated = useSettingsStore((s) => s.isAuthenticated);
   const login = useSettingsStore((s) => s.login);
   const locale = useSettingsStore((s) => s.locale);
@@ -32,6 +32,7 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState('admin@denta.uz');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +56,11 @@ export default function LoginScreen() {
     // Mock auth — later replace with NestJS API
     setTimeout(() => {
       const name = trimmedEmail.split('@')[0] || 'Admin';
-      login(name.charAt(0).toUpperCase() + name.slice(1));
+      login({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        login: trimmedEmail,
+        password,
+      });
       setLoading(false);
       router.replace('/');
     }, 450);
@@ -185,11 +190,27 @@ export default function LoginScreen() {
                   setPassword(v);
                   if (error) setError('');
                 }}
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 textContentType="password"
                 placeholder="••••••••"
                 onSubmitEditing={onSubmit}
                 returnKeyType="go"
+                rightIcon={
+                  <Pressable
+                    onPress={() => setShowPassword((v) => !v)}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      showPassword ? t('auth.hide_password') : t('auth.show_password')
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff size={iconSizes.md} color={colors.textMuted} />
+                    ) : (
+                      <Eye size={iconSizes.md} color={colors.textMuted} />
+                    )}
+                  </Pressable>
+                }
               />
 
               {error ? (

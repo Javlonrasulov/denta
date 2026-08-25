@@ -4,3 +4,6 @@ export { TopHeader } from './TopHeader';
 export { PageHeader } from './PageHeader';
 export { ContentMax } from './ContentMax';
 export { FontSizeControl } from './FontSizeControl';
+export { CredentialsModal } from './CredentialsModal';
+export { GlobalSearchModal } from './GlobalSearchModal';
+export { NotificationsPanel } from './NotificationsPanel';

@@ -32,7 +32,7 @@ export default function BookingChooseDoctorScreen() {
         }}
       >
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <ArrowLeft size={22} color={colors.text} />
+          <ArrowLeft size={22} color={colors.text} strokeWidth={1.8} />
         </Pressable>
         <Text variant="h2">{t('booking.choose_doctor')}</Text>
       </View>
@@ -43,7 +43,7 @@ export default function BookingChooseDoctorScreen() {
         <FlatList
           data={doctors.data}
           keyExtractor={(i) => i.id}
-          contentContainerStyle={{ padding: spacing.xl, gap: spacing.md }}
+          contentContainerStyle={{ padding: spacing.xl, gap: spacing.sm, paddingBottom: spacing['5xl'] }}
           renderItem={({ item }) => (
             <DoctorCard
               doctor={item}

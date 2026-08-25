@@ -15,18 +15,20 @@ interface KpiStatProps {
 }
 
 export function KpiStat({ label, value, trend, trendUp, comparison, icon: Icon }: KpiStatProps) {
-  const { colors, spacing, radius, iconSizes, shadows, isDark } = useTheme();
+  const { colors, spacing, radius, iconSizes, shadows, isDark, isMobile, layout } = useTheme();
 
   return (
     <View
       style={{
-        flex: 1,
-        minWidth: 160,
+        flexGrow: 1,
+        flexBasis: isMobile ? '46%' : layout.kpiMinWidth,
+        minWidth: isMobile ? '46%' : layout.kpiMinWidth,
+        maxWidth: isMobile ? '100%' : undefined,
         backgroundColor: colors.surface,
         borderRadius: radius.xl,
         borderWidth: 1,
         borderColor: colors.border,
-        padding: spacing.lg,
+        padding: isMobile ? spacing.md : spacing.lg,
         gap: spacing.sm,
         overflow: 'hidden',
         ...shadows.md,

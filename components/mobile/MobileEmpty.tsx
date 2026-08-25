@@ -1,12 +1,12 @@
 import React from 'react';
 import { View } from 'react-native';
-import { LucideIcon } from '@/components/icons';
+import type { LucideIcon } from '@/components/icons';
 
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/theme';
 
-interface EmptyStateProps {
+interface MobileEmptyProps {
   icon: LucideIcon;
   title: string;
   description?: string;
@@ -14,22 +14,22 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
-export function EmptyState({
+export function MobileEmpty({
   icon: Icon,
   title,
   description,
   actionLabel,
   onAction,
-}: EmptyStateProps) {
+}: MobileEmptyProps) {
   const { colors, spacing, radius } = useTheme();
 
   return (
     <View
       style={{
-        flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: spacing['3xl'],
+        paddingVertical: spacing['4xl'],
+        paddingHorizontal: spacing.xl,
         gap: spacing.md,
       }}
     >
@@ -58,54 +58,6 @@ export function EmptyState({
         <View style={{ marginTop: spacing.sm, minWidth: 160 }}>
           <Button title={actionLabel} onPress={onAction} size="sm" />
         </View>
-      ) : null}
-    </View>
-  );
-}
-
-interface ErrorStateProps {
-  title: string;
-  description?: string;
-  onRetry?: () => void;
-  retryLabel?: string;
-}
-
-export function ErrorState({ title, description, onRetry, retryLabel }: ErrorStateProps) {
-  const { colors, spacing, radius } = useTheme();
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: spacing['3xl'],
-        gap: spacing.md,
-      }}
-    >
-      <View
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: radius.xl,
-          backgroundColor: colors.errorMuted,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text variant="h2" color={colors.error}>
-          !
-        </Text>
-      </View>
-      <Text variant="h3" center color={colors.text}>
-        {title}
-      </Text>
-      {description ? (
-        <Text variant="bodySmall" muted center>
-          {description}
-        </Text>
-      ) : null}
-      {onRetry ? (
-        <Button title={retryLabel ?? 'Retry'} onPress={onRetry} variant="outline" size="sm" />
       ) : null}
     </View>
   );

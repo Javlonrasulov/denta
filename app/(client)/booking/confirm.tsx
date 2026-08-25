@@ -15,7 +15,7 @@ import { formatPrice } from '@/utils/slots';
 export default function BookingConfirmScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { colors, spacing, radius, shadows } = useTheme();
+  const { colors, spacing, radius } = useTheme();
   const draft = useAppointmentsStore((s) => s.draft);
   const addAppointment = useAppointmentsStore((s) => s.addAppointment);
   const user = useUserStore();
@@ -52,8 +52,8 @@ export default function BookingConfirmScreen() {
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginVertical: spacing.md }}>
-        <Pressable onPress={() => router.back()}>
-          <ArrowLeft size={22} color={colors.text} />
+        <Pressable onPress={() => router.back()} hitSlop={8}>
+          <ArrowLeft size={22} color={colors.text} strokeWidth={1.8} />
         </Pressable>
         <Text variant="h2">{t('booking.confirm')}</Text>
       </View>
@@ -66,7 +66,6 @@ export default function BookingConfirmScreen() {
           gap: spacing.lg,
           borderWidth: 1,
           borderColor: colors.borderSubtle,
-          ...shadows.md,
         }}
       >
         <Text variant="h3">{t('booking.your_appointment')}</Text>
@@ -74,13 +73,13 @@ export default function BookingConfirmScreen() {
         <Row icon={MapPin} label={clinic.data?.name ?? '—'} colors={colors} spacing={spacing} />
         <Row icon={Calendar} label={draft.date ?? '—'} colors={colors} spacing={spacing} />
         <Row icon={Clock} label={draft.time ?? '—'} colors={colors} spacing={spacing} />
-        <View style={{ height: 1, backgroundColor: colors.border }} />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text variant="body" muted>
+        <View style={{ height: 1, backgroundColor: colors.borderSubtle }} />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text variant="bodySmall" muted>
             {draft.serviceName}
           </Text>
           <Text variant="h3" color={colors.primary}>
-            {formatPrice(draft.price ?? 0)} so&apos;m
+            {formatPrice(draft.price ?? 0)}
           </Text>
         </View>
       </View>

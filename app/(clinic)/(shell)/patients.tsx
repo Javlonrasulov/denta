@@ -15,15 +15,21 @@ import { useTheme } from '@/theme';
 
 export default function ClinicPatientsScreen() {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, isMobile } = useTheme();
   const [query, setQuery] = useState('');
   const patients = usePatients(query);
 
   return (
     <AppShell title={t('crm.patients.title')} subtitle={t('crm.patients.subtitle')}>
       <View style={{ gap: spacing.lg }}>
-        <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-          <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: spacing.md,
+            alignItems: isMobile ? 'stretch' : 'center',
+          }}
+        >
+          <View style={{ flex: 1, minWidth: 0 }}>
             <SearchInput
               value={query}
               onChangeText={setQuery}

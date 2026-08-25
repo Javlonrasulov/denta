@@ -16,7 +16,7 @@ interface AppointmentCardProps {
 
 export function AppointmentCard({ appointment, onPress }: AppointmentCardProps) {
   const { t } = useTranslation();
-  const { colors, spacing, radius, shadows, iconSizes } = useTheme();
+  const { colors, spacing, radius, iconSizes } = useTheme();
 
   const tone =
     appointment.status === 'upcoming'
@@ -44,18 +44,17 @@ export function AppointmentCard({ appointment, onPress }: AppointmentCardProps) 
           borderWidth: 1,
           borderColor: colors.borderSubtle,
           opacity: pressed ? 0.94 : 1,
-          ...shadows.sm,
         },
       ]}
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 }}>
-          <Avatar name={appointment.doctorName} size={48} />
-          <View style={{ flex: 1 }}>
-            <Text variant="h3" numberOfLines={1} style={{ fontSize: 16 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1, minWidth: 0 }}>
+          <Avatar name={appointment.doctorName} size={44} />
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+            <Text variant="label" numberOfLines={1} style={{ fontSize: 15 }}>
               {appointment.doctorName}
             </Text>
-            <Text variant="bodySmall" muted numberOfLines={1}>
+            <Text variant="caption" muted numberOfLines={1}>
               {appointment.clinicName}
             </Text>
           </View>
@@ -63,20 +62,31 @@ export function AppointmentCard({ appointment, onPress }: AppointmentCardProps) 
         <Badge label={statusLabel} tone={tone} />
       </View>
 
-      <View style={{ gap: spacing.sm }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <Calendar size={iconSizes.xs} color={colors.textMuted} />
-          <Text variant="bodySmall">{appointment.date}</Text>
-          <Clock size={iconSizes.xs} color={colors.textMuted} />
-          <Text variant="bodySmall">{appointment.time}</Text>
+      <View
+        style={{
+          gap: spacing.sm,
+          paddingTop: spacing.sm,
+          borderTopWidth: 1,
+          borderTopColor: colors.borderSubtle,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Calendar size={iconSizes.xs} color={colors.textMuted} strokeWidth={1.8} />
+            <Text variant="caption">{appointment.date}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Clock size={iconSizes.xs} color={colors.textMuted} strokeWidth={1.8} />
+            <Text variant="caption">{appointment.time}</Text>
+          </View>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <MapPin size={iconSizes.xs} color={colors.textMuted} />
-          <Text variant="bodySmall" muted numberOfLines={1} style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <MapPin size={iconSizes.xs} color={colors.textMuted} strokeWidth={1.8} />
+          <Text variant="caption" muted numberOfLines={1} style={{ flex: 1 }}>
             {appointment.clinicAddress}
           </Text>
         </View>
-        <Text variant="caption" color={colors.primary}>
+        <Text variant="caption" weight="semibold" color={colors.primary}>
           {appointment.serviceName}
         </Text>
       </View>

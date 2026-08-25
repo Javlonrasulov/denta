@@ -9,7 +9,7 @@ import { useTheme } from '@/theme';
 
 export default function ClinicRoomsScreen() {
   const { t } = useTranslation();
-  const { colors, spacing, radius, isDesktop } = useTheme();
+  const { colors, spacing, radius, isDesktop, isTablet, isMobile } = useTheme();
 
   return (
     <AppShell title={t('crm.rooms.title')} subtitle={t('crm.rooms.subtitle')}>
@@ -33,9 +33,11 @@ export default function ClinicRoomsScreen() {
             <View
               key={room.id}
               style={{
-                width: isDesktop ? '23%' : '47%',
-                minWidth: 150,
+                width: isDesktop ? '23%' : isTablet ? '31%' : '47%',
+                minWidth: isMobile ? undefined : 150,
                 flexGrow: 1,
+                flexBasis: isMobile ? '46%' : undefined,
+                maxWidth: '100%',
                 backgroundColor: colors.surface,
                 borderRadius: radius.lg,
                 borderWidth: 1,

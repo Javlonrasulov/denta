@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Platform,
   StyleSheet,
   TextInput,
   TextInputProps,
@@ -10,6 +11,15 @@ import { Search, X } from '@/components/icons';
 
 import { Text } from './Text';
 import { useTheme } from '@/theme';
+
+const webInputReset =
+  Platform.OS === 'web'
+    ? ({
+        outlineStyle: 'none',
+        outlineWidth: 0,
+        boxShadow: 'none',
+      } as const)
+    : null;
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -54,14 +64,17 @@ export function Input({
         {leftIcon}
         <TextInput
           placeholderTextColor={colors.textMuted}
+          underlineColorAndroid="transparent"
           style={[
             styles.input,
+            webInputReset,
             {
               fontFamily: typography.body.fontFamily,
               fontSize: inputSizes[size].fontSize,
               color: colors.text,
               marginLeft: leftIcon ? spacing.sm : 0,
               marginRight: rightIcon ? spacing.sm : 0,
+              height: '100%',
             },
             style,
           ]}
@@ -116,9 +129,19 @@ export function SearchInput({
         onFocus={onFocus}
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, { color: colors.text, marginLeft: spacing.sm, fontSize: 15 }]}
+        style={[
+          styles.input,
+          webInputReset,
+          {
+            color: colors.text,
+            marginLeft: spacing.sm,
+            fontSize: 15,
+            height: '100%',
+          },
+        ]}
         returnKeyType="search"
         accessibilityLabel={placeholder}
+        underlineColorAndroid="transparent"
       />
       {value.length > 0 ? (
         <Pressable
@@ -142,5 +165,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 0,
+    margin: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
 });

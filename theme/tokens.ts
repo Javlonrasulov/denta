@@ -1,7 +1,7 @@
 /**
  * DENTA.UZ design tokens — premium medical SaaS.
- * Typography: Manrope (display/headings) + Onest (body/UI).
- * Both ship full Cyrillic — no system-font fallback for ўзбек кирилл / русский.
+ * Typography: Geologica (display/headings) + Golos Text (body/UI).
+ * Golos is Cyrillic-first (Paratype); Geologica has strong Cyrillic for brand type.
  * Dark mode: clear elevation layers, not muddy navy-on-navy.
  */
 
@@ -24,8 +24,16 @@ export const colors = {
     surface: '#FFFFFF',
     surfaceElevated: '#FFFFFF',
     surfaceSoft: '#EBEEF5',
-    sidebar: '#FAFBFD',
-    sidebarBorder: '#E4E9F1',
+    sidebar: '#0A2540',
+    sidebarBorder: 'rgba(255,255,255,0.08)',
+    sidebarText: '#FFFFFF',
+    sidebarTextMuted: '#A8BACC',
+    sidebarItem: '#E8F0F8',
+    sidebarIconBg: 'rgba(255,255,255,0.08)',
+    sidebarActiveBg: 'rgba(15, 155, 142, 0.22)',
+    sidebarActiveAccent: '#2DD4BF',
+    sidebarBrandFrom: '#0F9B8E',
+    sidebarBrandTo: '#0B6E9B',
     border: '#D8DEE8',
     borderSubtle: '#EAEFF5',
     text: '#0A0F1A',
@@ -64,8 +72,16 @@ export const colors = {
     surface: '#151922',
     surfaceElevated: '#1C2230',
     surfaceSoft: '#222938',
-    sidebar: '#0E1118',
-    sidebarBorder: '#252B3A',
+    sidebar: '#0B0F16',
+    sidebarBorder: 'rgba(255,255,255,0.08)',
+    sidebarText: '#FFFFFF',
+    sidebarTextMuted: '#A0ADC2',
+    sidebarItem: '#E6ECF5',
+    sidebarIconBg: 'rgba(255,255,255,0.07)',
+    sidebarActiveBg: 'rgba(46, 230, 208, 0.16)',
+    sidebarActiveAccent: '#2EE6D0',
+    sidebarBrandFrom: '#2EE6D0',
+    sidebarBrandTo: '#4A9EFF',
     border: '#323A4D',
     borderSubtle: '#252B3A',
     text: '#F5F7FB',
@@ -111,25 +127,25 @@ export const radius = {
   full: 9999,
 } as const;
 
-/** Manrope = brand/display; Onest = readable UI body (both Cyrillic-complete) */
+/** Geologica = brand/display; Golos Text = Cyrillic-first UI body */
 export const typography = {
-  display: { fontSize: 34, lineHeight: 40, fontFamily: 'Manrope_700Bold', letterSpacing: -0.8 },
-  h1: { fontSize: 26, lineHeight: 32, fontFamily: 'Manrope_700Bold', letterSpacing: -0.5 },
-  h2: { fontSize: 20, lineHeight: 28, fontFamily: 'Manrope_600SemiBold', letterSpacing: -0.35 },
-  h3: { fontSize: 16, lineHeight: 24, fontFamily: 'Manrope_600SemiBold', letterSpacing: -0.2 },
-  bodyLarge: { fontSize: 16, lineHeight: 24, fontFamily: 'Onest_400Regular', letterSpacing: -0.1 },
-  body: { fontSize: 14, lineHeight: 21, fontFamily: 'Onest_400Regular', letterSpacing: -0.05 },
-  bodySmall: { fontSize: 13, lineHeight: 18, fontFamily: 'Onest_400Regular', letterSpacing: 0 },
-  caption: { fontSize: 12, lineHeight: 16, fontFamily: 'Onest_500Medium', letterSpacing: 0.15 },
-  label: { fontSize: 13, lineHeight: 18, fontFamily: 'Manrope_600SemiBold', letterSpacing: 0.1 },
-  kpi: { fontSize: 24, lineHeight: 30, fontFamily: 'Manrope_700Bold', letterSpacing: -0.6 },
+  display: { fontSize: 34, lineHeight: 42, fontFamily: 'Geologica_700Bold', letterSpacing: -0.6 },
+  h1: { fontSize: 26, lineHeight: 34, fontFamily: 'Geologica_700Bold', letterSpacing: -0.4 },
+  h2: { fontSize: 20, lineHeight: 28, fontFamily: 'Geologica_600SemiBold', letterSpacing: -0.25 },
+  h3: { fontSize: 16, lineHeight: 24, fontFamily: 'Geologica_600SemiBold', letterSpacing: -0.15 },
+  bodyLarge: { fontSize: 16, lineHeight: 25, fontFamily: 'GolosText_400Regular', letterSpacing: 0 },
+  body: { fontSize: 14, lineHeight: 22, fontFamily: 'GolosText_400Regular', letterSpacing: 0 },
+  bodySmall: { fontSize: 13, lineHeight: 19, fontFamily: 'GolosText_400Regular', letterSpacing: 0 },
+  caption: { fontSize: 12, lineHeight: 16, fontFamily: 'GolosText_500Medium', letterSpacing: 0.2 },
+  label: { fontSize: 13, lineHeight: 18, fontFamily: 'GolosText_600SemiBold', letterSpacing: 0.05 },
+  kpi: { fontSize: 24, lineHeight: 30, fontFamily: 'Geologica_700Bold', letterSpacing: -0.45 },
 } as const;
 
 export const fontWeight = {
-  regular: 'Onest_400Regular',
-  medium: 'Onest_500Medium',
-  semibold: 'Manrope_600SemiBold',
-  bold: 'Manrope_700Bold',
+  regular: 'GolosText_400Regular',
+  medium: 'GolosText_500Medium',
+  semibold: 'GolosText_600SemiBold',
+  bold: 'Geologica_700Bold',
 } as const;
 
 export const shadows = {
@@ -224,7 +240,8 @@ export const inputSizes = {
 } as const;
 
 export const layout = {
-  sidebarWidth: 248,
+  sidebarWidth: 268,
+  sidebarCollapsedWidth: 76,
   headerHeight: 64,
   contentMaxWidth: 1440,
   contentPadding: 24,

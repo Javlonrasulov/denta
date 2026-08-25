@@ -7,12 +7,15 @@ import {
   Wallet,
 } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { mobileTabBarStyle, mobileTabLabelStyle } from '@/components/mobile';
 import { useTheme } from '@/theme';
 
 export default function DoctorTabsLayout() {
   const { t } = useTranslation();
   const { colors, typography } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -20,20 +23,10 @@ export default function DoctorTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.borderSubtle,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 6,
-          paddingTop: 6,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
+        tabBarStyle: mobileTabBarStyle(colors, insets.bottom),
         tabBarLabelStyle: {
+          ...mobileTabLabelStyle,
           fontFamily: typography.caption.fontFamily,
-          fontSize: 10,
-          fontWeight: '600',
         },
       }}
     >
@@ -41,8 +34,8 @@ export default function DoctorTabsLayout() {
         name="index"
         options={{
           title: t('tabs.dashboard'),
-          tabBarIcon: ({ color, size }) => (
-            <LayoutDashboard color={color} size={size - 2} strokeWidth={1.75} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <LayoutDashboard color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
           ),
         }}
       />
@@ -50,8 +43,8 @@ export default function DoctorTabsLayout() {
         name="calendar"
         options={{
           title: t('tabs.calendar'),
-          tabBarIcon: ({ color, size }) => (
-            <CalendarDays color={color} size={size - 2} strokeWidth={1.75} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <CalendarDays color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
           ),
         }}
       />
@@ -59,22 +52,26 @@ export default function DoctorTabsLayout() {
         name="patients"
         options={{
           title: t('tabs.patients'),
-          tabBarIcon: ({ color, size }) => <Users color={color} size={size - 2} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Users color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
+          ),
         }}
       />
       <Tabs.Screen
         name="finance"
         options={{
           title: t('tabs.finance'),
-          tabBarIcon: ({ color, size }) => <Wallet color={color} size={size - 2} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Wallet color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: ({ color, size }) => (
-            <UserRound color={color} size={size - 2} strokeWidth={1.75} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <UserRound color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
           ),
         }}
       />

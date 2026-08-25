@@ -265,7 +265,11 @@
     "schedule_changed": "Жадвал ўзгарди",
     "new_patient": "Янги бемор",
     "payment": "Тўлов",
-    "low_inventory": "Омбор камайди"
+    "low_inventory": "Омбор камайди",
+    "unread_count": "{{count}} та ўқилмаган",
+    "all_read": "Ҳаммаси ўқилди",
+    "mark_all_read": "Ҳаммасини ўқиш",
+    "empty": "Билдиришнома йўқ"
   },
   "empty": {
     "no_data": "Маълумот йўқ",
@@ -293,7 +297,19 @@
     "sign_in": "Кириш",
     "demo_hint": "Демо: исталган email ва парол (камида 4 белги)",
     "invalid_email": "Тўғри email киритинг",
-    "invalid_password": "Парол камида 4 белгидан иборат бўлиши керак"
+    "invalid_password": "Парол камида 4 белгидан иборат бўлиши керак",
+    "show_password": "Паролни кўрсатиш",
+    "hide_password": "Паролни яшириш",
+    "credentials_title": "Логин / парол",
+    "credentials_subtitle": "Логин ёки паролни ўзгартириш учун жорий паролни киритинг",
+    "login": "Логин",
+    "current_password": "Жорий парол",
+    "new_password": "Янги парол",
+    "confirm_password": "Янги парол (тасдиқлаш)",
+    "current_password_required": "Жорий паролни киритинг",
+    "password_mismatch": "Янги парол тасдиқлаш билан мос келмади",
+    "wrong_password": "Жорий парол нотўғри",
+    "credentials_saved": "Сақланди"
   },
   "crm": {
     "nav": {
@@ -307,7 +323,17 @@
       "inventory": "Омбор",
       "reports": "Ҳисоботлар",
       "settings": "Созламалар",
-      "help": "Ёрдам"
+      "help": "Ёрдам",
+      "section_main": "Асосий",
+      "section_clinic": "Клиника",
+      "section_ops": "Операциялар",
+      "online": "Онлайн",
+      "collapse_sidebar": "Сайдбарни йиғиш",
+      "expand_sidebar": "Сайдбарни очиш"
+    },
+    "search": {
+      "placeholder": "Бемор, шифокор, учрашув қидириш...",
+      "hint": "Исм, телефон, хизмат ёки хона рақамини ёзинг"
     },
     "dashboard": {
       "title": "Бошқарув панели",

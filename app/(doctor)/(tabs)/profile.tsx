@@ -1,69 +1,62 @@
 import { router } from 'expo-router';
 import { LogOut } from '@/components/icons';
-import { Pressable, ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { MobileCard, MobileHeader, MobileScreen } from '@/components/mobile';
+import { Avatar } from '@/components/ui/Avatar';
 import { Text } from '@/components/ui/Text';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/theme';
 
 export default function DoctorProfileScreen() {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const { colors, spacing, radius } = useTheme();
   const logout = useSettingsStore((s) => s.logout);
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{
-        paddingTop: insets.top + spacing.md,
-        paddingHorizontal: spacing.xl,
-        paddingBottom: spacing['5xl'],
-        gap: spacing.xl,
-      }}
-    >
-      <Text variant="h1">{t('tabs.profile')}</Text>
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: radius.xl,
-          padding: spacing.xl,
-          borderWidth: 1,
-          borderColor: colors.borderSubtle,
-          gap: spacing.sm,
-        }}
-      >
-        <Text variant="h2">Dr. Alisher Aliyev</Text>
-        <Text variant="body" muted>
-          Therapist · Smile Dental
-        </Text>
-        <Text variant="bodySmall" muted>
-          {t('doctor_app.working_hours')}: 09:00–18:00
-        </Text>
-      </View>
+    <MobileScreen contentStyle={{ gap: spacing.xl }}>
+      <MobileHeader title={t('tabs.profile')} />
+
+      <MobileCard>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg }}>
+          <Avatar name="Dr. Alisher Aliyev" size={64} />
+          <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
+            <Text variant="h3" numberOfLines={1}>
+              Dr. Alisher Aliyev
+            </Text>
+            <Text variant="bodySmall" muted>
+              Therapist · Smile Dental
+            </Text>
+            <Text variant="caption" muted>
+              {t('doctor_app.working_hours')}: 09:00–18:00
+            </Text>
+          </View>
+        </View>
+      </MobileCard>
 
       <Pressable
         onPress={() => {
           logout();
           router.replace('/login');
         }}
-        style={{
+        style={({ pressed }) => ({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           gap: spacing.sm,
           paddingVertical: spacing.lg,
-          borderRadius: radius.lg,
-          backgroundColor: colors.errorMuted,
-        }}
+          borderRadius: radius.xl,
+          backgroundColor: pressed ? colors.errorMuted : colors.surface,
+          borderWidth: 1,
+          borderColor: colors.borderSubtle,
+        })}
       >
-        <LogOut size={18} color={colors.error} />
+        <LogOut size={16} color={colors.error} strokeWidth={1.8} />
         <Text variant="label" color={colors.error}>
           {t('profile.logout')}
         </Text>
       </Pressable>
-    </ScrollView>
+    </MobileScreen>
   );
 }

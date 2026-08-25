@@ -27,7 +27,7 @@ export function LineChartCard({
   rangeLabels,
   points = [42, 55, 48, 62, 70, 58, 75],
 }: ChartCardProps) {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing, radius, isMobile } = useTheme();
   const width = 320;
   const height = 120;
   const pad = 8;
@@ -46,9 +46,16 @@ export function LineChartCard({
   }, [points]);
 
   return (
-    <View style={{ gap: spacing.md }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md }}>
-        <View style={{ gap: 2, flex: 1 }}>
+    <View style={{ gap: spacing.md, minWidth: 0 }}>
+      <View
+        style={{
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between',
+          alignItems: isMobile ? 'stretch' : 'flex-start',
+          gap: spacing.md,
+        }}
+      >
+        <View style={{ gap: 2, flex: 1, minWidth: 0 }}>
           <Text variant="h3">{title}</Text>
           {totalValue ? (
             <Text variant="kpi" style={{ fontSize: 20 }}>
@@ -95,9 +102,9 @@ interface DonutChartProps {
 }
 
 export function DonutChartCard({ title, segments, centerLabel, centerValue }: DonutChartProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, isMobile } = useTheme();
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
-  const size = 140;
+  const size = isMobile ? 120 : 140;
   const stroke = 14;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -111,9 +118,15 @@ export function DonutChartCard({ title, segments, centerLabel, centerValue }: Do
   });
 
   return (
-    <View style={{ gap: spacing.md }}>
+    <View style={{ gap: spacing.md, minWidth: 0 }}>
       <Text variant="h3">{title}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xl }}>
+      <View
+        style={{
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'center' : 'center',
+          gap: spacing.lg,
+        }}
+      >
         <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
           <Svg width={size} height={size}>
             <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.borderSubtle} strokeWidth={stroke} fill="none" />
@@ -141,11 +154,11 @@ export function DonutChartCard({ title, segments, centerLabel, centerValue }: Do
             </Text>
           </View>
         </View>
-        <View style={{ flex: 1, gap: spacing.sm }}>
+        <View style={{ flex: 1, gap: spacing.sm, width: isMobile ? '100%' : undefined, minWidth: 0 }}>
           {segments.map((seg) => (
             <View key={seg.label} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: seg.color }} />
-              <Text variant="caption" style={{ flex: 1 }} muted>
+              <Text variant="caption" style={{ flex: 1, minWidth: 0 }} muted numberOfLines={1}>
                 {seg.label}
               </Text>
               <Text variant="caption" weight="semibold">

@@ -19,7 +19,7 @@ interface ClinicCardProps {
 
 export function ClinicCard({ clinic, onPress, horizontal }: ClinicCardProps) {
   const { t } = useTranslation();
-  const { colors, spacing, radius, iconSizes, shadows } = useTheme();
+  const { colors, spacing, radius, iconSizes } = useTheme();
   const toggleClinic = useFavoritesStore((s) => s.toggleClinic);
   const isFavorite = useFavoritesStore((s) => s.isClinicFavorite(clinic.id));
 
@@ -30,18 +30,17 @@ export function ClinicCard({ clinic, onPress, horizontal }: ClinicCardProps) {
       accessibilityLabel={clinic.name}
       style={({ pressed }) => [
         {
-          width: horizontal ? 280 : '100%',
+          width: horizontal ? 260 : '100%',
           backgroundColor: colors.surface,
-          borderRadius: radius.lg,
+          borderRadius: radius.xl,
           borderWidth: 1,
           borderColor: colors.borderSubtle,
           overflow: 'hidden',
           opacity: pressed ? 0.94 : 1,
-          ...shadows.sm,
         },
       ]}
     >
-      <View style={{ height: 148, position: 'relative' }}>
+      <View style={{ height: horizontal ? 128 : 140, position: 'relative' }}>
         <Image
           source={{ uri: clinic.coverUrl }}
           style={{ width: '100%', height: '100%' }}
@@ -57,10 +56,10 @@ export function ClinicCard({ clinic, onPress, horizontal }: ClinicCardProps) {
             position: 'absolute',
             top: spacing.md,
             right: spacing.md,
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: 'rgba(255,255,255,0.92)',
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: 'rgba(255,255,255,0.95)',
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -69,6 +68,7 @@ export function ClinicCard({ clinic, onPress, horizontal }: ClinicCardProps) {
             size={iconSizes.sm}
             color={isFavorite ? colors.error : colors.textSecondary}
             fill={isFavorite ? colors.error : 'transparent'}
+            strokeWidth={1.8}
           />
         </Pressable>
         <View style={{ position: 'absolute', left: spacing.md, bottom: spacing.md }}>
@@ -79,35 +79,35 @@ export function ClinicCard({ clinic, onPress, horizontal }: ClinicCardProps) {
         </View>
       </View>
 
-      <View style={{ padding: spacing.lg, gap: spacing.sm }}>
-        <Text variant="h3" numberOfLines={1}>
+      <View style={{ padding: spacing.lg, gap: 6 }}>
+        <Text variant="label" numberOfLines={1} style={{ fontSize: 15, letterSpacing: -0.2 }}>
           {clinic.name}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <Star size={14} color={colors.star} fill={colors.star} />
-          <Text variant="bodySmall" weight="semibold">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <Star size={13} color={colors.star} fill={colors.star} />
+          <Text variant="caption" weight="semibold">
             {clinic.rating.toFixed(1)}
           </Text>
-          <Text variant="bodySmall" muted>
+          <Text variant="caption" muted>
             ({clinic.reviewCount})
           </Text>
           {clinic.distanceKm != null ? (
             <>
-              <Text variant="bodySmall" muted>
+              <Text variant="caption" muted>
                 ·
               </Text>
-              <MapPin size={12} color={colors.textMuted} />
-              <Text variant="bodySmall" muted>
+              <MapPin size={11} color={colors.textMuted} />
+              <Text variant="caption" muted>
                 {formatDistance(clinic.distanceKm)}
               </Text>
             </>
           ) : null}
         </View>
-        <Text variant="bodySmall" muted numberOfLines={1}>
+        <Text variant="caption" muted numberOfLines={1}>
           {clinic.address}
         </Text>
-        <Text variant="caption" color={colors.primary}>
-          {t('common.from')} {formatPrice(clinic.priceFrom)} so&apos;m
+        <Text variant="caption" weight="semibold" color={colors.primary} style={{ marginTop: 2 }}>
+          {t('common.from')} {formatPrice(clinic.priceFrom)}
         </Text>
       </View>
     </Pressable>

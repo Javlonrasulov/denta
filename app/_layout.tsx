@@ -4,18 +4,18 @@ import 'react-native-reanimated';
 import '@/locales/i18n';
 
 import {
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
-} from '@expo-google-fonts/manrope';
+  Geologica_500Medium,
+  Geologica_600SemiBold,
+  Geologica_700Bold,
+  Geologica_800ExtraBold,
+} from '@expo-google-fonts/geologica';
 import {
-  Onest_400Regular,
-  Onest_500Medium,
-  Onest_600SemiBold,
-  Onest_700Bold,
+  GolosText_400Regular,
+  GolosText_500Medium,
+  GolosText_600SemiBold,
+  GolosText_700Bold,
   useFonts,
-} from '@expo-google-fonts/onest';
+} from '@expo-google-fonts/golos-text';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
@@ -47,14 +47,14 @@ export default function RootLayout() {
   );
 
   const [loaded, error] = useFonts({
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
-    Manrope_800ExtraBold,
-    Onest_400Regular,
-    Onest_500Medium,
-    Onest_600SemiBold,
-    Onest_700Bold,
+    Geologica_500Medium,
+    Geologica_600SemiBold,
+    Geologica_700Bold,
+    Geologica_800ExtraBold,
+    GolosText_400Regular,
+    GolosText_500Medium,
+    GolosText_600SemiBold,
+    GolosText_700Bold,
   });
 
   const locale = useSettingsStore((s) => s.locale);

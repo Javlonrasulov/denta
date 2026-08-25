@@ -83,7 +83,7 @@ export function Odontogram({ teeth, onSelect, selectedNumber }: OdontogramProps)
           borderRadius: radius.xl,
           paddingVertical: spacing.lg,
           borderWidth: 1,
-          borderColor: colors.border,
+          borderColor: colors.borderSubtle,
           alignItems: 'center',
         }}
       >

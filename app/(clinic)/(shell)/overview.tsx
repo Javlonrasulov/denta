@@ -34,12 +34,13 @@ import { formatPrice } from '@/utils/slots';
 
 export default function ClinicOverviewScreen() {
   const { t } = useTranslation();
-  const { colors, spacing, radius, isDesktop } = useTheme();
+  const { colors, spacing, radius, isDesktop, isMobile, isTablet } = useTheme();
   const [range, setRange] = useState<'7d' | '30d' | '12m'>('7d');
   const stats = useClinicStats();
   const appointments = useAppointments();
   const doctors = useDoctors();
   const patients = usePatients();
+  const wide = isDesktop || isTablet;
 
   const todayApts = useMemo((): TimelineItem[] => {
     const list = (appointments.data ?? [])
@@ -100,9 +101,16 @@ export default function ClinicOverviewScreen() {
   return (
     <AppShell title={t('crm.dashboard.title')} subtitle={t('crm.dashboard.subtitle')}>
       <View style={{ gap: spacing.xl }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.lg }}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text variant="display" style={{ fontSize: 28, lineHeight: 34 }}>
+        <View
+          style={{
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between',
+            alignItems: isMobile ? 'flex-start' : 'flex-start',
+            gap: spacing.md,
+          }}
+        >
+          <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
+            <Text variant="display" style={{ fontSize: isMobile ? 24 : 28, lineHeight: isMobile ? 30 : 34 }}>
               {t('crm.dashboard.greeting')}
             </Text>
             <Text variant="body" color={colors.textSecondary}>
@@ -115,6 +123,7 @@ export default function ClinicOverviewScreen() {
               paddingVertical: spacing.sm,
               borderRadius: radius.full,
               backgroundColor: colors.primaryMuted,
+              alignSelf: isMobile ? 'flex-start' : undefined,
             }}
           >
             <Text variant="caption" color={colors.primary} weight="semibold">
@@ -163,8 +172,8 @@ export default function ClinicOverviewScreen() {
           ]}
         />
 
-        <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: spacing.lg }}>
-          <View style={{ flex: 1.1 }}>
+        <View style={{ flexDirection: wide ? 'row' : 'column', gap: spacing.lg }}>
+          <View style={{ flex: 1.1, minWidth: 0 }}>
             <Section title={t('crm.dashboard.todays_schedule')}>
               <Timeline
                 items={todayApts}
@@ -174,7 +183,7 @@ export default function ClinicOverviewScreen() {
               />
             </Section>
           </View>
-          <View style={{ flex: 1, gap: spacing.lg }}>
+          <View style={{ flex: 1, gap: spacing.lg, minWidth: 0 }}>
             <Section title={t('crm.dashboard.revenue_analytics')}>
               <LineChartCard
                 title=""
@@ -212,9 +221,11 @@ export default function ClinicOverviewScreen() {
               <View
                 key={room.id}
                 style={{
-                  width: isDesktop ? '18%' : '47%',
-                  minWidth: 140,
+                  width: isDesktop ? '18%' : isTablet ? '31%' : '47%',
+                  minWidth: isMobile ? undefined : 140,
                   flexGrow: 1,
+                  flexBasis: isMobile ? '46%' : undefined,
+                  maxWidth: isMobile ? '100%' : undefined,
                   padding: spacing.md,
                   borderRadius: radius.md,
                   backgroundColor: colors.surfaceSoft,
@@ -246,18 +257,18 @@ export default function ClinicOverviewScreen() {
           </View>
         </Section>
 
-        <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: spacing.lg }}>
-          <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: wide ? 'row' : 'column', gap: spacing.lg }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Section title={t('crm.dashboard.top_doctors')}>
               <View style={{ gap: spacing.md }}>
                 {topDoctors.map((doc) => (
-                  <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                  <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minWidth: 0 }}>
                     <Avatar uri={doc.photoUrl} name={doc.fullName} size={40} />
-                    <View style={{ flex: 1, gap: 2 }}>
+                    <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
                       <Text variant="label" numberOfLines={1}>
                         {doc.fullName}
                       </Text>
-                      <Text variant="caption" muted>
+                      <Text variant="caption" muted numberOfLines={1}>
                         {t('crm.dashboard.apts_count', { count: Math.round(doc.reviewCount / 5) })} · {t('crm.dashboard.rating', { value: doc.rating.toFixed(1) })}
                       </Text>
                       <View
@@ -286,7 +297,7 @@ export default function ClinicOverviewScreen() {
               </View>
             </Section>
           </View>
-          <View style={{ flex: 1.2 }}>
+          <View style={{ flex: 1.2, minWidth: 0 }}>
             <Section title={t('crm.dashboard.recent_patients')} padded={false}>
               <DataTable
                 data={recentPatients}

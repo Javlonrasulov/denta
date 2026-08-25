@@ -61,15 +61,15 @@ export default function ClinicProfileScreen() {
               position: 'absolute',
               top: insets.top + 8,
               left: spacing.lg,
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: 'rgba(255,255,255,0.92)',
+              width: 40,
+              height: 40,
+              borderRadius: radius.md,
+              backgroundColor: 'rgba(255,255,255,0.95)',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <ArrowLeft size={20} color={colors.text} />
+            <ArrowLeft size={20} color={colors.text} strokeWidth={1.8} />
           </Pressable>
           <Pressable
             onPress={() => toggleClinic(clinic.id)}
@@ -77,10 +77,10 @@ export default function ClinicProfileScreen() {
               position: 'absolute',
               top: insets.top + 8,
               right: spacing.lg,
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: 'rgba(255,255,255,0.92)',
+              width: 40,
+              height: 40,
+              borderRadius: radius.md,
+              backgroundColor: 'rgba(255,255,255,0.95)',
               alignItems: 'center',
               justifyContent: 'center',
             }}

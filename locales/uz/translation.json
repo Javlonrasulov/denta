@@ -265,7 +265,11 @@
     "schedule_changed": "Jadval o‘zgardi",
     "new_patient": "Yangi bemor",
     "payment": "To‘lov",
-    "low_inventory": "Ombor kamaydi"
+    "low_inventory": "Ombor kamaydi",
+    "unread_count": "{{count}} ta o‘qilmagan",
+    "all_read": "Hammasi o‘qildi",
+    "mark_all_read": "Hammasini o‘qish",
+    "empty": "Bildirishnoma yo‘q"
   },
   "empty": {
     "no_data": "Ma’lumot yo‘q",
@@ -293,7 +297,19 @@
     "sign_in": "Kirish",
     "demo_hint": "Demo: istalgan email va parol (kamida 4 belgi)",
     "invalid_email": "To‘g‘ri email kiriting",
-    "invalid_password": "Parol kamida 4 belgidan iborat bo‘lishi kerak"
+    "invalid_password": "Parol kamida 4 belgidan iborat bo‘lishi kerak",
+    "show_password": "Parolni ko‘rsatish",
+    "hide_password": "Parolni yashirish",
+    "credentials_title": "Login / parol",
+    "credentials_subtitle": "Login yoki parolni o‘zgartirish uchun joriy parolni kiriting",
+    "login": "Login",
+    "current_password": "Joriy parol",
+    "new_password": "Yangi parol",
+    "confirm_password": "Yangi parol (tasdiqlash)",
+    "current_password_required": "Joriy parolni kiriting",
+    "password_mismatch": "Yangi parol tasdiqlash bilan mos kelmadi",
+    "wrong_password": "Joriy parol noto‘g‘ri",
+    "credentials_saved": "Saqlandi"
   },
   "crm": {
     "nav": {
@@ -307,7 +323,17 @@
       "inventory": "Ombor",
       "reports": "Hisobotlar",
       "settings": "Sozlamalar",
-      "help": "Yordam"
+      "help": "Yordam",
+      "section_main": "Asosiy",
+      "section_clinic": "Klinika",
+      "section_ops": "Operatsiyalar",
+      "online": "Onlayn",
+      "collapse_sidebar": "Sidebarni yig‘ish",
+      "expand_sidebar": "Sidebarni ochish"
+    },
+    "search": {
+      "placeholder": "Bemor, shifokor, uchrashuv qidirish...",
+      "hint": "Ism, telefon, xizmat yoki xona raqamini yozing"
     },
     "dashboard": {
       "title": "Dashboard",

@@ -265,7 +265,11 @@
     "schedule_changed": "Расписание изменено",
     "new_patient": "Новый пациент",
     "payment": "Платёж",
-    "low_inventory": "Низкий остаток на складе"
+    "low_inventory": "Низкий остаток на складе",
+    "unread_count": "{{count}} непрочитанных",
+    "all_read": "Все прочитано",
+    "mark_all_read": "Прочитать все",
+    "empty": "Нет уведомлений"
   },
   "empty": {
     "no_data": "Нет данных",
@@ -293,7 +297,19 @@
     "sign_in": "Войти",
     "demo_hint": "Демо: любой email и пароль (мин. 4 символа)",
     "invalid_email": "Введите корректный email",
-    "invalid_password": "Пароль должен быть не короче 4 символов"
+    "invalid_password": "Пароль должен быть не короче 4 символов",
+    "show_password": "Показать пароль",
+    "hide_password": "Скрыть пароль",
+    "credentials_title": "Логин / пароль",
+    "credentials_subtitle": "Чтобы изменить логин или пароль, введите текущий пароль",
+    "login": "Логин",
+    "current_password": "Текущий пароль",
+    "new_password": "Новый пароль",
+    "confirm_password": "Подтвердите новый пароль",
+    "current_password_required": "Введите текущий пароль",
+    "password_mismatch": "Новый пароль и подтверждение не совпадают",
+    "wrong_password": "Неверный текущий пароль",
+    "credentials_saved": "Сохранено"
   },
   "crm": {
     "nav": {
@@ -307,7 +323,17 @@
       "inventory": "Склад",
       "reports": "Отчёты",
       "settings": "Настройки",
-      "help": "Помощь"
+      "help": "Помощь",
+      "section_main": "Главное",
+      "section_clinic": "Клиника",
+      "section_ops": "Операции",
+      "online": "Онлайн",
+      "collapse_sidebar": "Свернуть меню",
+      "expand_sidebar": "Развернуть меню"
+    },
+    "search": {
+      "placeholder": "Пациенты, врачи, записи...",
+      "hint": "Введите имя, телефон, услугу или номер кабинета"
     },
     "dashboard": {
       "title": "Панель",

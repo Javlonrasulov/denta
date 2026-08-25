@@ -66,6 +66,8 @@ interface ThemeValue {
   isDark: boolean;
   isDesktop: boolean;
   isTablet: boolean;
+  isMobile: boolean;
+  windowWidth: number;
   colors: ThemeColors;
   spacing: typeof spacing;
   radius: typeof radius;
@@ -92,6 +94,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const isDark = themeMode === 'system' ? system === 'dark' : themeMode === 'dark';
   const isDesktop = width >= layout.breakpointDesktop;
   const isTablet = width >= layout.breakpointTablet && width < layout.breakpointDesktop;
+  const isMobile = width < layout.breakpointTablet;
   const scale = FONT_SCALE[fontSize] ?? 1;
 
   useEffect(() => {
@@ -106,6 +109,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       isDark,
       isDesktop,
       isTablet,
+      isMobile,
+      windowWidth: width,
       colors: isDark ? colors.dark : colors.light,
       spacing,
       radius,
@@ -121,7 +126,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       hitSlop,
       minTouchTarget,
     }),
-    [themeMode, fontSize, isDark, isDesktop, isTablet, scale],
+    [themeMode, fontSize, isDark, isDesktop, isTablet, isMobile, width, scale],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

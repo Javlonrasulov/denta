@@ -52,12 +52,14 @@ export default function AppointmentDetailScreen() {
         gap: spacing.xl,
       }}
     >
-      <Pressable onPress={() => router.back()} hitSlop={8} style={{ width: 44, height: 44, justifyContent: 'center' }}>
-        <ArrowLeft size={22} color={colors.text} />
+      <Pressable onPress={() => router.back()} hitSlop={8} style={{ width: 40, height: 40, justifyContent: 'center' }}>
+        <ArrowLeft size={22} color={colors.text} strokeWidth={1.8} />
       </Pressable>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text variant="h1">{t('appointments.details')}</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md }}>
+        <Text variant="h2" style={{ flex: 1 }}>
+          {t('appointments.details')}
+        </Text>
         <Badge
           label={t(`appointments.status_${appointment.status}`)}
           tone={statusTone}
@@ -75,26 +77,29 @@ export default function AppointmentDetailScreen() {
         }}
       >
         <Text variant="h3">{appointment.doctorName}</Text>
-        <Text variant="body" muted>
+        <Text variant="bodySmall" muted>
           {appointment.clinicName}
         </Text>
+        <View style={{ height: 1, backgroundColor: colors.borderSubtle, marginVertical: 4 }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <Calendar size={16} color={colors.textMuted} />
+          <Calendar size={16} color={colors.textMuted} strokeWidth={1.8} />
           <Text variant="body">{appointment.date}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <Clock size={16} color={colors.textMuted} />
+          <Clock size={16} color={colors.textMuted} strokeWidth={1.8} />
           <Text variant="body">{appointment.time}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <MapPin size={16} color={colors.textMuted} />
-          <Text variant="body" muted style={{ flex: 1 }}>
+          <MapPin size={16} color={colors.textMuted} strokeWidth={1.8} />
+          <Text variant="bodySmall" muted style={{ flex: 1 }}>
             {appointment.clinicAddress}
           </Text>
         </View>
-        <Text variant="body">{appointment.serviceName}</Text>
+        <Text variant="label" color={colors.primary}>
+          {appointment.serviceName}
+        </Text>
         <Text variant="h3" color={colors.primary}>
-          {formatPrice(appointment.price)} so&apos;m
+          {formatPrice(appointment.price)}
         </Text>
       </View>
 

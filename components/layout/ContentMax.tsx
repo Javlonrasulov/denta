@@ -17,6 +17,7 @@ export function ContentMax({ children, style }: ContentMaxProps) {
           width: '100%',
           maxWidth: layout.contentMaxWidth,
           alignSelf: 'center',
+          minWidth: 0,
         },
         style,
       ]}

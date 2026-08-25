@@ -19,7 +19,7 @@ interface DoctorCardProps {
 
 export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardProps) {
   const { t } = useTranslation();
-  const { colors, spacing, radius, iconSizes, shadows } = useTheme();
+  const { colors, spacing, radius, iconSizes } = useTheme();
   const toggleDoctor = useFavoritesStore((s) => s.toggleDoctor);
   const isFavorite = useFavoritesStore((s) => s.isDoctorFavorite(doctor.id));
 
@@ -35,20 +35,19 @@ export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardP
           gap: spacing.md,
           padding: compact ? spacing.md : spacing.lg,
           backgroundColor: colors.surface,
-          borderRadius: radius.lg,
+          borderRadius: radius.xl,
           borderWidth: 1,
           borderColor: colors.borderSubtle,
           opacity: pressed ? 0.94 : 1,
-          ...shadows.sm,
         },
       ]}
     >
-      <Avatar uri={doctor.photoUrl} name={doctor.fullName} size={compact ? 52 : 64} />
-      <View style={{ flex: 1, gap: 4 }}>
-        <Text variant="h3" numberOfLines={1} style={{ fontSize: 16 }}>
+      <Avatar uri={doctor.photoUrl} name={doctor.fullName} size={compact ? 48 : 56} />
+      <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+        <Text variant="label" numberOfLines={1} style={{ fontSize: 15, letterSpacing: -0.2 }}>
           {doctor.fullName}
         </Text>
-        <Text variant="bodySmall" color={colors.secondary} numberOfLines={1}>
+        <Text variant="caption" color={colors.secondary} numberOfLines={1}>
           {doctor.specialization}
         </Text>
         {clinicName ? (
@@ -56,8 +55,8 @@ export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardP
             {t('doctor.at_clinic', { clinic: clinicName })}
           </Text>
         ) : null}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-          <Star size={12} color={colors.star} fill={colors.star} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2, flexWrap: 'wrap' }}>
+          <Star size={11} color={colors.star} fill={colors.star} />
           <Text variant="caption" weight="semibold">
             {doctor.rating.toFixed(1)}
           </Text>
@@ -74,16 +73,18 @@ export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardP
         hitSlop={10}
         accessibilityRole="button"
         style={{
-          width: 40,
-          height: 40,
+          width: 36,
+          height: 36,
           alignItems: 'center',
           justifyContent: 'center',
+          borderRadius: radius.md,
         }}
       >
         <Heart
           size={iconSizes.sm}
           color={isFavorite ? colors.error : colors.textMuted}
           fill={isFavorite ? colors.error : 'transparent'}
+          strokeWidth={1.8}
         />
       </Pressable>
     </Pressable>

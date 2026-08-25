@@ -2,23 +2,41 @@ import React, { useRef, useState } from 'react';
 import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Bell, Check, Globe, LogOut, Menu, Moon, Search, Sun } from '@/components/icons';
+import {
+  Bell,
+  Check,
+  ChevronDown,
+  Globe,
+  LogOut,
+  Menu,
+  Moon,
+  Search,
+  Sun,
+  UserRound,
+} from '@/components/icons';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { Text } from '@/components/ui/Text';
+import { CredentialsModal } from '@/components/layout/CredentialsModal';
 import { FontSizeControl } from '@/components/layout/FontSizeControl';
+import { GlobalSearchModal } from '@/components/layout/GlobalSearchModal';
+import {
+  getInitialUnreadCount,
+  NotificationsPanel,
+} from '@/components/layout/NotificationsPanel';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/theme';
 import { LocaleCode } from '@/types';
 
-const LOCALES: { code: LocaleCode; label: string; short: string }[] = [
-  { code: 'uz', label: 'O‘zbekcha', short: 'UZ' },
-  { code: 'uz-Cyrl', label: 'Ўзбекча', short: 'ЎЗ' },
-  { code: 'ru', label: 'Русский', short: 'RU' },
-  { code: 'en', label: 'English', short: 'EN' },
+const LOCALES: { code: LocaleCode; label: string; short: string; flag: string }[] = [
+  { code: 'uz', label: 'O‘zbekcha', short: 'UZ', flag: '🇺🇿' },
+  { code: 'uz-Cyrl', label: 'Ўзбекча', short: 'ЎЗ', flag: '🇺🇿' },
+  { code: 'ru', label: 'Русский', short: 'RU', flag: '🇷🇺' },
+  { code: 'en', label: 'English', short: 'EN', flag: '🇬🇧' },
 ];
 
-const MENU_WIDTH = 200;
+const LANG_MENU_WIDTH = 220;
+const ACCOUNT_MENU_WIDTH = 268;
 
 interface TopHeaderProps {
   title: string;
@@ -29,29 +47,71 @@ interface TopHeaderProps {
 
 export function TopHeader({ title, subtitle, onMenuPress, showMenu }: TopHeaderProps) {
   const { t } = useTranslation();
-  const { colors, spacing, radius, layout, iconSizes, isDark, shadows, isDesktop } = useTheme();
+  const { colors, spacing, radius, layout, isDark, shadows, isDesktop } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const locale = useSettingsStore((s) => s.locale);
   const setLocale = useSettingsStore((s) => s.setLocale);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
   const adminName = useSettingsStore((s) => s.adminName);
   const logout = useSettingsStore((s) => s.logout);
+
   const [langOpen, setLangOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [credentialsOpen, setCredentialsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(getInitialUnreadCount);
+  const [langPos, setLangPos] = useState({ top: 56, left: 8 });
+  const [accountPos, setAccountPos] = useState({ top: 56, right: 8 });
+  const [notifAnchor, setNotifAnchor] = useState({ top: 56, right: 24 });
+
   const langBtnRef = useRef<View>(null);
+  const accountBtnRef = useRef<View>(null);
+  const notifBtnRef = useRef<View>(null);
 
   const currentLocale = LOCALES.find((item) => item.code === locale) ?? LOCALES[0];
+  const compact = !isDesktop;
 
   const openLanguageMenu = () => {
     langBtnRef.current?.measureInWindow((x, y, width, height) => {
-      const centered = x + width / 2 - MENU_WIDTH / 2;
-      const left = Math.min(Math.max(8, centered), windowWidth - MENU_WIDTH - 8);
-      setMenuPos({ top: y + height + 6, left });
+      const centered = x + width / 2 - LANG_MENU_WIDTH / 2;
+      const left = Math.min(Math.max(8, centered), windowWidth - LANG_MENU_WIDTH - 8);
+      setLangPos({ top: y + height + 8, left });
       setLangOpen(true);
     });
   };
 
+  const openLanguageFromAccount = () => {
+    setAccountOpen(false);
+    setLangPos({
+      top: accountPos.top,
+      left: Math.max(8, windowWidth - accountPos.right - LANG_MENU_WIDTH),
+    });
+    setLangOpen(true);
+  };
+
+  const openAccountMenu = () => {
+    accountBtnRef.current?.measureInWindow((x, y, width, height) => {
+      setAccountPos({
+        top: y + height + 8,
+        right: Math.max(8, windowWidth - x - width),
+      });
+      setAccountOpen(true);
+    });
+  };
+
+  const openNotifications = () => {
+    notifBtnRef.current?.measureInWindow((x, y, width, height) => {
+      setNotifAnchor({
+        top: y + height + 8,
+        right: Math.max(8, windowWidth - x - width),
+      });
+      setNotifOpen(true);
+    });
+  };
+
   const handleLogout = () => {
+    setAccountOpen(false);
     logout();
     router.replace('/login');
   };
@@ -59,39 +119,42 @@ export function TopHeader({ title, subtitle, onMenuPress, showMenu }: TopHeaderP
   return (
     <View
       style={{
-        minHeight: layout.headerHeight,
+        height: compact ? 56 : layout.headerHeight,
+        paddingHorizontal: compact ? spacing.md : spacing.xl,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: spacing.xl,
-        paddingVertical: spacing.md,
+        gap: spacing.md,
         backgroundColor: colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: colors.borderSubtle,
-        gap: spacing.lg,
         zIndex: 20,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: compact ? spacing.sm : spacing.md,
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
         {showMenu ? (
-          <Pressable
-            onPress={onMenuPress}
-            accessibilityRole="button"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: radius.md,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colors.surfaceSoft,
-            }}
-          >
-            <Menu size={iconSizes.md} color={colors.text} />
-          </Pressable>
+          <GhostIconButton accessibilityLabel="Menu" onPress={onMenuPress} size={40}>
+            <Menu size={22} color={colors.text} strokeWidth={1.75} />
+          </GhostIconButton>
         ) : null}
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text variant="h3">{title}</Text>
-          {subtitle ? (
+
+        <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+          <Text
+            variant="h3"
+            numberOfLines={1}
+            style={{ fontSize: compact ? 16 : 17, letterSpacing: -0.3 }}
+          >
+            {title}
+          </Text>
+          {subtitle && !compact ? (
             <Text variant="caption" muted numberOfLines={1}>
               {subtitle}
             </Text>
@@ -99,166 +162,301 @@ export function TopHeader({ title, subtitle, onMenuPress, showMenu }: TopHeaderP
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-        <View ref={langBtnRef} collapsable={false}>
-          <HeaderIconButton
-            accessibilityLabel={t('profile.language')}
-            onPress={openLanguageMenu}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Globe size={iconSizes.sm} color={colors.textSecondary} />
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: compact ? 2 : 4,
+          flexShrink: 0,
+        }}
+      >
+        {!compact ? (
+          <View ref={langBtnRef} collapsable={false}>
+            <Pressable
+              onPress={openLanguageMenu}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.language')}
+              style={({ pressed }) => ({
+                height: 34,
+                paddingHorizontal: 10,
+                borderRadius: radius.md,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: pressed ? colors.surfaceSoft : 'transparent',
+              })}
+            >
+              <Globe size={15} color={colors.textMuted} strokeWidth={1.8} />
               <Text variant="caption" weight="semibold" color={colors.textSecondary}>
                 {currentLocale.short}
               </Text>
-            </View>
-          </HeaderIconButton>
-        </View>
+              <ChevronDown size={14} color={colors.textMuted} />
+            </Pressable>
+          </View>
+        ) : null}
 
-        <HeaderIconButton
-          accessibilityLabel={t('profile.dark_mode')}
-          onPress={() => setThemeMode(isDark ? 'light' : 'dark')}
-        >
-          {isDark ? (
-            <Sun size={iconSizes.sm} color={colors.textSecondary} />
-          ) : (
-            <Moon size={iconSizes.sm} color={colors.textSecondary} />
-          )}
-        </HeaderIconButton>
+        {!compact ? (
+          <GhostIconButton
+            accessibilityLabel={t('profile.dark_mode')}
+            onPress={() => setThemeMode(isDark ? 'light' : 'dark')}
+          >
+            {isDark ? (
+              <Sun size={18} color={colors.textSecondary} strokeWidth={1.8} />
+            ) : (
+              <Moon size={18} color={colors.textSecondary} strokeWidth={1.8} />
+            )}
+          </GhostIconButton>
+        ) : null}
 
         {isDesktop ? <FontSizeControl /> : null}
 
-        <HeaderIconButton>
-          <Search size={iconSizes.sm} color={colors.textSecondary} />
-        </HeaderIconButton>
-        <View style={{ position: 'relative' }}>
-          <HeaderIconButton>
-            <Bell size={iconSizes.sm} color={colors.textSecondary} />
-          </HeaderIconButton>
-          <View
-            style={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 7,
-              height: 7,
-              borderRadius: 4,
-              backgroundColor: colors.error,
-              borderWidth: 1.5,
-              borderColor: colors.surface,
-            }}
-          />
+        <GhostIconButton
+          accessibilityLabel={t('common.search')}
+          onPress={() => setSearchOpen(true)}
+        >
+          <Search size={18} color={colors.textSecondary} strokeWidth={1.8} />
+        </GhostIconButton>
+
+        <View ref={notifBtnRef} collapsable={false} style={{ position: 'relative' }}>
+          <GhostIconButton
+            accessibilityLabel={t('profile.notifications')}
+            onPress={openNotifications}
+          >
+            <Bell size={18} color={colors.textSecondary} strokeWidth={1.8} />
+          </GhostIconButton>
+          {unreadCount > 0 ? (
+            <View
+              style={{
+                position: 'absolute',
+                top: 9,
+                right: 9,
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: colors.error,
+              }}
+            />
+          ) : null}
         </View>
+
         <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: spacing.sm,
-            paddingLeft: spacing.sm,
-            marginLeft: spacing.xs,
-            borderLeftWidth: 1,
-            borderLeftColor: colors.borderSubtle,
+            width: 1,
+            height: 20,
+            backgroundColor: colors.borderSubtle,
+            marginHorizontal: compact ? 4 : 8,
           }}
-        >
-          <Avatar name={adminName} size={32} />
-          <Text variant="caption" weight="semibold" numberOfLines={1}>
-            {adminName}
-          </Text>
+        />
+
+        <View ref={accountBtnRef} collapsable={false}>
+          <Pressable
+            onPress={compact ? openAccountMenu : () => setCredentialsOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={adminName}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              height: 34,
+              paddingLeft: 2,
+              paddingRight: compact ? 2 : 8,
+              borderRadius: radius.full,
+              backgroundColor: pressed ? colors.surfaceSoft : 'transparent',
+            })}
+          >
+            <Avatar name={adminName} size={28} />
+            {!compact ? (
+              <Text variant="caption" weight="semibold" numberOfLines={1}>
+                {adminName}
+              </Text>
+            ) : null}
+          </Pressable>
+        </View>
+
+        {!compact ? (
           <Pressable
             onPress={handleLogout}
             accessibilityRole="button"
             accessibilityLabel={t('profile.logout')}
-            style={{
+            style={({ pressed }) => ({
+              height: 34,
+              paddingHorizontal: 12,
+              borderRadius: radius.md,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 6,
-              height: 36,
-              paddingHorizontal: spacing.md,
-              borderRadius: radius.md,
-              backgroundColor: colors.errorMuted,
-            }}
+              borderWidth: 1,
+              borderColor: colors.borderSubtle,
+              backgroundColor: pressed ? colors.errorMuted : 'transparent',
+            })}
           >
-            <LogOut size={14} color={colors.error} />
-            <Text variant="caption" weight="semibold" color={colors.error}>
+            <LogOut size={14} color={colors.textSecondary} strokeWidth={1.8} />
+            <Text variant="caption" weight="semibold" color={colors.textSecondary}>
               {t('profile.logout')}
             </Text>
           </Pressable>
-        </View>
+        ) : null}
       </View>
 
-      <Modal
-        visible={langOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLangOpen(false)}
-      >
-        <View style={{ flex: 1 }}>
-          <Pressable
-            style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
-            onPress={() => setLangOpen(false)}
-          />
+      <CredentialsModal visible={credentialsOpen} onClose={() => setCredentialsOpen(false)} />
+      <GlobalSearchModal visible={searchOpen} onClose={() => setSearchOpen(false)} />
+      <NotificationsPanel
+        visible={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        anchor={notifAnchor}
+        onUnreadChange={setUnreadCount}
+      />
+
+      <DropdownModal visible={langOpen} onClose={() => setLangOpen(false)}>
+        <View
+          style={{
+            position: 'absolute',
+            top: langPos.top,
+            left: langPos.left,
+            width: Math.min(LANG_MENU_WIDTH, windowWidth - 16),
+            backgroundColor: colors.surfaceElevated,
+            borderRadius: radius.xl,
+            borderWidth: 1,
+            borderColor: colors.borderSubtle,
+            padding: spacing.xs,
+            ...shadows.lg,
+          }}
+        >
+          <Text
+            variant="caption"
+            muted
+            style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
+          >
+            {t('profile.language')}
+          </Text>
+          {LOCALES.map((item) => {
+            const active = item.code === locale;
+            return (
+              <MenuRow
+                key={item.code}
+                active={active}
+                onPress={() => {
+                  setLocale(item.code);
+                  setLangOpen(false);
+                }}
+                left={
+                  <Text variant="body" style={{ fontSize: 18, lineHeight: 22 }}>
+                    {item.flag}
+                  </Text>
+                }
+                title={item.label}
+                subtitle={item.short}
+              />
+            );
+          })}
+        </View>
+      </DropdownModal>
+
+      <DropdownModal visible={accountOpen && compact} onClose={() => setAccountOpen(false)}>
+        <View
+          style={{
+            position: 'absolute',
+            top: accountPos.top,
+            right: accountPos.right,
+            width: Math.min(ACCOUNT_MENU_WIDTH, windowWidth - 16),
+            backgroundColor: colors.surfaceElevated,
+            borderRadius: radius.xl,
+            borderWidth: 1,
+            borderColor: colors.borderSubtle,
+            paddingVertical: spacing.sm,
+            ...shadows.lg,
+          }}
+        >
           <View
             style={{
-              position: 'absolute',
-              top: menuPos.top,
-              left: menuPos.left,
-              width: MENU_WIDTH,
-              backgroundColor: colors.surface,
-              borderRadius: radius.lg,
-              borderWidth: 1,
-              borderColor: colors.borderSubtle,
-              padding: spacing.xs,
-              ...shadows.lg,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: spacing.md,
+              paddingHorizontal: spacing.lg,
+              paddingBottom: spacing.md,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.borderSubtle,
             }}
           >
-            <Text
-              variant="caption"
-              muted
-              style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
-            >
-              {t('profile.language')}
-            </Text>
-            {LOCALES.map((item) => {
-              const active = item.code === locale;
-              return (
-                <Pressable
-                  key={item.code}
-                  onPress={() => {
-                    setLocale(item.code);
-                    setLangOpen(false);
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: spacing.md,
-                    paddingHorizontal: spacing.md,
-                    paddingVertical: spacing.md,
-                    borderRadius: radius.md,
-                    backgroundColor: active ? colors.primaryMuted : 'transparent',
-                  }}
-                >
-                  <Text variant="label" color={active ? colors.primary : colors.text}>
-                    {item.label}
-                  </Text>
-                  {active ? <Check size={16} color={colors.primary} /> : null}
-                </Pressable>
-              );
-            })}
+            <Avatar name={adminName} size={40} />
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              <Text variant="label" numberOfLines={1}>
+                {adminName}
+              </Text>
+              <Text variant="caption" muted numberOfLines={1}>
+                {t('common.app_name')}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ padding: spacing.xs, gap: 2 }}>
+            <MenuRow
+              onPress={() => {
+                setAccountOpen(false);
+                setCredentialsOpen(true);
+              }}
+              left={<UserRound size={16} color={colors.textSecondary} />}
+              title={t('auth.credentials_title')}
+            />
+            <MenuRow
+              onPress={openLanguageFromAccount}
+              left={<Globe size={16} color={colors.textSecondary} />}
+              title={t('profile.language')}
+              trailing={
+                <Text variant="caption" muted>
+                  {currentLocale.short}
+                </Text>
+              }
+            />
+            <MenuRow
+              onPress={() => setThemeMode(isDark ? 'light' : 'dark')}
+              left={
+                isDark ? (
+                  <Sun size={16} color={colors.textSecondary} />
+                ) : (
+                  <Moon size={16} color={colors.textSecondary} />
+                )
+              }
+              title={t('profile.dark_mode')}
+              trailing={
+                <Text variant="caption" muted>
+                  {isDark ? t('common.yes') : t('common.no')}
+                </Text>
+              }
+            />
+          </View>
+
+          <View
+            style={{
+              marginTop: spacing.xs,
+              borderTopWidth: 1,
+              borderTopColor: colors.borderSubtle,
+              padding: spacing.xs,
+            }}
+          >
+            <MenuRow
+              danger
+              onPress={handleLogout}
+              left={<LogOut size={16} color={colors.error} />}
+              title={t('profile.logout')}
+            />
           </View>
         </View>
-      </Modal>
+      </DropdownModal>
     </View>
   );
 }
 
-function HeaderIconButton({
+function GhostIconButton({
   children,
   onPress,
   accessibilityLabel,
+  size = 36,
 }: {
   children: React.ReactNode;
   onPress?: () => void;
   accessibilityLabel?: string;
+  size?: number;
 }) {
   const { colors, radius } = useTheme();
   return (
@@ -266,17 +464,95 @@ function HeaderIconButton({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={{
-        minWidth: 40,
-        height: 40,
-        paddingHorizontal: 10,
+      style={({ pressed }) => ({
+        width: size,
+        height: size,
         borderRadius: radius.md,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.surfaceSoft,
-      }}
+        backgroundColor: pressed ? colors.surfaceSoft : 'transparent',
+        flexShrink: 0,
+      })}
     >
       {children}
+    </Pressable>
+  );
+}
+
+function DropdownModal({
+  visible,
+  onClose,
+  children,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={{ flex: 1 }}>
+        <Pressable
+          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+          onPress={onClose}
+        />
+        {children}
+      </View>
+    </Modal>
+  );
+}
+
+function MenuRow({
+  title,
+  subtitle,
+  left,
+  trailing,
+  onPress,
+  active,
+  danger,
+}: {
+  title: string;
+  subtitle?: string;
+  left?: React.ReactNode;
+  trailing?: React.ReactNode;
+  onPress: () => void;
+  active?: boolean;
+  danger?: boolean;
+}) {
+  const { colors, spacing, radius } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+        paddingHorizontal: spacing.md,
+        paddingVertical: 12,
+        borderRadius: radius.md,
+        backgroundColor: active
+          ? colors.primaryMuted
+          : pressed
+            ? colors.surfaceSoft
+            : 'transparent',
+      })}
+    >
+      {left ? <View style={{ width: 22, alignItems: 'center' }}>{left}</View> : null}
+      <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+        <Text
+          variant="label"
+          color={danger ? colors.error : active ? colors.primary : colors.text}
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text variant="caption" muted numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {trailing}
+      {active ? <Check size={16} color={colors.primary} /> : null}
     </Pressable>
   );
 }

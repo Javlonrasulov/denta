@@ -265,7 +265,11 @@
     "schedule_changed": "Schedule changed",
     "new_patient": "New patient",
     "payment": "Payment",
-    "low_inventory": "Low inventory"
+    "low_inventory": "Low inventory",
+    "unread_count": "{{count}} unread",
+    "all_read": "All caught up",
+    "mark_all_read": "Mark all read",
+    "empty": "No notifications"
   },
   "empty": {
     "no_data": "No data",
@@ -293,7 +297,19 @@
     "sign_in": "Sign in",
     "demo_hint": "Demo: any email and password (min 4 characters)",
     "invalid_email": "Enter a valid email",
-    "invalid_password": "Password must be at least 4 characters"
+    "invalid_password": "Password must be at least 4 characters",
+    "show_password": "Show password",
+    "hide_password": "Hide password",
+    "credentials_title": "Login / password",
+    "credentials_subtitle": "Enter your current password to change login or password",
+    "login": "Login",
+    "current_password": "Current password",
+    "new_password": "New password",
+    "confirm_password": "Confirm new password",
+    "current_password_required": "Enter your current password",
+    "password_mismatch": "New password and confirmation do not match",
+    "wrong_password": "Current password is incorrect",
+    "credentials_saved": "Saved"
   },
   "crm": {
     "nav": {
@@ -307,7 +323,17 @@
       "inventory": "Inventory",
       "reports": "Reports",
       "settings": "Settings",
-      "help": "Help"
+      "help": "Help",
+      "section_main": "Main",
+      "section_clinic": "Clinic",
+      "section_ops": "Operations",
+      "online": "Online",
+      "collapse_sidebar": "Collapse sidebar",
+      "expand_sidebar": "Expand sidebar"
+    },
+    "search": {
+      "placeholder": "Search patients, doctors, appointments...",
+      "hint": "Type a name, phone, service, or room number"
     },
     "dashboard": {
       "title": "Dashboard",
