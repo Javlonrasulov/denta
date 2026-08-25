@@ -1,49 +1,77 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Globe, Moon, Sun, Eye, EyeOff } from '@/components/icons';
+import { Check, ChevronDown, Globe, Moon, Sun, Eye, EyeOff } from '@/components/icons';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Text } from '@/components/ui/Text';
+import { APP_DISPLAY_NAME, LOCKED_ROLE } from '@/constants/appVariant';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/theme';
 import { LocaleCode } from '@/types';
 
-const LOCALES: { code: LocaleCode; label: string }[] = [
-  { code: 'uz', label: 'O‘zbekcha' },
-  { code: 'uz-Cyrl', label: 'Ўзбекча' },
-  { code: 'ru', label: 'Русский' },
-  { code: 'en', label: 'English' },
+const LOCALES: { code: LocaleCode; label: string; short: string; flag: string }[] = [
+  { code: 'uz', label: 'O‘zbekcha', short: 'UZ', flag: '🇺🇿' },
+  { code: 'uz-Cyrl', label: 'Ўзбекча', short: 'ЎЗ', flag: '🇺🇿' },
+  { code: 'ru', label: 'Русский', short: 'RU', flag: '🇷🇺' },
+  { code: 'en', label: 'English', short: 'EN', flag: '🇬🇧' },
 ];
+
+const LANG_MENU_WIDTH = 220;
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const { colors, spacing, radius, shadows, isDark, iconSizes } = useTheme();
   const isAuthenticated = useSettingsStore((s) => s.isAuthenticated);
   const login = useSettingsStore((s) => s.login);
+  const setRole = useSettingsStore((s) => s.setRole);
   const locale = useSettingsStore((s) => s.locale);
   const setLocale = useSettingsStore((s) => s.setLocale);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
 
-  const [email, setEmail] = useState('admin@denta.uz');
+  const [loginValue, setLoginValue] = useState('admin');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const [langPos, setLangPos] = useState({ top: 56, right: 8 });
+  const langBtnRef = useRef<View>(null);
+
+  const currentLocale = LOCALES.find((item) => item.code === locale) ?? LOCALES[0];
 
   if (isAuthenticated) {
     return <Redirect href="/" />;
   }
 
+  const openLanguageMenu = () => {
+    langBtnRef.current?.measureInWindow((x, y, width, height) => {
+      setLangPos({
+        top: y + height + 8,
+        right: Math.max(8, windowWidth - x - width),
+      });
+      setLangOpen(true);
+    });
+  };
+
   const onSubmit = () => {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
-      setError(t('auth.invalid_email'));
+    const trimmedLogin = loginValue.trim();
+    if (!trimmedLogin) {
+      setError(t('auth.invalid_login'));
       return;
     }
     if (password.length < 4) {
@@ -55,12 +83,15 @@ export default function LoginScreen() {
     setLoading(true);
     // Mock auth — later replace with NestJS API
     setTimeout(() => {
-      const name = trimmedEmail.split('@')[0] || 'Admin';
+      const name = trimmedLogin.includes('@')
+        ? trimmedLogin.split('@')[0]
+        : trimmedLogin;
       login({
         name: name.charAt(0).toUpperCase() + name.slice(1),
-        login: trimmedEmail,
+        login: trimmedLogin,
         password,
       });
+      if (LOCKED_ROLE) setRole(LOCKED_ROLE);
       setLoading(false);
       router.replace('/');
     }, 450);
@@ -92,30 +123,30 @@ export default function LoginScreen() {
               zIndex: 2,
             }}
           >
-            <Pressable
-              onPress={() => {
-                const idx = LOCALES.findIndex((l) => l.code === locale);
-                setLocale(LOCALES[(idx + 1) % LOCALES.length].code);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('profile.language')}
-              style={{
-                height: 40,
-                paddingHorizontal: spacing.md,
-                borderRadius: radius.md,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.borderSubtle,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Globe size={16} color={colors.textSecondary} />
-              <Text variant="caption" weight="semibold">
-                {LOCALES.find((l) => l.code === locale)?.label ?? 'UZ'}
-              </Text>
-            </Pressable>
+            <View ref={langBtnRef} collapsable={false}>
+              <Pressable
+                onPress={openLanguageMenu}
+                accessibilityRole="button"
+                accessibilityLabel={t('profile.language')}
+                style={{
+                  height: 40,
+                  paddingHorizontal: spacing.md,
+                  borderRadius: radius.md,
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.borderSubtle,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Globe size={16} color={colors.textSecondary} />
+                <Text variant="caption" weight="semibold">
+                  {currentLocale.label}
+                </Text>
+                <ChevronDown size={14} color={colors.textMuted} />
+              </Pressable>
+            </View>
             <Pressable
               onPress={() => setThemeMode(isDark ? 'light' : 'dark')}
               accessibilityRole="button"
@@ -148,13 +179,12 @@ export default function LoginScreen() {
               gap: spacing.xl,
             }}
           >
-            <View style={{ gap: spacing.sm }}>
-              <Text variant="display" color={colors.primary}>
-                {t('common.app_name')}
+            <View style={{ gap: spacing.sm, alignItems: 'center' }}>
+              <Text variant="display" color={colors.primary} style={{ textAlign: 'center' }}>
+                {APP_DISPLAY_NAME}
               </Text>
-              <Text variant="h2">{t('auth.title')}</Text>
-              <Text variant="body" muted>
-                {t('auth.subtitle')}
+              <Text variant="h2" style={{ textAlign: 'center' }}>
+                {t('auth.title')}
               </Text>
             </View>
 
@@ -171,17 +201,16 @@ export default function LoginScreen() {
               }}
             >
               <Input
-                label={t('auth.email')}
-                value={email}
+                label={t('auth.login')}
+                value={loginValue}
                 onChangeText={(v) => {
-                  setEmail(v);
+                  setLoginValue(v);
                   if (error) setError('');
                 }}
                 autoCapitalize="none"
                 autoCorrect={false}
-                keyboardType="email-address"
-                textContentType="emailAddress"
-                placeholder="admin@denta.uz"
+                textContentType="username"
+                placeholder="admin"
               />
               <Input
                 label={t('auth.password')}
@@ -234,6 +263,79 @@ export default function LoginScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={langOpen} transparent animationType="fade" onRequestClose={() => setLangOpen(false)}>
+        <View style={{ flex: 1 }}>
+          <Pressable
+            style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+            onPress={() => setLangOpen(false)}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: langPos.top,
+              right: langPos.right,
+              width: Math.min(LANG_MENU_WIDTH, windowWidth - 16),
+              backgroundColor: colors.surfaceElevated,
+              borderRadius: radius.xl,
+              borderWidth: 1,
+              borderColor: colors.borderSubtle,
+              padding: spacing.xs,
+              ...shadows.lg,
+            }}
+          >
+            <Text
+              variant="caption"
+              muted
+              style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
+            >
+              {t('profile.language')}
+            </Text>
+            {LOCALES.map((item) => {
+              const active = item.code === locale;
+              return (
+                <Pressable
+                  key={item.code}
+                  onPress={() => {
+                    setLocale(item.code);
+                    setLangOpen(false);
+                  }}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing.md,
+                    paddingHorizontal: spacing.md,
+                    paddingVertical: 12,
+                    borderRadius: radius.md,
+                    backgroundColor: active
+                      ? colors.primaryMuted
+                      : pressed
+                        ? colors.surfaceSoft
+                        : 'transparent',
+                  })}
+                >
+                  <Text variant="body" style={{ fontSize: 18, lineHeight: 22 }}>
+                    {item.flag}
+                  </Text>
+                  <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+                    <Text
+                      variant="label"
+                      color={active ? colors.primary : colors.text}
+                      numberOfLines={1}
+                    >
+                      {item.label}
+                    </Text>
+                    <Text variant="caption" muted numberOfLines={1}>
+                      {item.short}
+                    </Text>
+                  </View>
+                  {active ? <Check size={16} color={colors.primary} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

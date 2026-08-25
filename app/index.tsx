@@ -1,10 +1,12 @@
 import { Redirect } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Building2, Stethoscope, UserRound } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import { APP_DISPLAY_NAME, APP_VARIANT, LOCKED_ROLE, roleHomeHref } from '@/constants/appVariant';
 import { Text } from '@/components/ui/Text';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/theme';
@@ -15,28 +17,24 @@ const ROLES: {
   icon: typeof UserRound;
   titleKey: string;
   descKey: string;
-  href: '/(client)/(tabs)' | '/(doctor)/(tabs)' | '/(clinic)/(shell)/overview';
 }[] = [
   {
     role: 'client',
     icon: UserRound,
     titleKey: 'role.client',
     descKey: 'role.client_desc',
-    href: '/(client)/(tabs)',
   },
   {
     role: 'doctor',
     icon: Stethoscope,
     titleKey: 'role.doctor',
     descKey: 'role.doctor_desc',
-    href: '/(doctor)/(tabs)',
   },
   {
     role: 'clinic',
     icon: Building2,
     titleKey: 'role.clinic',
     descKey: 'role.clinic_desc',
-    href: '/(clinic)/(shell)/overview',
   },
 ];
 
@@ -48,10 +46,24 @@ export default function RoleGateScreen() {
   const setRole = useSettingsStore((s) => s.setRole);
   const isAuthenticated = useSettingsStore((s) => s.isAuthenticated);
 
+  // Client / Doctor APK: lock role automatically (no picker).
+  useEffect(() => {
+    if (!isAuthenticated || !LOCKED_ROLE) return;
+    if (role !== LOCKED_ROLE) setRole(LOCKED_ROLE);
+  }, [isAuthenticated, role, setRole]);
+
   if (!isAuthenticated) return <Redirect href="/login" />;
+
+  if (LOCKED_ROLE) {
+    return <Redirect href={roleHomeHref(LOCKED_ROLE)} />;
+  }
+
   if (role === 'client') return <Redirect href="/(client)/(tabs)" />;
   if (role === 'doctor') return <Redirect href="/(doctor)/(tabs)" />;
   if (role === 'clinic') return <Redirect href="/(clinic)/(shell)/overview" />;
+
+  const visibleRoles =
+    APP_VARIANT === 'clinic' ? ROLES : ROLES.filter((r) => r.role === APP_VARIANT);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -67,7 +79,7 @@ export default function RoleGateScreen() {
       >
         <Animated.View entering={FadeInUp.springify()}>
           <Text variant="display" color={colors.primary}>
-            {t('common.app_name')}
+            {APP_DISPLAY_NAME}
           </Text>
           <Text
             variant="body"
@@ -90,7 +102,7 @@ export default function RoleGateScreen() {
           gap: spacing.md,
         }}
       >
-        {ROLES.map((item, index) => {
+        {visibleRoles.map((item, index) => {
           const Icon = item.icon;
           return (
             <Animated.View key={item.role} entering={FadeInDown.delay(80 * index).springify()}>

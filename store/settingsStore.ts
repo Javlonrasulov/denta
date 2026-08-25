@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { APP_VARIANT } from '@/constants/appVariant';
 import { LocaleCode, UserRole } from '@/types';
 import { zustandStorage } from '@/utils/storage';
 
@@ -88,7 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
         }),
     }),
     {
-      name: 'denta-settings',
+      name: `denta-settings-${APP_VARIANT}`,
       storage: createJSONStorage(() => zustandStorage),
     },
   ),
