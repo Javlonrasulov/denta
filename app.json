@@ -1,22 +1,25 @@
 {
   "expo": {
-    "name": "Stomatologiya",
-    "slug": "Stomatologiya",
+    "name": "Denta",
+    "slug": "denta",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "stomatologiya",
+    "scheme": "denta",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.denta.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#153E75",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.denta.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -26,12 +29,14 @@
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
+      "expo-localization",
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#153E75"
         }
       ]
     ],

@@ -1,40 +1,36 @@
 import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { Text, View } from '@/components/Themed';
+import { Button } from '@/components/ui/Button';
+import { Text } from '@/components/ui/Text';
+import { useTheme } from '@/theme';
 
 export default function NotFoundScreen() {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
-      <View style={styles.container}>
-        <Text style={styles.title}>This screen doesn't exist.</Text>
-
-        <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>Go to home screen!</Text>
+      <Stack.Screen options={{ title: '404' }} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing['2xl'],
+          backgroundColor: colors.background,
+          gap: spacing.lg,
+        }}
+      >
+        <Text variant="h1">404</Text>
+        <Text variant="body" muted center>
+          {t('error.something_wrong')}
+        </Text>
+        <Link href="/" asChild>
+          <Button title={t('common.back')} />
         </Link>
       </View>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#2e78b7',
-  },
-});
