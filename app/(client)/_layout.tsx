@@ -1,9 +1,13 @@
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 
+import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/theme';
 
 export default function ClientLayout() {
   const { colors } = useTheme();
+  const isAuthenticated = useSettingsStore((s) => s.isAuthenticated);
+
+  if (!isAuthenticated) return <Redirect href="/login" />;
 
   return (
     <Stack

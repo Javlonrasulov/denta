@@ -5,7 +5,7 @@ import {
   UserRound,
   Users,
   Wallet,
-} from 'lucide-react-native';
+} from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '@/theme';
@@ -23,13 +23,17 @@ export default function DoctorTabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.borderSubtle,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarLabelStyle: {
           fontFamily: typography.caption.fontFamily,
-          fontSize: 11,
+          fontSize: 10,
+          fontWeight: '600',
         },
       }}
     >
@@ -38,7 +42,7 @@ export default function DoctorTabsLayout() {
         options={{
           title: t('tabs.dashboard'),
           tabBarIcon: ({ color, size }) => (
-            <LayoutDashboard color={color} size={size} strokeWidth={1.75} />
+            <LayoutDashboard color={color} size={size - 2} strokeWidth={1.75} />
           ),
         }}
       />
@@ -47,7 +51,7 @@ export default function DoctorTabsLayout() {
         options={{
           title: t('tabs.calendar'),
           tabBarIcon: ({ color, size }) => (
-            <CalendarDays color={color} size={size} strokeWidth={1.75} />
+            <CalendarDays color={color} size={size - 2} strokeWidth={1.75} />
           ),
         }}
       />
@@ -55,14 +59,14 @@ export default function DoctorTabsLayout() {
         name="patients"
         options={{
           title: t('tabs.patients'),
-          tabBarIcon: ({ color, size }) => <Users color={color} size={size} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size }) => <Users color={color} size={size - 2} strokeWidth={1.75} />,
         }}
       />
       <Tabs.Screen
         name="finance"
         options={{
           title: t('tabs.finance'),
-          tabBarIcon: ({ color, size }) => <Wallet color={color} size={size} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size }) => <Wallet color={color} size={size - 2} strokeWidth={1.75} />,
         }}
       />
       <Tabs.Screen
@@ -70,7 +74,7 @@ export default function DoctorTabsLayout() {
         options={{
           title: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => (
-            <UserRound color={color} size={size} strokeWidth={1.75} />
+            <UserRound color={color} size={size - 2} strokeWidth={1.75} />
           ),
         }}
       />

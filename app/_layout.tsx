@@ -4,12 +4,18 @@ import 'react-native-reanimated';
 import '@/locales/i18n';
 
 import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from '@expo-google-fonts/manrope';
+import {
+  Onest_400Regular,
+  Onest_500Medium,
+  Onest_600SemiBold,
+  Onest_700Bold,
   useFonts,
-} from '@expo-google-fonts/plus-jakarta-sans';
+} from '@expo-google-fonts/onest';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
@@ -41,10 +47,14 @@ export default function RootLayout() {
   );
 
   const [loaded, error] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+    Onest_400Regular,
+    Onest_500Medium,
+    Onest_600SemiBold,
+    Onest_700Bold,
   });
 
   const locale = useSettingsStore((s) => s.locale);
@@ -92,6 +102,7 @@ function RootNavigator() {
         }}
       >
         <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
         <Stack.Screen name="(client)" />
         <Stack.Screen name="(doctor)" />
         <Stack.Screen name="(clinic)" />

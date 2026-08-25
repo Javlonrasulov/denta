@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from '@/components/icons';
 
 import { DoctorCard } from '@/components/doctor/DoctorCard';
 import { Text } from '@/components/ui/Text';

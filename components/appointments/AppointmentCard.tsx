@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Clock, MapPin } from 'lucide-react-native';
+import { Calendar, Clock, MapPin } from '@/components/icons';
 
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';

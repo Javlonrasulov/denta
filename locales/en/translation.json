@@ -1,6 +1,16 @@
 {
   "common": {
-    "app_name": "Denta",
+    "app_name": "DENTA.UZ",
+    "tagline": "Modern Dental Care Platform",
+    "add": "Add",
+    "export": "Export",
+    "filter": "Filter",
+    "actions": "Actions",
+    "occupied": "Occupied",
+    "maintenance": "Maintenance",
+    "vs_yesterday": "vs yesterday",
+    "this_week": "this week",
+    "available_short": "free",
     "loading": "Loading...",
     "error": "Error",
     "retry": "Retry",
@@ -160,6 +170,9 @@
     "language": "Language",
     "notifications": "Notifications",
     "dark_mode": "Dark mode",
+    "font_size": "Text size",
+    "font_size_decrease": "Decrease text size",
+    "font_size_increase": "Increase text size",
     "privacy": "Privacy",
     "help": "Help",
     "logout": "Log out",
@@ -271,5 +284,138 @@
     "doctor_desc": "Manage your schedule, patients, and income",
     "clinic_desc": "Manage your clinic, staff, and finances",
     "continue_as": "Continue as {{role}}"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Enter your email and password to continue",
+    "email": "Email",
+    "password": "Password",
+    "sign_in": "Sign in",
+    "demo_hint": "Demo: any email and password (min 4 characters)",
+    "invalid_email": "Enter a valid email",
+    "invalid_password": "Password must be at least 4 characters"
+  },
+  "crm": {
+    "nav": {
+      "overview": "Overview",
+      "appointments": "Appointments",
+      "patients": "Patients",
+      "doctors": "Doctors",
+      "rooms": "Rooms",
+      "services": "Services",
+      "finance": "Finance",
+      "inventory": "Inventory",
+      "reports": "Reports",
+      "settings": "Settings",
+      "help": "Help"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Today's clinic activity",
+      "greeting": "Good day, Admin",
+      "intro": "See at a glance what's happening in your clinic today.",
+      "revenue": "Revenue",
+      "appointments": "Appointments",
+      "new_patients": "New patients",
+      "occupancy": "Occupancy",
+      "completed_of": "{{count}} completed",
+      "rooms_available": "{{count}} rooms available",
+      "todays_schedule": "Today's appointments",
+      "revenue_analytics": "Revenue analytics",
+      "range_7d": "7 days",
+      "range_30d": "30 days",
+      "range_12m": "12 months",
+      "week_total": "Weekly total",
+      "rooms": "Rooms",
+      "top_doctors": "Top doctors",
+      "recent_patients": "Recent patients",
+      "quick_actions": "Quick actions",
+      "new_appointment": "New appointment",
+      "add_patient": "Add patient",
+      "add_doctor": "Add doctor",
+      "add_expense": "Add expense",
+      "available_slot": "AVAILABLE",
+      "apts_count": "{{count}} appointments",
+      "rating": "Rating {{value}}"
+    },
+    "appointments": {
+      "title": "Appointments",
+      "subtitle": "Calendar and schedule",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "patients": {
+      "title": "Patients",
+      "subtitle": "Patient database",
+      "phone": "Phone",
+      "doctor": "Doctor",
+      "treatment": "Treatment",
+      "balance": "Balance",
+      "status": "Status",
+      "patient": "Patient",
+      "visits": "Visits",
+      "next": "Next",
+      "overview": "Overview",
+      "treatment_tab": "Treatment",
+      "dental_chart": "Dental chart",
+      "payments": "Payments",
+      "notes": "Notes",
+      "age": "Age",
+      "patient_id": "ID"
+    },
+    "doctors": {
+      "title": "Doctors",
+      "subtitle": "Team and performance",
+      "today_apts": "Today",
+      "revenue": "Revenue",
+      "rating": "Rating",
+      "status": "Status",
+      "schedule": "Schedule",
+      "patients": "Patients",
+      "finance": "Finance"
+    },
+    "rooms": {
+      "title": "Rooms",
+      "subtitle": "Room status and occupancy"
+    },
+    "services": {
+      "title": "Services",
+      "subtitle": "Prices and duration",
+      "duration": "Duration",
+      "price": "Price",
+      "category": "Category"
+    },
+    "finance": {
+      "title": "Finance",
+      "subtitle": "Revenue, expenses, and payments",
+      "profit": "Profit",
+      "outstanding": "Outstanding",
+      "vs_expenses": "Revenue vs expenses",
+      "transactions": "Transactions",
+      "date": "Date",
+      "type": "Type",
+      "description": "Description",
+      "amount": "Amount"
+    },
+    "inventory": {
+      "title": "Inventory",
+      "subtitle": "Materials and stock",
+      "total_items": "Total",
+      "low_stock": "Low stock",
+      "value": "Value",
+      "material": "Material",
+      "stock": "Stock",
+      "unit": "Unit",
+      "add_material": "Add material"
+    },
+    "reports": {
+      "title": "Reports",
+      "subtitle": "Analytics and export"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Clinic settings"
+    }
   }
 }

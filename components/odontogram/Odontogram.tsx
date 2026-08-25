@@ -13,11 +13,11 @@ const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 const CONDITION_COLOR: Record<ToothCondition, string> = {
   healthy: '#059669',
   caries: '#DC2626',
-  filled: '#0891B2',
+  filled: '#0D9488',
   crown: '#D97706',
   missing: '#94A3B8',
-  root_canal: '#7C3AED',
-  implant: '#153E75',
+  root_canal: '#6366F1',
+  implant: '#0F3D7A',
   needs_treatment: '#F59E0B',
 };
 

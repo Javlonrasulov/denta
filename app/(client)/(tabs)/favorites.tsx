@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Heart } from 'lucide-react-native';
+import { Heart } from '@/components/icons';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

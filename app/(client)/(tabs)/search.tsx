@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { SlidersHorizontal } from 'lucide-react-native';
+import { SlidersHorizontal } from '@/components/icons';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
@@ -19,7 +19,7 @@ import { SearchInput } from '@/components/ui/Input';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { useClinics, useDoctors } from '@/hooks/queries';
-import { Search } from 'lucide-react-native';
+import { Search } from '@/components/icons';
 import { useTheme } from '@/theme';
 
 type SortKey = 'nearest' | 'rating' | 'price';

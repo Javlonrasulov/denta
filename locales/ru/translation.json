@@ -1,6 +1,16 @@
 {
   "common": {
-    "app_name": "Denta",
+    "app_name": "DENTA.UZ",
+    "tagline": "Современная платформа стоматологии",
+    "add": "Добавить",
+    "export": "Экспорт",
+    "filter": "Фильтр",
+    "actions": "Действия",
+    "occupied": "Занято",
+    "maintenance": "На ремонте",
+    "vs_yesterday": "к вчерашнему",
+    "this_week": "на этой неделе",
+    "available_short": "свободно",
     "loading": "Загрузка...",
     "error": "Ошибка",
     "retry": "Повторить",
@@ -160,6 +170,9 @@
     "language": "Язык",
     "notifications": "Уведомления",
     "dark_mode": "Тёмная тема",
+    "font_size": "Размер текста",
+    "font_size_decrease": "Уменьшить текст",
+    "font_size_increase": "Увеличить текст",
     "privacy": "Конфиденциальность",
     "help": "Помощь",
     "logout": "Выйти",
@@ -271,5 +284,138 @@
     "doctor_desc": "Управляйте расписанием, пациентами и доходом",
     "clinic_desc": "Управляйте клиникой, персоналом и финансами",
     "continue_as": "Продолжить как {{role}}"
+  },
+  "auth": {
+    "title": "Вход",
+    "subtitle": "Введите email и пароль, чтобы продолжить",
+    "email": "Email",
+    "password": "Пароль",
+    "sign_in": "Войти",
+    "demo_hint": "Демо: любой email и пароль (мин. 4 символа)",
+    "invalid_email": "Введите корректный email",
+    "invalid_password": "Пароль должен быть не короче 4 символов"
+  },
+  "crm": {
+    "nav": {
+      "overview": "Обзор",
+      "appointments": "Записи",
+      "patients": "Пациенты",
+      "doctors": "Врачи",
+      "rooms": "Кабинеты",
+      "services": "Услуги",
+      "finance": "Финансы",
+      "inventory": "Склад",
+      "reports": "Отчёты",
+      "settings": "Настройки",
+      "help": "Помощь"
+    },
+    "dashboard": {
+      "title": "Панель",
+      "subtitle": "Активность клиники сегодня",
+      "greeting": "Добрый день, Admin",
+      "intro": "Посмотрите, что происходит в вашей клинике сегодня.",
+      "revenue": "Выручка",
+      "appointments": "Записи",
+      "new_patients": "Новые пациенты",
+      "occupancy": "Занятость",
+      "completed_of": "{{count}} завершено",
+      "rooms_available": "{{count}} кабинетов свободно",
+      "todays_schedule": "Записи на сегодня",
+      "revenue_analytics": "Аналитика выручки",
+      "range_7d": "7 дней",
+      "range_30d": "30 дней",
+      "range_12m": "12 месяцев",
+      "week_total": "Итого за неделю",
+      "rooms": "Кабинеты",
+      "top_doctors": "Лучшие врачи",
+      "recent_patients": "Недавние пациенты",
+      "quick_actions": "Быстрые действия",
+      "new_appointment": "Новая запись",
+      "add_patient": "Добавить пациента",
+      "add_doctor": "Добавить врача",
+      "add_expense": "Добавить расход",
+      "available_slot": "СВОБОДНО",
+      "apts_count": "{{count}} записей",
+      "rating": "Рейтинг {{value}}"
+    },
+    "appointments": {
+      "title": "Записи",
+      "subtitle": "Календарь и расписание",
+      "day": "День",
+      "week": "Неделя",
+      "month": "Месяц"
+    },
+    "patients": {
+      "title": "Пациенты",
+      "subtitle": "База пациентов",
+      "phone": "Телефон",
+      "doctor": "Врач",
+      "treatment": "Лечение",
+      "balance": "Баланс",
+      "status": "Статус",
+      "patient": "Пациент",
+      "visits": "Визиты",
+      "next": "Следующий",
+      "overview": "Обзор",
+      "treatment_tab": "Лечение",
+      "dental_chart": "Зубная карта",
+      "payments": "Платежи",
+      "notes": "Заметки",
+      "age": "Возраст",
+      "patient_id": "ID"
+    },
+    "doctors": {
+      "title": "Врачи",
+      "subtitle": "Команда и эффективность",
+      "today_apts": "Сегодня",
+      "revenue": "Выручка",
+      "rating": "Рейтинг",
+      "status": "Статус",
+      "schedule": "Расписание",
+      "patients": "Пациенты",
+      "finance": "Финансы"
+    },
+    "rooms": {
+      "title": "Кабинеты",
+      "subtitle": "Статус и занятость кабинетов"
+    },
+    "services": {
+      "title": "Услуги",
+      "subtitle": "Цены и длительность",
+      "duration": "Длительность",
+      "price": "Цена",
+      "category": "Категория"
+    },
+    "finance": {
+      "title": "Финансы",
+      "subtitle": "Доход, расходы и платежи",
+      "profit": "Прибыль",
+      "outstanding": "Задолженность",
+      "vs_expenses": "Доход и расходы",
+      "transactions": "Транзакции",
+      "date": "Дата",
+      "type": "Тип",
+      "description": "Описание",
+      "amount": "Сумма"
+    },
+    "inventory": {
+      "title": "Склад",
+      "subtitle": "Материалы и запасы",
+      "total_items": "Всего",
+      "low_stock": "Мало на складе",
+      "value": "Стоимость",
+      "material": "Материал",
+      "stock": "Остаток",
+      "unit": "Единица",
+      "add_material": "Добавить материал"
+    },
+    "reports": {
+      "title": "Отчёты",
+      "subtitle": "Аналитика и экспорт"
+    },
+    "settings": {
+      "title": "Настройки",
+      "subtitle": "Настройки клиники"
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Calendar, Clock, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin } from '@/components/icons';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';

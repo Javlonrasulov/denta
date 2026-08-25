@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowLeft, MapPin, Navigation } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Navigation } from '@/components/icons';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

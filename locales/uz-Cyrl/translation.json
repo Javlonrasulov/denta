@@ -1,6 +1,16 @@
 {
   "common": {
-    "app_name": "Denta",
+    "app_name": "DENTA.UZ",
+    "tagline": "Замонавий стоматология платформаси",
+    "add": "Қўшиш",
+    "export": "Экспорт",
+    "filter": "Филтр",
+    "actions": "Амаллар",
+    "occupied": "Банд",
+    "maintenance": "Таъмирда",
+    "vs_yesterday": "кечагига нисбатан",
+    "this_week": "шу ҳафта",
+    "available_short": "бўш",
     "loading": "Юкланмоқда...",
     "error": "Хатолик",
     "retry": "Қайта уриниш",
@@ -160,6 +170,9 @@
     "language": "Тил",
     "notifications": "Билдиришномалар",
     "dark_mode": "Қоронғу режим",
+    "font_size": "Матн ўлчами",
+    "font_size_decrease": "Матнни кичиклаштириш",
+    "font_size_increase": "Матнни катталаштириш",
     "privacy": "Махфийлик",
     "help": "Ёрдам",
     "logout": "Чиқиш",
@@ -271,5 +284,138 @@
     "doctor_desc": "Жадвал, беморлар ва даромадни бошқаринг",
     "clinic_desc": "Клиникани, ходимларни ва молияни бошқаринг",
     "continue_as": "{{role}} сифатида давом этиш"
+  },
+  "auth": {
+    "title": "Кириш",
+    "subtitle": "Давом этиш учун email ва паролингизни киритинг",
+    "email": "Email",
+    "password": "Парол",
+    "sign_in": "Кириш",
+    "demo_hint": "Демо: исталган email ва парол (камида 4 белги)",
+    "invalid_email": "Тўғри email киритинг",
+    "invalid_password": "Парол камида 4 белгидан иборат бўлиши керак"
+  },
+  "crm": {
+    "nav": {
+      "overview": "Умумий",
+      "appointments": "Учрашувлар",
+      "patients": "Беморлар",
+      "doctors": "Шифокорлар",
+      "rooms": "Хоналар",
+      "services": "Хизматлар",
+      "finance": "Молия",
+      "inventory": "Омбор",
+      "reports": "Ҳисоботлар",
+      "settings": "Созламалар",
+      "help": "Ёрдам"
+    },
+    "dashboard": {
+      "title": "Бошқарув панели",
+      "subtitle": "Бугунги клиника фаолияти",
+      "greeting": "Хайрли кун, Admin",
+      "intro": "Бугун клиникангизда нима бўлаётганини бир қарашда кўринг.",
+      "revenue": "Даромад",
+      "appointments": "Учрашувлар",
+      "new_patients": "Янги беморлар",
+      "occupancy": "Бандлик",
+      "completed_of": "{{count}} якунланган",
+      "rooms_available": "{{count}} хона бўш",
+      "todays_schedule": "Бугунги учрашувлар",
+      "revenue_analytics": "Даромад таҳлили",
+      "range_7d": "7 кун",
+      "range_30d": "30 кун",
+      "range_12m": "12 ой",
+      "week_total": "Ҳафталик жами",
+      "rooms": "Хоналар",
+      "top_doctors": "Энг фаол шифокорлар",
+      "recent_patients": "Сўнгги беморлар",
+      "quick_actions": "Тезкор амаллар",
+      "new_appointment": "Янги учрашув",
+      "add_patient": "Бемор қўшиш",
+      "add_doctor": "Шифокор қўшиш",
+      "add_expense": "Харажат қўшиш",
+      "available_slot": "БЎШ",
+      "apts_count": "{{count}} учрашув",
+      "rating": "Рейтинг {{value}}"
+    },
+    "appointments": {
+      "title": "Учрашувлар",
+      "subtitle": "Календар ва жадвал",
+      "day": "Кун",
+      "week": "Ҳафта",
+      "month": "Ой"
+    },
+    "patients": {
+      "title": "Беморлар",
+      "subtitle": "Беморлар базаси",
+      "phone": "Телефон",
+      "doctor": "Шифокор",
+      "treatment": "Даволаш",
+      "balance": "Баланс",
+      "status": "Ҳолат",
+      "patient": "Бемор",
+      "visits": "Ташрифлар",
+      "next": "Кейинги",
+      "overview": "Умумий",
+      "treatment_tab": "Даволаш",
+      "dental_chart": "Тиш харитаси",
+      "payments": "Тўловлар",
+      "notes": "Изоҳлар",
+      "age": "Ёш",
+      "patient_id": "ID"
+    },
+    "doctors": {
+      "title": "Шифокорлар",
+      "subtitle": "Жамоа ва самарадорлик",
+      "today_apts": "Бугунги",
+      "revenue": "Даромад",
+      "rating": "Рейтинг",
+      "status": "Ҳолат",
+      "schedule": "Жадвал",
+      "patients": "Беморлар",
+      "finance": "Молия"
+    },
+    "rooms": {
+      "title": "Хоналар",
+      "subtitle": "Хона ҳолати ва бандлик"
+    },
+    "services": {
+      "title": "Хизматлар",
+      "subtitle": "Нархлар ва давомийлик",
+      "duration": "Давомийлик",
+      "price": "Нарх",
+      "category": "Категория"
+    },
+    "finance": {
+      "title": "Молия",
+      "subtitle": "Даромад, харажат ва тўловлар",
+      "profit": "Фойда",
+      "outstanding": "Қарз",
+      "vs_expenses": "Даромад ва харажат",
+      "transactions": "Транзакциялар",
+      "date": "Сана",
+      "type": "Тур",
+      "description": "Тавсиф",
+      "amount": "Сумма"
+    },
+    "inventory": {
+      "title": "Омбор",
+      "subtitle": "Материаллар ва захира",
+      "total_items": "Жами",
+      "low_stock": "Кам қолган",
+      "value": "Қиймат",
+      "material": "Материал",
+      "stock": "Захира",
+      "unit": "Бирлик",
+      "add_material": "Материал қўшиш"
+    },
+    "reports": {
+      "title": "Ҳисоботлар",
+      "subtitle": "Аналитика ва экспорт"
+    },
+    "settings": {
+      "title": "Созламалар",
+      "subtitle": "Клиника созламалари"
+    }
   }
 }

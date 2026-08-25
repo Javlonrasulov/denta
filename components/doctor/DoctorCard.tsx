@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { Heart, Star } from 'lucide-react-native';
+import { Heart, Star } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 
 import { Avatar } from '@/components/ui/Avatar';
@@ -35,7 +35,7 @@ export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardP
           gap: spacing.md,
           padding: compact ? spacing.md : spacing.lg,
           backgroundColor: colors.surface,
-          borderRadius: radius.xl,
+          borderRadius: radius.lg,
           borderWidth: 1,
           borderColor: colors.borderSubtle,
           opacity: pressed ? 0.94 : 1,

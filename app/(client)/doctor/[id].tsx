@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Heart } from 'lucide-react-native';
+import { ArrowLeft, Heart } from '@/components/icons';
 import { addDays, format } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';

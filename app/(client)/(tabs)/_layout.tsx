@@ -5,7 +5,7 @@ import {
   Home,
   Search,
   UserRound,
-} from 'lucide-react-native';
+} from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '@/theme';
@@ -23,13 +23,17 @@ export default function ClientTabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.borderSubtle,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarLabelStyle: {
           fontFamily: typography.caption.fontFamily,
-          fontSize: 11,
+          fontSize: 10,
+          fontWeight: '600',
         },
       }}
     >
@@ -37,14 +41,14 @@ export default function ClientTabsLayout() {
         name="index"
         options={{
           title: t('tabs.home'),
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size }) => <Home color={color} size={size - 2} strokeWidth={1.75} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: t('tabs.search'),
-          tabBarIcon: ({ color, size }) => <Search color={color} size={size} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size }) => <Search color={color} size={size - 2} strokeWidth={1.75} />,
         }}
       />
       <Tabs.Screen
@@ -52,7 +56,7 @@ export default function ClientTabsLayout() {
         options={{
           title: t('tabs.appointments'),
           tabBarIcon: ({ color, size }) => (
-            <CalendarDays color={color} size={size} strokeWidth={1.75} />
+            <CalendarDays color={color} size={size - 2} strokeWidth={1.75} />
           ),
         }}
       />
@@ -60,7 +64,7 @@ export default function ClientTabsLayout() {
         name="favorites"
         options={{
           title: t('tabs.favorites'),
-          tabBarIcon: ({ color, size }) => <Heart color={color} size={size} strokeWidth={1.75} />,
+          tabBarIcon: ({ color, size }) => <Heart color={color} size={size - 2} strokeWidth={1.75} />,
         }}
       />
       <Tabs.Screen
@@ -68,7 +72,7 @@ export default function ClientTabsLayout() {
         options={{
           title: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => (
-            <UserRound color={color} size={size} strokeWidth={1.75} />
+            <UserRound color={color} size={size - 2} strokeWidth={1.75} />
           ),
         }}
       />

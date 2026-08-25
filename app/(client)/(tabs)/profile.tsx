@@ -8,7 +8,7 @@ import {
   Moon,
   Shield,
   UserRound,
-} from 'lucide-react-native';
+} from '@/components/icons';
 import { Pressable, ScrollView, Switch, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +39,7 @@ export default function ProfileScreen() {
     setThemeMode,
     notificationsEnabled,
     setNotificationsEnabled,
-    setRole,
+    logout,
   } = useSettingsStore();
 
   const isDark = themeMode === 'dark';
@@ -194,8 +194,8 @@ export default function ProfileScreen() {
 
       <Pressable
         onPress={() => {
-          setRole(null);
-          router.replace('/');
+          logout();
+          router.replace('/login');
         }}
         style={{
           flexDirection: 'row',

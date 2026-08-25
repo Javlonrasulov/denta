@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Check } from 'lucide-react-native';
+import { Check } from '@/components/icons';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';

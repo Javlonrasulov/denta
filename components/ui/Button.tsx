@@ -48,7 +48,7 @@ export function Button({
   textStyle,
   accessibilityLabel,
 }: ButtonProps) {
-  const { colors, buttonSizes, radius, typography } = useTheme();
+  const { colors, buttonSizes, radius, fontWeight } = useTheme();
   const scale = useSharedValue(1);
   const sizeToken = buttonSizes[size];
   const isDisabled = disabled || loading;
@@ -87,7 +87,7 @@ export function Button({
         {
           height: sizeToken.height,
           paddingHorizontal: sizeToken.paddingHorizontal,
-          borderRadius: radius.md,
+          borderRadius: radius.full,
           backgroundColor: scheme.bg,
           borderWidth: scheme.border ? 1 : 0,
           borderColor: scheme.border,
@@ -109,8 +109,9 @@ export function Button({
               {
                 color: scheme.text,
                 fontSize: sizeToken.fontSize,
-                fontFamily: typography.label.fontFamily,
+                fontFamily: fontWeight.semibold,
                 marginLeft: leftIcon ? 8 : 0,
+                letterSpacing: -0.1,
               },
               textStyle,
             ]}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { LucideIcon } from 'lucide-react-native';
+import { LucideIcon } from '@/components/icons';
 
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';

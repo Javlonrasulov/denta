@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Bell, MapPin, ChevronRight } from 'lucide-react-native';
+import { Bell, MapPin, ChevronRight } from '@/components/icons';
 import { useMemo } from 'react';
 import {
   Pressable,
@@ -144,8 +144,11 @@ export default function ClientHomeScreen() {
           </View>
 
           <Animated.View entering={FadeInDown.springify()}>
-            <Text variant="h1" style={{ marginBottom: spacing.sm }}>
+            <Text variant="h1" color={colors.primary} style={{ marginBottom: spacing.xs }}>
               {t('common.app_name')}
+            </Text>
+            <Text variant="caption" muted style={{ marginBottom: spacing.sm }}>
+              {t('common.tagline')}
             </Text>
             <SearchInput
               value=""

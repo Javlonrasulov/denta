@@ -1,6 +1,16 @@
 {
   "common": {
-    "app_name": "Denta",
+    "app_name": "DENTA.UZ",
+    "tagline": "Modern Dental Care Platform",
+    "add": "Qo‘shish",
+    "export": "Eksport",
+    "filter": "Filtr",
+    "actions": "Amallar",
+    "occupied": "Band",
+    "maintenance": "Ta’mirda",
+    "vs_yesterday": "kechagiga nisbatan",
+    "this_week": "shu hafta",
+    "available_short": "bo‘sh",
     "loading": "Yuklanmoqda...",
     "error": "Xatolik",
     "retry": "Qayta urinish",
@@ -160,6 +170,9 @@
     "language": "Til",
     "notifications": "Bildirishnomalar",
     "dark_mode": "Qorong‘u rejim",
+    "font_size": "Matn o‘lchami",
+    "font_size_decrease": "Matnni kichiklashtirish",
+    "font_size_increase": "Matnni kattalashtirish",
     "privacy": "Maxfiylik",
     "help": "Yordam",
     "logout": "Chiqish",
@@ -271,5 +284,138 @@
     "doctor_desc": "Jadval, bemorlar va daromadni boshqaring",
     "clinic_desc": "Klinikani, xodimlarni va moliyani boshqaring",
     "continue_as": "{{role}} sifatida davom etish"
+  },
+  "auth": {
+    "title": "Kirish",
+    "subtitle": "Davom etish uchun email va parolingizni kiriting",
+    "email": "Email",
+    "password": "Parol",
+    "sign_in": "Kirish",
+    "demo_hint": "Demo: istalgan email va parol (kamida 4 belgi)",
+    "invalid_email": "To‘g‘ri email kiriting",
+    "invalid_password": "Parol kamida 4 belgidan iborat bo‘lishi kerak"
+  },
+  "crm": {
+    "nav": {
+      "overview": "Overview",
+      "appointments": "Uchrashuvlar",
+      "patients": "Bemorlar",
+      "doctors": "Shifokorlar",
+      "rooms": "Xonalar",
+      "services": "Xizmatlar",
+      "finance": "Moliya",
+      "inventory": "Ombor",
+      "reports": "Hisobotlar",
+      "settings": "Sozlamalar",
+      "help": "Yordam"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Bugungi klinika faoliyati",
+      "greeting": "Xayrli kun, Admin",
+      "intro": "Bugun klinikangizda nima bo‘layotganini bir qarashda ko‘ring.",
+      "revenue": "Daromad",
+      "appointments": "Uchrashuvlar",
+      "new_patients": "Yangi bemorlar",
+      "occupancy": "Bandlik",
+      "completed_of": "{{count}} yakunlangan",
+      "rooms_available": "{{count}} xona bo‘sh",
+      "todays_schedule": "Bugungi uchrashuvlar",
+      "revenue_analytics": "Daromad tahlili",
+      "range_7d": "7 kun",
+      "range_30d": "30 kun",
+      "range_12m": "12 oy",
+      "week_total": "Haftalik jami",
+      "rooms": "Xonalar",
+      "top_doctors": "Eng faol shifokorlar",
+      "recent_patients": "So‘nggi bemorlar",
+      "quick_actions": "Tezkor amallar",
+      "new_appointment": "Yangi uchrashuv",
+      "add_patient": "Bemor qo‘shish",
+      "add_doctor": "Shifokor qo‘shish",
+      "add_expense": "Xarajat qo‘shish",
+      "available_slot": "AVAILABLE",
+      "apts_count": "{{count}} uchrashuv",
+      "rating": "Reyting {{value}}"
+    },
+    "appointments": {
+      "title": "Uchrashuvlar",
+      "subtitle": "Kalendar va jadval",
+      "day": "Kun",
+      "week": "Hafta",
+      "month": "Oy"
+    },
+    "patients": {
+      "title": "Bemorlar",
+      "subtitle": "Bemorlar bazasi",
+      "phone": "Telefon",
+      "doctor": "Shifokor",
+      "treatment": "Davolash",
+      "balance": "Balans",
+      "status": "Holat",
+      "patient": "Bemor",
+      "visits": "Tashriflar",
+      "next": "Keyingi",
+      "overview": "Umumiy",
+      "treatment_tab": "Davolash",
+      "dental_chart": "Dental chart",
+      "payments": "To‘lovlar",
+      "notes": "Izohlar",
+      "age": "Yosh",
+      "patient_id": "ID"
+    },
+    "doctors": {
+      "title": "Shifokorlar",
+      "subtitle": "Jamoa va samaradorlik",
+      "today_apts": "Bugungi",
+      "revenue": "Daromad",
+      "rating": "Reyting",
+      "status": "Holat",
+      "schedule": "Jadval",
+      "patients": "Bemorlar",
+      "finance": "Moliya"
+    },
+    "rooms": {
+      "title": "Xonalar",
+      "subtitle": "Xona holati va bandlik"
+    },
+    "services": {
+      "title": "Xizmatlar",
+      "subtitle": "Narxlar va davomiylik",
+      "duration": "Davomiylik",
+      "price": "Narx",
+      "category": "Kategoriya"
+    },
+    "finance": {
+      "title": "Moliya",
+      "subtitle": "Daromad, xarajat va to‘lovlar",
+      "profit": "Foyda",
+      "outstanding": "Qarz",
+      "vs_expenses": "Daromad va xarajat",
+      "transactions": "Tranzaksiyalar",
+      "date": "Sana",
+      "type": "Tur",
+      "description": "Tavsif",
+      "amount": "Summa"
+    },
+    "inventory": {
+      "title": "Ombor",
+      "subtitle": "Materiallar va zaxira",
+      "total_items": "Jami",
+      "low_stock": "Kam qolgan",
+      "value": "Qiymat",
+      "material": "Material",
+      "stock": "Zaxira",
+      "unit": "Birlik",
+      "add_material": "Material qo‘shish"
+    },
+    "reports": {
+      "title": "Hisobotlar",
+      "subtitle": "Analitika va eksport"
+    },
+    "settings": {
+      "title": "Sozlamalar",
+      "subtitle": "Klinika sozlamalari"
+    }
   }
 }

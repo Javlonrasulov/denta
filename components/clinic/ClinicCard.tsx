@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
-import { Heart, MapPin, Star } from 'lucide-react-native';
+import { Heart, MapPin, Star } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 
 import { Badge } from '@/components/ui/Badge';
@@ -32,12 +32,12 @@ export function ClinicCard({ clinic, onPress, horizontal }: ClinicCardProps) {
         {
           width: horizontal ? 280 : '100%',
           backgroundColor: colors.surface,
-          borderRadius: radius.xl,
+          borderRadius: radius.lg,
           borderWidth: 1,
           borderColor: colors.borderSubtle,
           overflow: 'hidden',
           opacity: pressed ? 0.94 : 1,
-          ...shadows.md,
+          ...shadows.sm,
         },
       ]}
     >

@@ -6,7 +6,7 @@ import {
   View,
   Pressable,
 } from 'react-native';
-import { Search, X } from 'lucide-react-native';
+import { Search, X } from '@/components/icons';
 
 import { Text } from './Text';
 import { useTheme } from '@/theme';

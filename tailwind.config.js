@@ -40,10 +40,11 @@ module.exports = {
         line: '#E2E8F0',
       },
       fontFamily: {
-        sans: ['PlusJakartaSans_400Regular'],
-        medium: ['PlusJakartaSans_500Medium'],
-        semibold: ['PlusJakartaSans_600SemiBold'],
-        bold: ['PlusJakartaSans_700Bold'],
+        sans: ['Onest_400Regular'],
+        medium: ['Onest_500Medium'],
+        semibold: ['Manrope_600SemiBold'],
+        bold: ['Manrope_700Bold'],
+        display: ['Manrope_700Bold'],
       },
       borderRadius: {
         sm: '8px',

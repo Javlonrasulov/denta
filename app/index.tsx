@@ -1,8 +1,7 @@
 import { Redirect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Building2, Stethoscope, UserRound } from 'lucide-react-native';
+import { Building2, Stethoscope, UserRound } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
@@ -16,7 +15,7 @@ const ROLES: {
   icon: typeof UserRound;
   titleKey: string;
   descKey: string;
-  href: '/(client)/(tabs)' | '/(doctor)/(tabs)' | '/(clinic)/(tabs)';
+  href: '/(client)/(tabs)' | '/(doctor)/(tabs)' | '/(clinic)/(shell)/overview';
 }[] = [
   {
     role: 'client',
@@ -37,7 +36,7 @@ const ROLES: {
     icon: Building2,
     titleKey: 'role.clinic',
     descKey: 'role.clinic_desc',
-    href: '/(clinic)/(tabs)',
+    href: '/(clinic)/(shell)/overview',
   },
 ];
 
@@ -47,75 +46,82 @@ export default function RoleGateScreen() {
   const { colors, spacing, radius, shadows } = useTheme();
   const role = useSettingsStore((s) => s.role);
   const setRole = useSettingsStore((s) => s.setRole);
+  const isAuthenticated = useSettingsStore((s) => s.isAuthenticated);
 
+  if (!isAuthenticated) return <Redirect href="/login" />;
   if (role === 'client') return <Redirect href="/(client)/(tabs)" />;
   if (role === 'doctor') return <Redirect href="/(doctor)/(tabs)" />;
-  if (role === 'clinic') return <Redirect href="/(clinic)/(tabs)" />;
+  if (role === 'clinic') return <Redirect href="/(clinic)/(shell)/overview" />;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={[colors.primary, '#0F2D56']}
+      <View
         style={{
           paddingTop: insets.top + spacing['3xl'],
-          paddingBottom: spacing['4xl'],
+          paddingBottom: spacing['3xl'],
           paddingHorizontal: spacing['2xl'],
+          backgroundColor: colors.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.borderSubtle,
         }}
       >
         <Animated.View entering={FadeInUp.springify()}>
-          <Text variant="display" color={colors.textInverse}>
+          <Text variant="display" color={colors.primary}>
             {t('common.app_name')}
           </Text>
           <Text
-            variant="bodyLarge"
-            color="rgba(255,255,255,0.82)"
-            style={{ marginTop: spacing.sm, maxWidth: 300 }}
+            variant="body"
+            color={colors.textSecondary}
+            style={{ marginTop: spacing.sm, maxWidth: 320 }}
           >
+            {t('common.tagline')}
+          </Text>
+          <Text variant="bodySmall" muted style={{ marginTop: spacing.md }}>
             {t('role.choose_role')}
           </Text>
         </Animated.View>
-      </LinearGradient>
+      </View>
 
       <View
         style={{
           flex: 1,
-          marginTop: -spacing['2xl'],
           paddingHorizontal: spacing.xl,
+          paddingTop: spacing.xl,
           gap: spacing.md,
         }}
       >
         {ROLES.map((item, index) => {
           const Icon = item.icon;
           return (
-            <Animated.View key={item.role} entering={FadeInDown.delay(120 * index).springify()}>
+            <Animated.View key={item.role} entering={FadeInDown.delay(80 * index).springify()}>
               <Pressable
                 onPress={() => setRole(item.role)}
                 accessibilityRole="button"
                 accessibilityLabel={t(item.titleKey)}
                 style={({ pressed }) => ({
                   backgroundColor: colors.surface,
-                  borderRadius: radius.xl,
+                  borderRadius: radius.lg,
                   padding: spacing.xl,
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: spacing.lg,
                   borderWidth: 1,
-                  borderColor: colors.borderSubtle,
-                  opacity: pressed ? 0.94 : 1,
-                  ...shadows.md,
+                  borderColor: pressed ? colors.primary : colors.borderSubtle,
+                  opacity: pressed ? 0.96 : 1,
+                  ...shadows.sm,
                 })}
               >
                 <View
                   style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: radius.lg,
+                    width: 48,
+                    height: 48,
+                    borderRadius: radius.md,
                     backgroundColor: colors.primaryMuted,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon size={24} color={colors.primary} strokeWidth={1.75} />
+                  <Icon size={22} color={colors.primary} strokeWidth={1.75} />
                 </View>
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text variant="h3">{t(item.titleKey)}</Text>
