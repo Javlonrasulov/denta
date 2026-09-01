@@ -60,8 +60,9 @@
   },
   "home": {
     "greeting": "Здравствуйте",
+    "assalamu_alaykum": "Ассалому алейкум",
     "nearby_clinics": "Клиники рядом",
-    "top_doctors": "Лучшие врачи",
+    "top_doctors": "Врачи",
     "available_today": "Свободно сегодня",
     "popular_clinics": "Популярные клиники",
     "specializations": "Специализации",
@@ -69,7 +70,20 @@
     "location_permission": "Разрешите доступ к геолокации, чтобы найти ближайшие клиники",
     "good_morning": "Доброе утро",
     "good_afternoon": "Добрый день",
-    "good_evening": "Добрый вечер"
+    "good_evening": "Добрый вечер",
+    "quick_actions": "Быстрые действия",
+    "book": "Запись",
+    "clinics_map": "Карта клиник",
+    "map_subtitle": "Стоматологии рядом",
+    "open_count": "{{count}} открыто",
+    "map_view": "Карта",
+    "satellite": "Спутник",
+    "legend_clinics": "Клиники",
+    "legend_open": "Открыто",
+    "legend_closed": "Закрыто",
+    "stat_appointments": "Приёмы",
+    "stat_nearby": "Клиники",
+    "stat_favorites": "Избранное"
   },
   "search": {
     "title": "Поиск",

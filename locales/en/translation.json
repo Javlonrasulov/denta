@@ -60,8 +60,9 @@
   },
   "home": {
     "greeting": "Hello",
+    "assalamu_alaykum": "Assalomu alaykum",
     "nearby_clinics": "Nearby clinics",
-    "top_doctors": "Top doctors",
+    "top_doctors": "Doctors",
     "available_today": "Available today",
     "popular_clinics": "Popular clinics",
     "specializations": "Specializations",
@@ -69,7 +70,20 @@
     "location_permission": "Allow location access to find nearby clinics",
     "good_morning": "Good morning",
     "good_afternoon": "Good afternoon",
-    "good_evening": "Good evening"
+    "good_evening": "Good evening",
+    "quick_actions": "Quick actions",
+    "book": "Book",
+    "clinics_map": "Clinics map",
+    "map_subtitle": "Nearby dental clinics",
+    "open_count": "{{count}} open",
+    "map_view": "Map",
+    "satellite": "Satellite",
+    "legend_clinics": "Clinics",
+    "legend_open": "Open",
+    "legend_closed": "Closed",
+    "stat_appointments": "Visits",
+    "stat_nearby": "Clinics",
+    "stat_favorites": "Favorites"
   },
   "search": {
     "title": "Search",
