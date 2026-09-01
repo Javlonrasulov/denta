@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { View } from 'react-native';
 import {
   CalendarDays,
   Heart,
@@ -9,7 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { mobileTabBarStyle, mobileTabLabelStyle } from '@/components/mobile';
+import { clientTabBarStyle, mobileTabLabelStyle } from '@/components/mobile';
 import { useTheme } from '@/theme';
 
 export default function ClientTabsLayout() {
@@ -23,7 +24,7 @@ export default function ClientTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarStyle: mobileTabBarStyle(colors, insets.bottom),
+        tabBarStyle: clientTabBarStyle(colors, insets.bottom),
         tabBarLabelStyle: {
           ...mobileTabLabelStyle,
           fontFamily: typography.caption.fontFamily,
@@ -35,7 +36,16 @@ export default function ClientTabsLayout() {
         options={{
           title: t('tabs.home'),
           tabBarIcon: ({ color, size, focused }) => (
-            <Home color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
+            <View
+              style={{
+                backgroundColor: focused ? colors.primaryMuted : 'transparent',
+                borderRadius: 12,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+              }}
+            >
+              <Home color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
+            </View>
           ),
         }}
       />
@@ -51,7 +61,7 @@ export default function ClientTabsLayout() {
       <Tabs.Screen
         name="appointments"
         options={{
-          title: t('tabs.appointments'),
+          title: t('tabs.my_appointments'),
           tabBarIcon: ({ color, size, focused }) => (
             <CalendarDays color={color} size={size - 2} strokeWidth={focused ? 2.2 : 1.75} />
           ),

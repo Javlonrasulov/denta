@@ -41,9 +41,9 @@
     "status": "Ҳолат"
   },
   "tabs": {
-    "home": "Бош саҳифа",
+    "home": "Асосий",
     "search": "Қидирув",
-    "appointments": "Учрашувлар",
+    "appointments": "Қабулларим",
     "favorites": "Севимлилар",
     "profile": "Профил",
     "dashboard": "Бошқарув панели",
@@ -54,12 +54,15 @@
     "services": "Хизматлар",
     "inventory": "Омбор",
     "reports": "Ҳисоботлар",
-    "settings": "Созламалар"
+    "settings": "Созламалар",
+    "map": "Харита",
+    "my_appointments": "Қабулларим"
   },
   "home": {
     "greeting": "Салом",
+    "assalamu_alaykum": "Ассалому алайкум",
     "nearby_clinics": "Яқин клиникалар",
-    "top_doctors": "Энг яхши шифокорлар",
+    "top_doctors": "Шифокорлар",
     "available_today": "Бугун бўш",
     "popular_clinics": "Машҳур клиникалар",
     "specializations": "Мутахассисликлар",
@@ -67,7 +70,20 @@
     "location_permission": "Яқин клиникани топиш учун жойлашувга рухсат беринг",
     "good_morning": "Хайрли тонг",
     "good_afternoon": "Хайрли кун",
-    "good_evening": "Хайрли кеч"
+    "good_evening": "Хайрли кеч",
+    "quick_actions": "Тез амаллар",
+    "book": "Банд қилиш",
+    "clinics_map": "Клиникалар харитаси",
+    "map_subtitle": "Яқин стоматологиялар",
+    "open_count": "{{count}} очиқ",
+    "map_view": "Харита",
+    "satellite": "Спутник",
+    "legend_clinics": "Клиникалар",
+    "legend_open": "Очиқ",
+    "legend_closed": "Ёпиқ",
+    "stat_appointments": "Қабуллар",
+    "stat_nearby": "Клиникалар",
+    "stat_favorites": "Севимлилар"
   },
   "search": {
     "title": "Қидирув",
@@ -136,13 +152,15 @@
     "price": "Нарх",
     "patient": "Бемор",
     "notes": "Изоҳлар",
-    "success_title": "Учрашув банд қилинди!",
+    "success_title": "Қабул тасдиқланди",
     "success_subtitle": "Тез орада эслатма оласиз",
-    "confirm_booking": "Бандловни тасдиқлаш"
+    "confirm_booking": "Қабулга ёзилиш",
+    "view_on_map": "Харитада кўриш",
+    "my_appointments": "Менинг қабулларим"
   },
   "appointments": {
-    "upcoming": "Келгуси",
-    "completed": "Якунланган",
+    "upcoming": "Яқинлашаётган",
+    "completed": "Туган",
     "cancelled": "Бекор қилинган",
     "no_upcoming": "Келгуси учрашувлар йўқ",
     "no_completed": "Якунланган учрашувлар йўқ",
@@ -153,15 +171,15 @@
     "status_upcoming": "Кутилмоқда",
     "status_completed": "Якунланган",
     "status_cancelled": "Бекор қилинган",
-    "empty_cta": "Учрашув банд қилиш"
+    "empty_cta": "Стоматолог топиш"
   },
   "favorites": {
     "title": "Севимлилар",
     "doctors": "Шифокорлар",
     "clinics": "Клиникалар",
     "empty_doctors": "Севимли шифокорлар йўқ",
-    "empty_clinics": "Севимли клиникалар йўқ",
-    "empty_cta": "Қидиришни бошлаш"
+    "empty_clinics": "Севимли клиникаларингиз шу ерда",
+    "empty_cta": "Клиника топиш"
   },
   "profile": {
     "title": "Профил",
@@ -183,7 +201,17 @@
     "title": "Харита",
     "nearby": "Яқин-атрофда",
     "view_clinic": "Клиникани кўриш",
-    "nearest_slot": "Энг яқин бўш вақт"
+    "nearest_slot": "Энг яқин бўш вақт",
+    "city_tashkent": "Тошкент",
+    "search_placeholder": "Стоматолог ёки клиника қидиринг...",
+    "filter_nearby": "Яқин",
+    "filter_available_today": "Бугун бўш",
+    "filter_rating": "4.5+",
+    "filter_24h": "24/7",
+    "filter_price": "Нарх",
+    "filter_specialty": "Мутахассислик",
+    "slots_today": "Бугун бўш вақт бор",
+    "my_location": "Менинг жойлашувим"
   },
   "doctor_app": {
     "todays_appointments": "Бугунги учрашувлар",

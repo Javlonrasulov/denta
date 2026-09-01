@@ -43,7 +43,7 @@
   "tabs": {
     "home": "Home",
     "search": "Search",
-    "appointments": "Appointments",
+    "appointments": "Bookings",
     "favorites": "Favorites",
     "profile": "Profile",
     "dashboard": "Dashboard",
@@ -54,7 +54,9 @@
     "services": "Services",
     "inventory": "Inventory",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "map": "Map",
+    "my_appointments": "Bookings"
   },
   "home": {
     "greeting": "Hello",
@@ -136,9 +138,11 @@
     "price": "Price",
     "patient": "Patient",
     "notes": "Notes",
-    "success_title": "Appointment booked!",
+    "success_title": "Booking confirmed",
     "success_subtitle": "You will receive a reminder soon",
-    "confirm_booking": "Confirm booking"
+    "confirm_booking": "Confirm booking",
+    "view_on_map": "View on map",
+    "my_appointments": "My appointments"
   },
   "appointments": {
     "upcoming": "Upcoming",
@@ -153,15 +157,15 @@
     "status_upcoming": "Upcoming",
     "status_completed": "Completed",
     "status_cancelled": "Cancelled",
-    "empty_cta": "Book an appointment"
+    "empty_cta": "Find a dentist"
   },
   "favorites": {
     "title": "Favorites",
     "doctors": "Doctors",
     "clinics": "Clinics",
     "empty_doctors": "No favorite doctors yet",
-    "empty_clinics": "No favorite clinics yet",
-    "empty_cta": "Start searching"
+    "empty_clinics": "Your favorite clinics will appear here",
+    "empty_cta": "Find a clinic"
   },
   "profile": {
     "title": "Profile",
@@ -183,7 +187,17 @@
     "title": "Map",
     "nearby": "Nearby",
     "view_clinic": "View clinic",
-    "nearest_slot": "Nearest available slot"
+    "nearest_slot": "Next available",
+    "city_tashkent": "Tashkent",
+    "search_placeholder": "Search dentist or clinic...",
+    "filter_nearby": "Nearby",
+    "filter_available_today": "Available today",
+    "filter_rating": "4.5+",
+    "filter_24h": "24/7",
+    "filter_price": "Price",
+    "filter_specialty": "Specialty",
+    "slots_today": "Slots available today",
+    "my_location": "My location"
   },
   "doctor_app": {
     "todays_appointments": "Today's appointments",

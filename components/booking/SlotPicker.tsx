@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/theme';
@@ -37,7 +38,10 @@ export function SlotPicker({ slots, selected, onSelect }: SlotPickerProps) {
             <Pressable
               key={slot.time}
               disabled={disabled}
-              onPress={() => onSelect(slot.time)}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                onSelect(slot.time);
+              }}
               accessibilityRole="button"
               accessibilityState={{ disabled, selected: isSelected }}
               accessibilityLabel={`${slot.time} ${slot.available ? t('common.available') : t('common.booked')}`}

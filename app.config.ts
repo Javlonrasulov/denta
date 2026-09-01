@@ -39,6 +39,12 @@ const VARIANTS: Record<
 
 const selected = VARIANTS[VARIANT] ?? VARIANTS.clinic;
 
+/** Maps SDK requires a non-empty meta-data key on Android or MapView crashes the process. */
+const GOOGLE_MAPS_API_KEY =
+  process.env.GOOGLE_MAPS_API_KEY ??
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ??
+  'REPLACE_WITH_GOOGLE_MAPS_API_KEY';
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: selected.name,
@@ -55,17 +61,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: '#153E75',
+      backgroundColor: '#4F46E5',
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     package: selected.androidPackage,
     predictiveBackGestureEnabled: false,
+    permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
   },
   web: {
     bundler: 'metro',
-    output: 'static',
+    output: 'single',
     favicon: './assets/images/favicon.png',
   },
   plugins: [
@@ -73,11 +80,25 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-secure-store',
     'expo-localization',
     [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'Allow DENTA to use your location to show nearby dental clinics on the map.',
+      },
+    ],
+    [
+      'react-native-maps',
+      {
+        androidGoogleMapsApiKey: GOOGLE_MAPS_API_KEY,
+        iosGoogleMapsApiKey: GOOGLE_MAPS_API_KEY,
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         image: './assets/images/splash-icon.png',
         resizeMode: 'contain',
-        backgroundColor: '#153E75',
+        backgroundColor: '#4F46E5',
       },
     ],
   ],
@@ -86,6 +107,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     appVariant: VARIANT,
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     eas: {
       projectId: undefined,
     },

@@ -43,7 +43,7 @@
   "tabs": {
     "home": "Главная",
     "search": "Поиск",
-    "appointments": "Записи",
+    "appointments": "Приёмы",
     "favorites": "Избранное",
     "profile": "Профиль",
     "dashboard": "Панель",
@@ -54,7 +54,9 @@
     "services": "Услуги",
     "inventory": "Склад",
     "reports": "Отчёты",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "map": "Карта",
+    "my_appointments": "Приёмы"
   },
   "home": {
     "greeting": "Здравствуйте",
@@ -136,9 +138,11 @@
     "price": "Цена",
     "patient": "Пациент",
     "notes": "Заметки",
-    "success_title": "Вы записаны!",
+    "success_title": "Запись подтверждена",
     "success_subtitle": "Скоро вы получите напоминание",
-    "confirm_booking": "Подтвердить запись"
+    "confirm_booking": "Записаться",
+    "view_on_map": "Показать на карте",
+    "my_appointments": "Мои приёмы"
   },
   "appointments": {
     "upcoming": "Предстоящие",
@@ -153,15 +157,15 @@
     "status_upcoming": "Предстоит",
     "status_completed": "Завершена",
     "status_cancelled": "Отменена",
-    "empty_cta": "Записаться на приём"
+    "empty_cta": "Найти стоматолога"
   },
   "favorites": {
     "title": "Избранное",
     "doctors": "Врачи",
     "clinics": "Клиники",
     "empty_doctors": "Нет избранных врачей",
-    "empty_clinics": "Нет избранных клиник",
-    "empty_cta": "Начать поиск"
+    "empty_clinics": "Любимые клиники появятся здесь",
+    "empty_cta": "Найти клинику"
   },
   "profile": {
     "title": "Профиль",
@@ -182,8 +186,18 @@
   "map": {
     "title": "Карта",
     "nearby": "Рядом",
-    "view_clinic": "Открыть клинику",
-    "nearest_slot": "Ближайший свободный слот"
+    "view_clinic": "Смотреть клинику",
+    "nearest_slot": "Ближайшее время",
+    "city_tashkent": "Ташкент",
+    "search_placeholder": "Найти стоматолога или клинику...",
+    "filter_nearby": "Рядом",
+    "filter_available_today": "Свободно сегодня",
+    "filter_rating": "4.5+",
+    "filter_24h": "24/7",
+    "filter_price": "Цена",
+    "filter_specialty": "Специальность",
+    "slots_today": "Есть свободное время сегодня",
+    "my_location": "Моё местоположение"
   },
   "doctor_app": {
     "todays_appointments": "Записи на сегодня",

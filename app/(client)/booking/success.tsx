@@ -81,9 +81,17 @@ export default function BookingSuccessScreen() {
 
       <View style={{ flex: 1 }} />
       <View style={{ width: '100%', gap: spacing.md }}>
-        <Button title={t('booking.add_to_calendar')} variant="outline" fullWidth onPress={() => undefined} />
         <Button
-          title={t('tabs.appointments')}
+          title={t('booking.view_on_map')}
+          variant="outline"
+          fullWidth
+          onPress={() => {
+            clearDraft();
+            router.replace('/(client)/(tabs)');
+          }}
+        />
+        <Button
+          title={t('booking.my_appointments')}
           fullWidth
           onPress={() => {
             clearDraft();

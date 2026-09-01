@@ -51,7 +51,7 @@ export default function AppointmentsScreen() {
           icon={CalendarDays}
           title={emptyTitle}
           actionLabel={t('appointments.empty_cta')}
-          onAction={() => router.push('/(client)/(tabs)/search')}
+          onAction={() => router.push('/(client)/(tabs)')}
         />
       ) : (
         <FlatList

@@ -51,7 +51,7 @@ export default function FavoritesScreen() {
             icon={Heart}
             title={t('favorites.empty_clinics')}
             actionLabel={t('favorites.empty_cta')}
-            onAction={() => router.push('/(client)/(tabs)/search')}
+            onAction={() => router.push('/(client)/(tabs)')}
           />
         ) : (
           <FlatList
@@ -68,7 +68,7 @@ export default function FavoritesScreen() {
           icon={Heart}
           title={t('favorites.empty_doctors')}
           actionLabel={t('favorites.empty_cta')}
-          onAction={() => router.push('/(client)/(tabs)/search')}
+          onAction={() => router.push('/(client)/(tabs)')}
         />
       ) : (
         <FlatList

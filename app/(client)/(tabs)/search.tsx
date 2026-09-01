@@ -52,7 +52,7 @@ export default function SearchScreen() {
             <SearchInput
               value={query}
               onChangeText={setQuery}
-              placeholder={t('search.placeholder')}
+              placeholder={t('map.search_placeholder')}
               onClear={() => setQuery('')}
             />
           </View>
@@ -82,7 +82,7 @@ export default function SearchScreen() {
           <FlatList
             data={sortedClinics}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing['5xl'] }}
+          contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: 120 }}
             renderItem={({ item }) => (
               <ClinicCard clinic={item} onPress={() => router.push(`/(client)/clinic/${item.id}`)} />
             )}

@@ -41,9 +41,9 @@
     "status": "Holat"
   },
   "tabs": {
-    "home": "Bosh sahifa",
+    "home": "Asosiy",
     "search": "Qidiruv",
-    "appointments": "Uchrashuvlar",
+    "appointments": "Qabullarim",
     "favorites": "Sevimlilar",
     "profile": "Profil",
     "dashboard": "Boshqaruv paneli",
@@ -54,12 +54,15 @@
     "services": "Xizmatlar",
     "inventory": "Ombor",
     "reports": "Hisobotlar",
-    "settings": "Sozlamalar"
+    "settings": "Sozlamalar",
+    "map": "Xarita",
+    "my_appointments": "Qabullarim"
   },
   "home": {
     "greeting": "Salom",
+    "assalamu_alaykum": "Assalomu alaykum",
     "nearby_clinics": "Yaqin klinikalar",
-    "top_doctors": "Eng yaxshi shifokorlar",
+    "top_doctors": "Shifokorlar",
     "available_today": "Bugun bo‘sh",
     "popular_clinics": "Mashhur klinikalar",
     "specializations": "Mutaxassisliklar",
@@ -67,7 +70,20 @@
     "location_permission": "Yaqin klinikani topish uchun joylashuvga ruxsat bering",
     "good_morning": "Xayrli tong",
     "good_afternoon": "Xayrli kun",
-    "good_evening": "Xayrli kech"
+    "good_evening": "Xayrli kech",
+    "quick_actions": "Tez amallar",
+    "book": "Band qilish",
+    "clinics_map": "Klinikalar xaritasi",
+    "map_subtitle": "Yaqin stomatologiyalar",
+    "open_count": "{{count}} ochiq",
+    "map_view": "Xarita",
+    "satellite": "Sputnik",
+    "legend_clinics": "Klinikalar",
+    "legend_open": "Ochiq",
+    "legend_closed": "Yopiq",
+    "stat_appointments": "Qabullar",
+    "stat_nearby": "Klinikalar",
+    "stat_favorites": "Sevimlilar"
   },
   "search": {
     "title": "Qidiruv",
@@ -136,13 +152,15 @@
     "price": "Narx",
     "patient": "Bemor",
     "notes": "Izohlar",
-    "success_title": "Uchrashuv band qilindi!",
+    "success_title": "Qabul tasdiqlandi",
     "success_subtitle": "Tez orada eslatma olasiz",
-    "confirm_booking": "Bandlovni tasdiqlash"
+    "confirm_booking": "Qabulga yozilish",
+    "view_on_map": "Xaritada ko‘rish",
+    "my_appointments": "Mening qabullarim"
   },
   "appointments": {
-    "upcoming": "Kelgusi",
-    "completed": "Yakunlangan",
+    "upcoming": "Yaqinlashayotgan",
+    "completed": "Tugagan",
     "cancelled": "Bekor qilingan",
     "no_upcoming": "Kelgusi uchrashuvlar yo‘q",
     "no_completed": "Yakunlangan uchrashuvlar yo‘q",
@@ -153,15 +171,15 @@
     "status_upcoming": "Kutilmoqda",
     "status_completed": "Yakunlangan",
     "status_cancelled": "Bekor qilingan",
-    "empty_cta": "Uchrashuv band qilish"
+    "empty_cta": "Stomatolog topish"
   },
   "favorites": {
     "title": "Sevimlilar",
     "doctors": "Shifokorlar",
     "clinics": "Klinikalar",
     "empty_doctors": "Sevimli shifokorlar yo‘q",
-    "empty_clinics": "Sevimli klinikalar yo‘q",
-    "empty_cta": "Qidirishni boshlash"
+    "empty_clinics": "Sevimli klinikalaringiz shu yerda",
+    "empty_cta": "Klinika topish"
   },
   "profile": {
     "title": "Profil",
@@ -183,7 +201,17 @@
     "title": "Xarita",
     "nearby": "Yaqin-atrofda",
     "view_clinic": "Klinikani ko‘rish",
-    "nearest_slot": "Eng yaqin bo‘sh vaqt"
+    "nearest_slot": "Eng yaqin bo‘sh vaqt",
+    "city_tashkent": "Toshkent",
+    "search_placeholder": "Stomatolog yoki klinika qidiring...",
+    "filter_nearby": "Yaqin",
+    "filter_available_today": "Bugun bo‘sh",
+    "filter_rating": "4.5+",
+    "filter_24h": "24/7",
+    "filter_price": "Narx",
+    "filter_specialty": "Mutaxassislik",
+    "slots_today": "Bugun bo‘sh vaqt bor",
+    "my_location": "Mening joylashuvim"
   },
   "doctor_app": {
     "todays_appointments": "Bugungi uchrashuvlar",

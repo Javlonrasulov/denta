@@ -29,7 +29,7 @@ const LOCALES: { code: LocaleCode; label: string; short: string; flag: string }[
   { code: 'en', label: 'English', short: 'EN', flag: '🇬🇧' },
 ];
 
-const LANG_MENU_WIDTH = 220;
+const LANG_MENU_WIDTH = 240;
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -317,18 +317,17 @@ export default function LoginScreen() {
                   <Text variant="body" style={{ fontSize: 18, lineHeight: 22 }}>
                     {item.flag}
                   </Text>
-                  <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
-                    <Text
-                      variant="label"
-                      color={active ? colors.primary : colors.text}
-                      numberOfLines={1}
-                    >
-                      {item.label}
-                    </Text>
-                    <Text variant="caption" muted numberOfLines={1}>
-                      {item.short}
-                    </Text>
-                  </View>
+                  <Text variant="caption" muted numberOfLines={1}>
+                    {item.short}
+                  </Text>
+                  <Text
+                    variant="label"
+                    color={active ? colors.primary : colors.text}
+                    numberOfLines={1}
+                    style={{ flex: 1, minWidth: 0 }}
+                  >
+                    {item.label}
+                  </Text>
                   {active ? <Check size={16} color={colors.primary} /> : null}
                 </Pressable>
               );
