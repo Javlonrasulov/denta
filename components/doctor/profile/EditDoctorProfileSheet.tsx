@@ -123,7 +123,16 @@ export function EditDoctorProfileSheet({
   };
 
   return (
-    <ProfileSheet visible={visible} onClose={onClose} title={t('doctor_profile.edit_title')}>
+    <ProfileSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('doctor_profile.edit_title')}
+      footer={
+        <View style={{ flexShrink: 0, minHeight: 56 }}>
+          <PrimaryButton title={t('doctor_profile.save')} onPress={submit} />
+        </View>
+      }
+    >
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1 }}>
           <Field label={t('doctor_profile.first_name')} value={firstName} onChangeText={setFirstName} />
@@ -195,7 +204,6 @@ export function EditDoctorProfileSheet({
           {error}
         </Text>
       ) : null}
-      <PrimaryButton title={t('doctor_profile.save')} onPress={submit} />
     </ProfileSheet>
   );
 }

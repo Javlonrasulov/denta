@@ -76,7 +76,7 @@ export function ServicesBreakdown({ items }: { items: ServiceBreakdownItem[] }) 
                 fill="none"
                 strokeDasharray={`${arc.len} ${c - arc.len}`}
                 strokeDashoffset={-arc.offset}
-                strokeLinecap="round"
+                strokeLinecap="butt"
                 rotation={-90}
                 origin={`${size / 2}, ${size / 2}`}
               />

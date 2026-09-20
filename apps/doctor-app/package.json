@@ -1,0 +1,11 @@
+{
+  "name": "@denta/doctor-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Denta Doctor mobile app (Expo). Runs the shared mobile codebase with APP_VARIANT=doctor.",
+  "scripts": {
+    "start": "cd ../.. && cross-env APP_VARIANT=doctor EXPO_PUBLIC_APP_VARIANT=doctor npx expo start --port 8082",
+    "android": "cd ../.. && cross-env APP_VARIANT=doctor EXPO_PUBLIC_APP_VARIANT=doctor npx expo start --android --port 8082",
+    "ios": "cd ../.. && cross-env APP_VARIANT=doctor EXPO_PUBLIC_APP_VARIANT=doctor npx expo start --ios --port 8082"
+  }
+}

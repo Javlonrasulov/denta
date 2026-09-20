@@ -28,7 +28,8 @@ const fromConfig = Constants.expoConfig?.extra?.appVariant as AppVariant | undef
 const fromPublicEnv = process.env.EXPO_PUBLIC_APP_VARIANT as AppVariant | undefined;
 
 /** Native package wins (doctor APK stays doctor even if Metro was started as clinic). */
-export const APP_VARIANT: AppVariant = fromNative ?? fromPublicEnv ?? fromConfig ?? 'clinic';
+export const APP_VARIANT: AppVariant =
+  fromNative ?? fromPublicEnv ?? fromConfig ?? 'doctor';
 
 export const LOCKED_ROLE: UserRole | null =
   APP_VARIANT === 'client' || APP_VARIANT === 'doctor' ? APP_VARIANT : null;

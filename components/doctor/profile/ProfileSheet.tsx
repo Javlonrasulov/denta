@@ -34,14 +34,25 @@ export function ProfileSheet({
 }) {
   const insets = useSafeAreaInsets();
   const { colors, authSurface, hairline } = useLoginTheme();
+  const bottomPad = Math.max(insets.bottom, 12) + 20;
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent={Platform.OS === 'android'}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1, justifyContent: 'flex-end' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }} onPress={onClose}>
+        <Pressable
+          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+          onPress={onClose}
+        >
           <Animated.View
             entering={FadeIn.duration(180)}
             exiting={FadeOut.duration(160)}
@@ -59,7 +70,7 @@ export function ProfileSheet({
             borderColor: hairline,
             paddingHorizontal: 20,
             paddingTop: 10,
-            paddingBottom: Math.max(insets.bottom, 16) + 12,
+            paddingBottom: bottomPad,
             maxHeight,
           }}
         >
@@ -106,17 +117,26 @@ export function ProfileSheet({
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12, paddingBottom: 8 }}
+              bounces={false}
+              style={{ flexGrow: 0 }}
+              contentContainerStyle={{ gap: 12, paddingBottom: footer ? 4 : 8 }}
             >
               {children}
-              {footer}
             </ScrollView>
           ) : (
-            <View style={{ gap: 12 }}>
-              {children}
+            <View style={{ gap: 12 }}>{children}</View>
+          )}
+          {footer ? (
+            <View
+              style={{
+                marginTop: 14,
+                paddingTop: 4,
+                flexShrink: 0,
+              }}
+            >
               {footer}
             </View>
-          )}
+          ) : null}
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>

@@ -31,7 +31,7 @@ export function DurationSheet({
           return (
             <ScalePressable
               key={item}
-              accessibilityLabel={t('doctor_profile.duration_value', { count: item })}
+              accessibilityLabel={t('doctor_profile.duration_value', { n: item })}
               onPress={() => {
                 void Haptics.selectionAsync();
                 onChange(item);
@@ -56,7 +56,7 @@ export function DurationSheet({
                   color: active ? colors.primary : colors.text,
                 }}
               >
-                {t('doctor_profile.duration_value', { count: item })}
+                {t('doctor_profile.duration_value', { n: item })}
               </Text>
               {active ? <Check size={18} color={colors.primary} strokeWidth={2.4} /> : null}
             </ScalePressable>

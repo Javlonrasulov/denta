@@ -10,7 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { clientTabBarStyle, mobileTabLabelStyle } from '@/components/mobile';
+import { clientTabBarStyle, mobileTabLabelStyle, tabBarBottomInset } from '@/components/mobile';
 import { useTheme } from '@/theme';
 
 export default function ClientTabsLayout() {
@@ -20,6 +20,7 @@ export default function ClientTabsLayout() {
 
   return (
     <Tabs
+      safeAreaInsets={{ bottom: tabBarBottomInset(insets.bottom) }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,

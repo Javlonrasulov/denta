@@ -175,7 +175,7 @@ export function AddPaymentSheet({
             paddingHorizontal: 20,
             paddingTop: 10,
             paddingBottom: Math.max(insets.bottom, 16) + 12,
-            maxHeight: '88%',
+            height: '88%',
           }}
         >
           <View style={{ alignItems: 'center', paddingBottom: 8 }}>
@@ -203,6 +203,7 @@ export function AddPaymentSheet({
           <ScrollView
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
             contentContainerStyle={{ gap: 12, paddingBottom: 8 }}
           >
             <View style={{ flexDirection: 'row', gap: 8 }}>

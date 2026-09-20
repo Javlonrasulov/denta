@@ -1,3 +1,4 @@
+export { LanguageBottomSheet } from '@/components/auth/LanguageBottomSheet';
 export { DoctorAvatar } from './DoctorAvatar';
 export { DoctorProfileHero } from './DoctorProfileHero';
 export { ProfileStats } from './ProfileStats';

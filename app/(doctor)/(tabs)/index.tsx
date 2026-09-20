@@ -20,6 +20,7 @@ import {
 import { MobileScreen } from '@/components/mobile';
 import { ErrorState } from '@/components/states/EmptyState';
 import { useDoctorDashboard } from '@/hooks/useDoctorDashboard';
+import { useDoctorProfileStore } from '@/store/doctorProfileStore';
 import {
   buildDoctorNotifications,
   doctorGreetingName,
@@ -33,6 +34,7 @@ export default function DoctorDashboardScreen() {
   const { model, doctor, patients, isLoading, isError, refetch } = useDoctorDashboard();
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
+  const avatarOverride = useDoctorProfileStore((s) => s.overrides.avatar);
 
   const notifications = useMemo(() => {
     return buildDoctorNotifications(model).map((item) => ({
@@ -87,8 +89,7 @@ export default function DoctorDashboardScreen() {
   const currentElapsed = model.currentAppointment
     ? model.nowMinutes - parseMinutes(model.currentAppointment.time)
     : 0;
-  const total =
-    model.completedAppointments.length + model.remainingAppointments.length;
+  const headerPhoto = avatarOverride === undefined ? doctor?.photoUrl : avatarOverride ?? undefined;
 
   return (
     <MobileScreen
@@ -98,7 +99,7 @@ export default function DoctorDashboardScreen() {
     >
       <DoctorDashboardHeader
         doctorName={doctorName}
-        photoUrl={doctor?.photoUrl}
+        photoUrl={headerPhoto}
         alertCount={unreadCount}
         onNotify={() => setNotifyOpen(true)}
         onProfile={openProfile}
@@ -129,7 +130,7 @@ export default function DoctorDashboardScreen() {
         patients={model.patientsToday}
         completed={model.completedAppointments.length}
         remaining={model.remainingAppointments.length}
-        total={total}
+        total={model.todayAppointments.filter((a) => a.status !== 'cancelled').length}
       />
 
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>

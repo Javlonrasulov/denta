@@ -9,16 +9,18 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { doctorTabBarStyle, doctorTabLabelStyle } from '@/components/mobile';
+import { doctorTabBarStyle, doctorTabLabelStyle, tabBarBottomInset } from '@/components/mobile';
 import { useTheme } from '@/theme';
 
 export default function DoctorTabsLayout() {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const bottom = tabBarBottomInset(insets.bottom);
 
   return (
     <Tabs
+      safeAreaInsets={{ bottom }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,

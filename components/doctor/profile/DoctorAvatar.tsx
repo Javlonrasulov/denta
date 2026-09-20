@@ -13,7 +13,7 @@ export function DoctorAvatar({
   uri,
   firstName,
   lastName,
-  size = 108,
+  size = 118,
   onPress,
   editable = true,
 }: {
@@ -28,7 +28,8 @@ export function DoctorAvatar({
   const initials = doctorInitials(firstName, lastName);
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const badge = Math.round(size * 0.3);
+  const badge = Math.max(30, Math.round(size * 0.3));
+  const ring = size + 10;
 
   return (
     <ScalePressable
@@ -37,65 +38,92 @@ export function DoctorAvatar({
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress?.();
       }}
-      style={{ width: size + 6, height: size + 6, alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: ring + 8, height: ring + 8, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Animated.View
-        entering={FadeIn.duration(280)}
-        onTouchStart={() => {
-          scale.value = withSpring(0.96, { damping: 16, stiffness: 280 });
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: ring + 18,
+          height: ring + 18,
+          borderRadius: (ring + 18) / 2,
+          backgroundColor: isDark ? 'rgba(129,140,248,0.12)' : 'rgba(67,56,202,0.08)',
         }}
-        onTouchEnd={() => {
-          scale.value = withSpring(1, { damping: 16, stiffness: 280 });
+      />
+      <View
+        style={{
+          width: ring,
+          height: ring,
+          borderRadius: ring / 2,
+          borderWidth: 1.5,
+          borderColor: isDark ? 'rgba(165,180,252,0.35)' : 'rgba(67,56,202,0.22)',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
-        style={[
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderWidth: 3,
-            borderColor: isDark ? 'rgba(165,180,252,0.28)' : 'rgba(67,56,202,0.16)',
-            backgroundColor: isDark ? 'rgba(129,140,248,0.16)' : 'rgba(67,56,202,0.1)',
-            overflow: 'hidden',
-            alignItems: 'center',
-            justifyContent: 'center',
-          },
-          animStyle,
-        ]}
       >
-        {uri ? (
-          <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" />
-        ) : (
-          <Text
-            maxFontSizeMultiplier={1}
-            style={{
-              fontFamily: 'Geologica_700Bold',
-              fontSize: size * 0.32,
-              lineHeight: size * 0.38,
-              color: colors.primary,
-              letterSpacing: -0.6,
-            }}
-          >
-            {initials}
-          </Text>
-        )}
-      </Animated.View>
+        <Animated.View
+          entering={FadeIn.duration(280)}
+          onTouchStart={() => {
+            scale.value = withSpring(0.96, { damping: 16, stiffness: 280 });
+          }}
+          onTouchEnd={() => {
+            scale.value = withSpring(1, { damping: 16, stiffness: 280 });
+          }}
+          style={[
+            {
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              borderWidth: 3,
+              borderColor: isDark ? 'rgba(165,180,252,0.32)' : 'rgba(255,255,255,0.92)',
+              backgroundColor: isDark ? 'rgba(129,140,248,0.18)' : 'rgba(67,56,202,0.12)',
+              overflow: 'hidden',
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+            animStyle,
+          ]}
+        >
+          {uri ? (
+            <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" />
+          ) : (
+            <Text
+              maxFontSizeMultiplier={1}
+              style={{
+                fontFamily: 'Geologica_700Bold',
+                fontSize: size * 0.3,
+                lineHeight: size * 0.36,
+                color: colors.primary,
+                letterSpacing: -0.6,
+              }}
+            >
+              {initials}
+            </Text>
+          )}
+        </Animated.View>
+      </View>
       {editable ? (
         <View
           style={{
             position: 'absolute',
-            right: 0,
-            bottom: 2,
+            right: 2,
+            bottom: 4,
             width: badge,
             height: badge,
             borderRadius: badge / 2,
             backgroundColor: colors.primary,
             alignItems: 'center',
             justifyContent: 'center',
-            borderWidth: 2,
-            borderColor: isDark ? '#0B1220' : '#E3E9F4',
+            borderWidth: 2.5,
+            borderColor: isDark ? '#0B1220' : '#E8EDFA',
+            shadowColor: '#4338CA',
+            shadowOpacity: 0.28,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 3,
           }}
         >
-          <Camera size={badge * 0.46} color="#FFFFFF" strokeWidth={2.1} />
+          <Camera size={badge * 0.44} color="#FFFFFF" strokeWidth={2.2} />
         </View>
       ) : null}
     </ScalePressable>

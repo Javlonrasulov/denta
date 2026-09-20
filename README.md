@@ -1,44 +1,66 @@
-# Denta
+# DENTA.UZ
 
-Premium stomatologiya platformasi — **Client**, **Doctor** va **Clinic CRM** frontend (Expo / React Native).
+Uchta alohida product:
 
-Hozircha faqat frontend: mock data + local state. Backend (NestJS + Prisma + PostgreSQL) keyingi bosqichda ulanadi.
+| Product | Stack | Path | Port |
+|---------|--------|------|------|
+| **Client App** | React Native + Expo | `apps/client-app` | **8081** |
+| **Doctor App** | React Native + Expo | `apps/doctor-app` | **8082** |
+| **Clinic CRM** | **Next.js** (web) | `apps/clinic-web` | **3000** |
 
-## Stack
+> **Muhim:** Clinic CRM — Next.js. Doctor/Client Expo Web Clinic CRM emas.
+> `expo start --web` orqali Clinic ochilmasin.
 
-- Expo 57 · React Native · TypeScript · Expo Router
-- NativeWind · Reanimated · Gesture Handler · SVG
-- Zustand · TanStack Query · i18next (uz / uz-Cyrl / ru / en)
-- Plus Jakarta Sans · Lucide icons · SecureStore-ready auth storage
-
-## Ishga tushirish
+## Local development
 
 ```bash
+# root
 npm install
-npx expo start
+
+# Clinic CRM (browser)
+cd apps/clinic-web
+npm run dev
+# → http://localhost:3000
+
+# Client mobile
+cd apps/client-app
+npm run start
+# → Metro :8081
+
+# Doctor mobile
+cd apps/doctor-app
+npm run start
+# → Metro :8082
 ```
 
-Rol tanlash ekranidan Client / Doctor / Clinic ilovasiga o‘ting.
+Yoki rootdan:
 
-## Arxitektura
-
-```
-app/(client)   — bemor ilovasi (tabs, klinika, shifokor, booking, map)
-app/(doctor)   — shifokor (dashboard, calendar, patients + odontogram, finance)
-app/(clinic)   — klinika CRM (dashboard, appointments, doctors, inventory)
-components/    — UI + feature komponentlar
-services/      — API abstraction (mock delay; NestJS uchun tayyor)
-hooks/         — TanStack Query hooks
-store/         — Zustand (settings, favorites, appointments draft)
-theme/         — design tokens + ThemeProvider (light/dark)
-locales/       — 4 til
-mocks/         — realistik O‘zbekiston ma’lumotlari
+```bash
+npm run start:clinic   # Next.js :3000
+npm run start:client   # Expo client :8081
+npm run start:doctor   # Expo doctor :8082
 ```
 
-## Booking slot logikasi
+## Architecture
 
-Shifokor ish vaqti `09:00–18:00`, tanaffus `13:00–14:00`, davomiylik `30 min`. Band qilingan slotlar o‘chirilgan — random emas. Keyin shu logika backendga ko‘chiriladi.
+```
+apps/
+  client-app/     # Expo entry (APP_VARIANT=client, port 8081)
+  doctor-app/     # Expo entry (APP_VARIANT=doctor, port 8082)
+  clinic-web/     # Next.js Clinic CRM (port 3000)
+packages/
+  types/          # shared domain types
+  mocks/          # clinic web mock data
+  utils/          # formatPrice, dates
+  design-tokens/  # shared tokens
+app/              # Expo Router screens (client + doctor + legacy clinic RN)
+components/       # mobile UI (not used by clinic-web)
+```
 
-## Keyingi bosqich
+Mobile UI (`react-native`) Clinic Web’ga import qilinmaydi. Clinic Web — alohida DOM/Tailwind UI.
 
-NestJS + Prisma + PostgreSQL + Redis + Socket.IO + Firebase Notifications + Mapbox.
+## Clinic CRM modules
+
+Overview · Appointments · Patients · Doctors · Rooms · Services · Finance · Inventory · Reports · Settings
+
+Layout: left sidebar + top header + main content (desktop/tablet first).

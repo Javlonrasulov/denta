@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --font-onest: 'Onest', sans-serif;
+  --text-page-title: 1.75rem;
+  --text-section: 1.125rem;
+  --text-body: 0.875rem;
+  --text-table: 0.8125rem;
+  --text-caption: 0.75rem;
+  --text-kpi: 1.75rem;
+  --leading-tight-pro: 1.25;
+  --leading-body: 1.45;
+  --tracking-cyrillic: 0;
+  --tracking-section-label: 0.04em;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  font-family: var(--font-onest), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-cyrillic);
+}
+
+/* Prevent browser UA fonts on controls — keep Onest everywhere */
+button,
+input,
+select,
+textarea,
+optgroup,
+option {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+table {
+  font: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}

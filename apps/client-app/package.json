@@ -1,0 +1,11 @@
+{
+  "name": "@denta/client-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Denta Client mobile app (Expo). Runs the shared mobile codebase with APP_VARIANT=client.",
+  "scripts": {
+    "start": "cd ../.. && cross-env APP_VARIANT=client EXPO_PUBLIC_APP_VARIANT=client npx expo start --port 8081",
+    "android": "cd ../.. && cross-env APP_VARIANT=client EXPO_PUBLIC_APP_VARIANT=client npx expo start --android --port 8081",
+    "ios": "cd ../.. && cross-env APP_VARIANT=client EXPO_PUBLIC_APP_VARIANT=client npx expo start --ios --port 8081"
+  }
+}

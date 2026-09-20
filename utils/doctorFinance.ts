@@ -335,12 +335,12 @@ export function buildDoctorFinanceModel(
   const revenue = sumAmount(income);
   const expenseTotal = sumAmount(expenses);
   const previousRevenue = sumAmount(previousIncome);
-  const deltaPct =
+  const rawDelta =
     previousRevenue > 0
       ? Math.round(((revenue - previousRevenue) / previousRevenue) * 100)
-      : revenue > 0
-        ? 100
-        : null;
+      : null;
+  const deltaPct =
+    rawDelta == null || Math.abs(rawDelta) > 300 ? null : rawDelta;
 
   const services = buildServices(income);
   const patients = new Set(

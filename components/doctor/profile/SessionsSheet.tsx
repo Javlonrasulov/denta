@@ -22,9 +22,9 @@ export function SessionsSheet({
   const lastActive = (item: DoctorDeviceSession) => {
     if (item.lastActiveKey === 'now') return t('doctor_profile.session_now');
     if (item.lastActiveKey === 'hours') {
-      return t('doctor_profile.session_hours', { count: item.lastActiveCount ?? 1 });
+      return t('doctor_profile.session_hours', { n: item.lastActiveCount ?? 1 });
     }
-    return t('doctor_profile.session_days', { count: item.lastActiveCount ?? 1 });
+    return t('doctor_profile.session_days', { n: item.lastActiveCount ?? 1 });
   };
 
   return (

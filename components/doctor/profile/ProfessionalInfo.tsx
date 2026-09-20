@@ -64,8 +64,9 @@ export function ProfessionalInfo({ profile }: { profile: DoctorProfile }) {
           fontFamily: 'Geologica_600SemiBold',
           fontSize: 11,
           lineHeight: 14,
-          letterSpacing: 1.1,
+          letterSpacing: 1.2,
           color: colors.textMuted,
+          textTransform: 'uppercase',
           paddingHorizontal: 4,
         }}
       >
@@ -83,7 +84,7 @@ export function ProfessionalInfo({ profile }: { profile: DoctorProfile }) {
         <Row label={t('doctor_profile.specialty')} value={profile.specialty} />
         <Row
           label={t('doctor_profile.experience')}
-          value={t('doctor_profile.years_exp', { count: profile.experienceYears })}
+          value={t('doctor_profile.years_exp', { n: profile.experienceYears })}
         />
         <Row label={t('doctor_profile.clinic')} value={profile.clinicName} />
         <Row
@@ -92,7 +93,7 @@ export function ProfessionalInfo({ profile }: { profile: DoctorProfile }) {
         />
         <Row
           label={t('doctor_profile.duration')}
-          value={t('doctor_profile.duration_value', { count: profile.appointmentDuration })}
+          value={t('doctor_profile.duration_value', { n: profile.appointmentDuration })}
           last
         />
       </View>

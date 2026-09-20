@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -44,8 +45,9 @@ export function ProfileCompletion({
         <Text
           style={{
             fontFamily: 'Geologica_700Bold',
-            fontSize: 16,
-            lineHeight: 20,
+            fontSize: 18,
+            lineHeight: 22,
+            letterSpacing: -0.3,
             color: colors.primary,
           }}
         >
@@ -54,23 +56,25 @@ export function ProfileCompletion({
       </View>
       <View
         style={{
-          height: 6,
-          borderRadius: 3,
+          height: 7,
+          borderRadius: 4,
           backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
           overflow: 'hidden',
         }}
       >
-        <View
+        <LinearGradient
+          colors={isDark ? (['#818CF8', '#6366F1'] as const) : (['#6366F1', '#4338CA'] as const)}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
           style={{
-            width: `${completion.percent}%`,
+            width: `${Math.max(completion.percent, 4)}%`,
             height: '100%',
-            borderRadius: 3,
-            backgroundColor: colors.primary,
+            borderRadius: 4,
           }}
         />
       </View>
       {!done ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
           <Text
             style={{
               fontFamily: 'GolosText_400Regular',
@@ -85,10 +89,12 @@ export function ProfileCompletion({
             <View
               key={key}
               style={{
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-                borderRadius: 8,
+                paddingHorizontal: 9,
+                paddingVertical: 4,
+                borderRadius: 9,
                 backgroundColor: isDark ? 'rgba(129,140,248,0.14)' : 'rgba(67,56,202,0.08)',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(165,180,252,0.16)' : 'rgba(67,56,202,0.1)',
               }}
             >
               <Text
@@ -108,4 +114,3 @@ export function ProfileCompletion({
     </Animated.View>
   );
 }
-

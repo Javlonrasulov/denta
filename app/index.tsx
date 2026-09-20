@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, View } from 'react-native';
+import { Linking, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Building2, Stethoscope, UserRound } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +38,8 @@ const ROLES: {
   },
 ];
 
+const CLINIC_WEB_URL = 'http://localhost:3000';
+
 export default function RoleGateScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -52,6 +54,45 @@ export default function RoleGateScreen() {
     if (role !== LOCKED_ROLE) setRole(LOCKED_ROLE);
   }, [isAuthenticated, role, setRole]);
 
+  // Expo Web must never host Clinic CRM — redirect users to Next.js app.
+  if (Platform.OS === 'web' && (APP_VARIANT === 'clinic' || role === 'clinic')) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          paddingTop: insets.top + spacing['3xl'],
+          paddingHorizontal: spacing['2xl'],
+          gap: spacing.lg,
+        }}
+      >
+        <Text variant="display" color={colors.primary}>
+          DENTA.UZ Clinic CRM
+        </Text>
+        <Text variant="body" color={colors.textSecondary}>
+          Clinic CRM is a separate Next.js web app. Expo Web is not the clinic product.
+        </Text>
+        <Text variant="bodySmall" muted>
+          Run: cd apps/clinic-web && npm run dev
+        </Text>
+        <Pressable
+          onPress={() => Linking.openURL(CLINIC_WEB_URL)}
+          style={{
+            alignSelf: 'flex-start',
+            backgroundColor: colors.primary,
+            paddingHorizontal: spacing.xl,
+            paddingVertical: spacing.md,
+            borderRadius: radius.lg,
+          }}
+        >
+          <Text variant="label" color={colors.textInverse}>
+            Open {CLINIC_WEB_URL}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   if (!isAuthenticated) return <Redirect href="/login" />;
 
   if (LOCKED_ROLE) {
@@ -62,8 +103,13 @@ export default function RoleGateScreen() {
   if (role === 'doctor') return <Redirect href="/(doctor)/(tabs)" />;
   if (role === 'clinic') return <Redirect href="/(clinic)/(shell)/overview" />;
 
+  // On Expo web, clinic is not a selectable mobile role.
   const visibleRoles =
-    APP_VARIANT === 'clinic' ? ROLES : ROLES.filter((r) => r.role === APP_VARIANT);
+    Platform.OS === 'web'
+      ? ROLES.filter((r) => r.role !== 'clinic')
+      : APP_VARIANT === 'clinic'
+        ? ROLES
+        : ROLES.filter((r) => r.role === APP_VARIANT);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

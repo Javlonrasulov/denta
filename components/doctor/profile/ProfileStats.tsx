@@ -9,14 +9,15 @@ import type { DoctorProfileStats } from '@/types';
 function Cell({ label, value }: { label: string; value: string }) {
   const { colors } = useLoginTheme();
   return (
-    <View style={{ flex: 1, minWidth: 0, alignItems: 'center', gap: 2 }}>
+    <View style={{ flex: 1, minWidth: 0, alignItems: 'center', gap: 3, paddingHorizontal: 2 }}>
       <Text
         numberOfLines={1}
         maxFontSizeMultiplier={1}
         style={{
           fontFamily: 'Geologica_700Bold',
-          fontSize: 16,
-          lineHeight: 20,
+          fontSize: 17,
+          lineHeight: 21,
+          letterSpacing: -0.3,
           color: colors.text,
           ...(Platform.OS === 'android' ? { paddingRight: 2 } : null),
         }}
@@ -30,7 +31,9 @@ function Cell({ label, value }: { label: string; value: string }) {
           fontFamily: 'GolosText_500Medium',
           fontSize: 10,
           lineHeight: 13,
+          letterSpacing: 0.2,
           color: colors.textMuted,
+          textTransform: 'uppercase',
         }}
       >
         {label}
@@ -51,21 +54,21 @@ export function ProfileStats({ stats }: { stats: DoctorProfileStats }) {
         borderRadius: 18,
         borderWidth: 1,
         borderColor: hairline,
-        paddingVertical: 14,
-        paddingHorizontal: 8,
+        paddingVertical: 15,
+        paddingHorizontal: 6,
         flexDirection: 'row',
         alignItems: 'center',
       }}
     >
       <Cell label={t('doctor_profile.stats_patients')} value={String(stats.patients)} />
-      <View style={{ width: 1, height: 28, backgroundColor: hairline }} />
+      <View style={{ width: 1, height: 30, backgroundColor: hairline }} />
       <Cell label={t('doctor_profile.stats_visits')} value={String(stats.appointments)} />
-      <View style={{ width: 1, height: 28, backgroundColor: hairline }} />
+      <View style={{ width: 1, height: 30, backgroundColor: hairline }} />
       <Cell label={t('doctor_profile.stats_rating')} value={stats.rating.toFixed(1)} />
-      <View style={{ width: 1, height: 28, backgroundColor: hairline }} />
+      <View style={{ width: 1, height: 30, backgroundColor: hairline }} />
       <Cell
         label={t('doctor_profile.stats_exp')}
-        value={t('doctor_profile.years_short', { count: stats.experienceYears })}
+        value={t('doctor_profile.years_short', { n: stats.experienceYears })}
       />
     </Animated.View>
   );

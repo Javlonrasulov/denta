@@ -137,7 +137,7 @@ export function buildDoctorProfile(input: {
     email: overrides.email?.trim() || 'alisher@smile-dental.uz',
     bio:
       overrides.bio ??
-      'Terapevt stomatolog, estetik va terapevtik stomatologiya bo‘yicha ishlaydi.',
+      `Terapevt stomatolog, ${doctor.experienceYears} yillik tajriba. Estetik va terapevtik stomatologiya bo‘yicha ishlaydi.`,
     languages: overrides.languages ?? doctor.languages,
     workingHours,
     weeklySchedule,

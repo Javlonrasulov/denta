@@ -28,8 +28,9 @@ export function WorkSchedulePreview({
           fontFamily: 'Geologica_600SemiBold',
           fontSize: 11,
           lineHeight: 14,
-          letterSpacing: 1.1,
+          letterSpacing: 1.2,
           color: colors.textMuted,
+          textTransform: 'uppercase',
           paddingHorizontal: 4,
         }}
       >
@@ -93,11 +94,13 @@ export function WorkSchedulePreview({
           onPress={onManage}
           style={{
             marginTop: 10,
-            height: 40,
-            borderRadius: 12,
+            height: 42,
+            borderRadius: 13,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: isDark ? 'rgba(129,140,248,0.14)' : 'rgba(67,56,202,0.08)',
+            backgroundColor: isDark ? 'rgba(129,140,248,0.16)' : 'rgba(67,56,202,0.1)',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(165,180,252,0.2)' : 'rgba(67,56,202,0.12)',
           }}
         >
           <Text

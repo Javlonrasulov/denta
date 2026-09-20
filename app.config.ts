@@ -2,7 +2,8 @@ import type { ExpoConfig, ConfigContext } from 'expo/config';
 
 export type AppVariant = 'client' | 'doctor' | 'clinic';
 
-const VARIANT = (process.env.APP_VARIANT ?? 'clinic') as AppVariant;
+/** Mobile products only. Clinic CRM is Next.js at apps/clinic-web (port 3000). */
+const VARIANT = (process.env.APP_VARIANT ?? 'doctor') as AppVariant;
 
 const VARIANTS: Record<
   AppVariant,

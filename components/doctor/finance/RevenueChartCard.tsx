@@ -21,7 +21,7 @@ function Bar({
   onPress: () => void;
 }) {
   const { colors, isDark } = useLoginTheme();
-  const barHeight = Math.max(8, Math.round(ratio * 108));
+  const barHeight = ratio <= 0 ? 4 : Math.max(10, Math.round(ratio * 108));
 
   return (
     <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', minWidth: 0 }}>

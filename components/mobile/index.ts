@@ -13,4 +13,5 @@ export {
   mobileTabLabelStyle,
   doctorTabBarStyle,
   doctorTabLabelStyle,
+  tabBarBottomInset,
 } from './tabBar';

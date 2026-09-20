@@ -111,16 +111,15 @@ export default function DoctorProfileScreen() {
       void (async () => {
         const result = await pickDoctorAvatar(source);
         if (!result.ok) {
-          if (result.reason === 'permission') {
-            showToast({
-              tone: 'warning',
-              title: t('doctor_profile.permission_denied'),
-              message:
-                source === 'camera'
-                  ? t('doctor_profile.permission_camera')
-                  : t('doctor_profile.permission_photos'),
-            });
-          }
+          if (result.reason === 'cancel') return;
+          showToast({
+            tone: 'warning',
+            title: t('doctor_profile.permission_denied'),
+            message:
+              source === 'camera'
+                ? t('doctor_profile.permission_camera')
+                : t('doctor_profile.permission_photos'),
+          });
           return;
         }
         setPreviewUri(result.uri);
@@ -191,7 +190,7 @@ export default function DoctorProfileScreen() {
   return (
     <MobileScreen
       style={{ backgroundColor: canvas }}
-      contentStyle={{ gap: 18, paddingTop: 8 }}
+      contentStyle={{ gap: 16, paddingTop: 6, paddingBottom: 28 }}
       onRefresh={refetch}
     >
       <ProfileHeader onEdit={() => setEditOpen(true)} />
@@ -256,7 +255,7 @@ export default function DoctorProfileScreen() {
         <ProfileSettingsRow
           icon={Clock}
           label={t('doctor_profile.visit_length')}
-          value={t('doctor_profile.duration_value', { count: profile.appointmentDuration })}
+          value={t('doctor_profile.duration_value', { n: profile.appointmentDuration })}
           onPress={() => setDurationOpen(true)}
         />
         <ProfileSettingsRow
@@ -310,7 +309,7 @@ export default function DoctorProfileScreen() {
         {t('doctor_profile.version', { version: '1.0.0' })}
       </Text>
 
-      <AvatarActionSheet>
+      <AvatarActionSheet
         visible={avatarOpen}
         canRemove={Boolean(profile.avatar)}
         onClose={() => setAvatarOpen(false)}

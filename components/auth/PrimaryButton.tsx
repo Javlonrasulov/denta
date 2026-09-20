@@ -53,6 +53,8 @@ export function PrimaryButton({
           opacity: isDisabled && !loading ? 0.48 : 1,
           borderRadius: 16,
           overflow: 'hidden',
+          flexShrink: 0,
+          minHeight: 56,
         },
         animStyle,
       ]}
@@ -63,6 +65,7 @@ export function PrimaryButton({
         end={{ x: 1, y: 1 }}
         style={{
           height: 56,
+          minHeight: 56,
           borderRadius: 16,
           alignItems: 'center',
           justifyContent: 'center',

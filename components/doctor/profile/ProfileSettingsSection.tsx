@@ -21,8 +21,9 @@ export function ProfileSettingsSection({
           fontFamily: 'Geologica_600SemiBold',
           fontSize: 11,
           lineHeight: 14,
-          letterSpacing: 1.15,
+          letterSpacing: 1.2,
           color: colors.textMuted,
+          textTransform: 'uppercase',
           paddingHorizontal: 4,
         }}
       >

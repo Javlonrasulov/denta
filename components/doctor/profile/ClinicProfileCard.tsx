@@ -36,12 +36,14 @@ export function ClinicProfileCard({
       >
         <View
           style={{
-            width: 46,
-            height: 46,
-            borderRadius: 14,
-            backgroundColor: field,
+            width: 48,
+            height: 48,
+            borderRadius: 15,
+            backgroundColor: isDark ? 'rgba(129,140,248,0.16)' : 'rgba(67,56,202,0.1)',
             alignItems: 'center',
             justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(165,180,252,0.18)' : 'rgba(67,56,202,0.12)',
           }}
         >
           <Building2 size={20} color={colors.primary} strokeWidth={1.8} />
@@ -53,12 +55,13 @@ export function ClinicProfileCard({
               fontFamily: 'Geologica_600SemiBold',
               fontSize: 16,
               lineHeight: 22,
+              letterSpacing: -0.2,
               color: colors.text,
             }}
           >
             {profile.clinicName}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <MapPin size={13} color={colors.textMuted} strokeWidth={1.8} />
             <Text
               numberOfLines={1}
@@ -70,7 +73,7 @@ export function ClinicProfileCard({
                 color: colors.textMuted,
               }}
             >
-              {profile.clinicAddress}
+              {profile.clinicAddress || profile.clinicCity}
             </Text>
           </View>
           <Text
@@ -85,7 +88,18 @@ export function ClinicProfileCard({
             {t('doctor_profile.clinic_profile')}
           </Text>
         </View>
-        <ChevronRight size={16} color={colors.textMuted} strokeWidth={1.8} />
+        <View
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 10,
+            backgroundColor: field,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ChevronRight size={15} color={colors.textMuted} strokeWidth={1.9} />
+        </View>
       </ScalePressable>
     </Animated.View>
   );
