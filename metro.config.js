@@ -4,6 +4,14 @@ const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
+// Backend build output can appear/disappear during API compiles — don't watch it.
+config.watchFolders = config.watchFolders ?? [];
+const apiDist = path.resolve(__dirname, 'apps/api/dist');
+config.resolver.blockList = [
+  ...(Array.isArray(config.resolver.blockList) ? config.resolver.blockList : []),
+  new RegExp(`${apiDist.replace(/[/\\]/g, '[/\\\\]')}[/\\\\].*`),
+];
+
 // react-native-maps has no web implementation — stub it so Metro doesn't hang.
 const mapsWebStub = path.resolve(__dirname, 'components/map/react-native-maps.web.js');
 const upstreamResolveRequest = config.resolver.resolveRequest;

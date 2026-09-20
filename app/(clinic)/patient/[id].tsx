@@ -6,13 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { Odontogram } from '@/components/odontogram/Odontogram';
+import { useQuery } from '@tanstack/react-query';
+import { getPatientOdontogram } from '@/services/patientService';
 import { SegmentedControl } from '@/components/crm';
 import { ErrorState } from '@/components/states/EmptyState';
 import { Avatar } from '@/components/ui/Avatar';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { usePatient } from '@/hooks/queries';
-import { MOCK_ODONTOGRAM } from '@/mocks/data';
 import { useTheme } from '@/theme';
 
 type Tab = 'overview' | 'appointments' | 'treatment' | 'chart' | 'payments' | 'notes';
@@ -23,6 +24,11 @@ export default function ClinicPatientDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors, spacing, radius, shadows } = useTheme();
   const patient = usePatient(id);
+  const odontogramQuery = useQuery({
+    queryKey: ['patients', id, 'odontogram'],
+    enabled: Boolean(id),
+    queryFn: () => getPatientOdontogram(id),
+  });
   const [tab, setTab] = useState<Tab>('overview');
 
   if (patient.isLoading) return <ListSkeleton rows={6} />;
@@ -119,7 +125,7 @@ export default function ClinicPatientDetailScreen() {
       />
 
       {tab === 'chart' ? (
-        <Odontogram teeth={MOCK_ODONTOGRAM} />
+        <Odontogram teeth={odontogramQuery.data ?? []} />
       ) : tab === 'notes' ? (
         <Text variant="body" muted>
           {p.notes ?? t('empty.no_data')}

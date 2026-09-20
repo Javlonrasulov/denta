@@ -22,7 +22,8 @@ import { ErrorState } from '@/components/states/EmptyState';
 import { Text } from '@/components/ui/Text';
 import { ScalePressable } from '@/components/doctor/dashboard/ScalePressable';
 import { useDoctorCalendar } from '@/hooks/useDoctorCalendar';
-import { cancelAppointment } from '@/services/appointmentService';
+import { cancelAppointment, updateAppointmentStatus } from '@/services/appointmentService';
+import { createFinanceRecord } from '@/services/financeService';
 import { useToastStore } from '@/store/toastStore';
 import type { CalendarFilter, CalendarSlot, CalendarView } from '@/utils/doctorCalendar';
 import {
@@ -116,6 +117,89 @@ export default function DoctorCalendarScreen() {
         tone: 'success',
         title: t('appointments.cancel_appointment'),
         message: t('doctor_app.cancelled_done'),
+      });
+    } catch {
+      showToast({
+        tone: 'error',
+        title: t('common.error'),
+        message: t('error.something_wrong'),
+      });
+    }
+  };
+
+  const handleStart = async () => {
+    const apt = activeSlot?.appointment;
+    if (!apt) return;
+    try {
+      await updateAppointmentStatus(apt.id, 'IN_PROGRESS');
+      refetch();
+      setActiveSlot(null);
+      if (apt.patientId) router.push(`/(doctor)/patient/${apt.patientId}`);
+    } catch {
+      showToast({
+        tone: 'error',
+        title: t('common.error'),
+        message: t('error.something_wrong'),
+      });
+    }
+  };
+
+  const handleComplete = async () => {
+    const apt = activeSlot?.appointment;
+    if (!apt) return;
+    try {
+      const updated = await updateAppointmentStatus(apt.id, 'COMPLETED');
+      // Optional: record full payment immediately if doctor chooses pay-on-complete later.
+      // Charge is created unpaid by backend; do not auto-create PAID payment.
+      setActiveSlot(null);
+      refetch();
+      showToast({
+        tone: 'success',
+        title: t('appointments.status_completed'),
+        message: updated.charge
+          ? t('doctor_app.charge_created', {
+              amount: updated.charge.remainingAmount,
+              defaultValue: `Charge: ${updated.charge.remainingAmount} UZS unpaid`,
+            })
+          : t('doctor_app.completed_done', {
+              defaultValue: 'Visit completed',
+            }),
+      });
+    } catch {
+      showToast({
+        tone: 'error',
+        title: t('common.error'),
+        message: t('error.something_wrong'),
+      });
+    }
+  };
+
+  const handlePayCharge = async () => {
+    const apt = activeSlot?.appointment;
+    const charge = apt?.charge;
+    if (!apt || !charge || charge.remainingAmount <= 0) return;
+    try {
+      await createFinanceRecord({
+        type: 'income',
+        amount: charge.remainingAmount,
+        serviceName: apt.serviceName,
+        patientName: apt.patientName,
+        patientId: apt.patientId,
+        doctorId: apt.doctorId,
+        doctorName: apt.doctorName,
+        appointmentId: apt.id,
+        chargeId: charge.id,
+        paymentMethod: 'cash',
+        paymentStatus: 'paid',
+      });
+      setActiveSlot(null);
+      refetch();
+      showToast({
+        tone: 'success',
+        title: t('doctor_finance.paid'),
+        message: t('doctor_app.payment_recorded', {
+          defaultValue: 'Payment recorded',
+        }),
       });
     } catch {
       showToast({
@@ -285,9 +369,13 @@ export default function DoctorCalendarScreen() {
           void handleCancel();
         }}
         onStart={() => {
-          const id = activeSlot?.appointment?.patientId;
-          setActiveSlot(null);
-          if (id) router.push(`/(doctor)/patient/${id}`);
+          void handleStart();
+        }}
+        onComplete={() => {
+          void handleComplete();
+        }}
+        onPay={() => {
+          void handlePayCharge();
         }}
       />
     </MobileScreen>

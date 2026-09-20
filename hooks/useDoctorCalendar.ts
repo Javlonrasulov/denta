@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { useAppointments, useDoctor, useFinance, usePatients } from '@/hooks/queries';
+import { useAppointments, useFinance, usePatients } from '@/hooks/queries';
+import { useDoctorMe } from '@/hooks/useDoctorMe';
 import type { Appointment, Doctor, FinanceRecord, Patient } from '@/types';
 import {
   buildDoctorCalendar,
   type CalendarFilter,
   type DoctorCalendarModel,
 } from '@/utils/doctorCalendar';
-import { DEMO_DOCTOR_ID, localDateKey } from '@/utils/doctorDashboard';
+import { localDateKey } from '@/utils/doctorDashboard';
 
 export function useDoctorCalendar(selectedKey: string, filter: CalendarFilter): {
   model: DoctorCalendarModel;
@@ -22,7 +23,7 @@ export function useDoctorCalendar(selectedKey: string, filter: CalendarFilter): 
 } {
   const [now, setNow] = useState(() => new Date());
   const appointments = useAppointments();
-  const doctor = useDoctor(DEMO_DOCTOR_ID);
+  const doctor = useDoctorMe();
   const patients = usePatients();
   const finance = useFinance();
 
@@ -35,11 +36,11 @@ export function useDoctorCalendar(selectedKey: string, filter: CalendarFilter): 
     () =>
       buildDoctorCalendar({
         appointments: appointments.data ?? [],
-        doctor: doctor.data,
+        doctor: doctor.data ?? undefined,
         selectedKey: selectedKey || localDateKey(now),
         filter,
         now,
-        doctorId: DEMO_DOCTOR_ID,
+        doctorId: doctor.data?.id,
       }),
     [appointments.data, doctor.data, selectedKey, filter, now],
   );

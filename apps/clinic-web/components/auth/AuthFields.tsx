@@ -1,7 +1,13 @@
 'use client';
 
 import { Eye, EyeOff } from 'lucide-react';
-import { useId, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import {
+  useId,
+  useState,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from 'react';
 
 import { cn } from '@/lib/cn';
 
@@ -94,7 +100,7 @@ export function AuthButton({
   variant = 'primary',
   className,
   ...rest
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
   variant?: 'primary' | 'secondary' | 'ghost';
 }) {

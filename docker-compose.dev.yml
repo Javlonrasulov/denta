@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: denta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: denta
+      POSTGRES_PASSWORD: denta
+      POSTGRES_DB: denta
+    ports:
+      - "5432:5432"
+    volumes:
+      - denta_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U denta -d denta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: denta-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - denta_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: denta-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: denta
+      MINIO_ROOT_PASSWORD: dentapass123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - denta_minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: denta-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  denta_pg_data:
+  denta_redis_data:
+  denta_minio_data:

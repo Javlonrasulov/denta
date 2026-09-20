@@ -51,7 +51,8 @@ const LOCALE_MAP: Record<string, string> = {
   en: 'en-GB',
 };
 
-export const DEMO_DOCTOR_NAME = 'Dr. Alisher Aliyev';
+export const DEMO_DOCTOR_NAME =
+  process.env.EXPO_PUBLIC_USE_MOCK_API === 'true' ? 'Dr. Alisher Aliyev' : '';
 
 function startOfDay(date: Date): Date {
   const x = new Date(date);
@@ -111,7 +112,7 @@ export function isCancelledStatus(status: PaymentStatus): boolean {
 }
 
 function countsAsRevenue(record: FinanceRecord): boolean {
-  return record.type === 'income' && !isCancelledStatus(record.paymentStatus);
+  return record.type === 'income' && record.paymentStatus === 'paid';
 }
 
 function countsAsExpense(record: FinanceRecord): boolean {

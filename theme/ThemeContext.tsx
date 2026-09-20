@@ -38,25 +38,27 @@ const WEB_ROOT_FONT: Record<UiFontSize, string> = {
   xl: '19px',
 };
 
-type TypographyTokens = {
-  [K in keyof typeof typography]: {
-    fontSize: number;
-    lineHeight: number;
-    fontFamily: string;
-    letterSpacing: number;
-  };
+type TypographyToken = {
+  fontSize: number;
+  lineHeight: number;
+  fontFamily: string;
+  letterSpacing: number;
 };
+
+type TypographyTokens = Record<keyof typeof typography, TypographyToken>;
 
 function scaleTypography(scale: number): TypographyTokens {
   const next = {} as TypographyTokens;
-  (Object.keys(typography) as (keyof typeof typography)[]).forEach((key) => {
+  for (const key of Object.keys(typography) as (keyof typeof typography)[]) {
     const token = typography[key];
-    next[key] = {
-      ...token,
+    const scaled: TypographyToken = {
       fontSize: Math.round(token.fontSize * scale),
       lineHeight: Math.round(token.lineHeight * scale),
+      fontFamily: token.fontFamily,
+      letterSpacing: token.letterSpacing,
     };
-  });
+    next[key] = scaled;
+  }
   return next;
 }
 

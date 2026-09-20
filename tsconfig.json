@@ -14,5 +14,15 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "apps/api",
+    "apps/clinic-web",
+    "apps/api/**",
+    "apps/clinic-web/**",
+    "dist",
+    "dist-web-test",
+    "**/.next"
   ]
 }

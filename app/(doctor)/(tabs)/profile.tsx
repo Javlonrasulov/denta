@@ -55,6 +55,7 @@ import { useDoctorProfile } from '@/hooks/useDoctorProfile';
 import {
   getDoctorSessions,
   pickDoctorAvatar,
+  revokeOtherSessions,
   uploadDoctorAvatar,
 } from '@/services/doctorProfileService';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -165,9 +166,27 @@ export default function DoctorProfileScreen() {
 
   const doLogout = () => {
     setLogoutOpen(false);
+    void (async () => {
+      const { logout: apiLogout } = await import('@/services/authService');
+      await apiLogout();
+      logout();
+      router.replace('/login');
+    })();
+  };
+
+  const doLogoutAll = () => {
     setLogoutAllOpen(false);
-    logout();
-    router.replace('/login');
+    void (async () => {
+      try {
+        await revokeOtherSessions();
+      } catch {
+        /* still log out current session */
+      }
+      const { logout: apiLogout } = await import('@/services/authService');
+      await apiLogout();
+      logout();
+      router.replace('/login');
+    })();
   };
 
   const openSessions = async () => {
@@ -382,7 +401,7 @@ export default function DoctorProfileScreen() {
         body={t('doctor_profile.logout_all_body')}
         confirmLabel={t('doctor_profile.logout_all')}
         onClose={() => setLogoutAllOpen(false)}
-        onConfirm={doLogout}
+        onConfirm={doLogoutAll}
       />
     </MobileScreen>
   );

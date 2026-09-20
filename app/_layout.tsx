@@ -27,6 +27,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '@/locales/i18n';
+import { apiBaseUrl } from '@/services/apiClient';
 import { useSettingsStore } from '@/store/settingsStore';
 import { ThemeProvider, useTheme } from '@/theme';
 import { GlassToastHost } from '@/components/ui/GlassToastHost';
@@ -38,6 +39,12 @@ if (Platform.OS !== 'web') {
 }
 
 LogBox.ignoreAllLogs(true);
+
+if (!__DEV__ && !apiBaseUrl()) {
+  throw new Error(
+    'EXPO_PUBLIC_API_URL is required in production builds. Mocks are disabled.',
+  );
+}
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -76,6 +83,17 @@ export default function RootLayout() {
   useEffect(() => {
     void i18n.changeLanguage(locale);
   }, [locale]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { restoreSession } = await import('@/services/authService');
+        await restoreSession();
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

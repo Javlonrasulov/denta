@@ -10,10 +10,16 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/cn';
+import {
+  clinicApi,
+  clinicApiEnabled,
+  type ClinicNotification,
+} from '@/lib/api/clinic-api';
+import { readPersistedSession } from '@/lib/auth/session';
 
 type NotifKind =
   | 'appointment_reminder'
@@ -21,74 +27,18 @@ type NotifKind =
   | 'low_inventory'
   | 'payment'
   | 'booking_confirmed'
-  | 'schedule_changed';
+  | 'schedule_changed'
+  | 'system';
 
 interface AppNotification {
   id: string;
   type: NotifKind;
-  titleKey: string;
+  title: string;
   body: string;
   time: string;
   href: string;
   read: boolean;
 }
-
-const INITIAL: AppNotification[] = [
-  {
-    id: 'n1',
-    type: 'appointment_reminder',
-    titleKey: 'notifications.appointment_reminder',
-    body: 'Javlonbek Karimov · 10:00 · Consultation',
-    time: '09:15',
-    href: '/appointments',
-    read: false,
-  },
-  {
-    id: 'n2',
-    type: 'new_patient',
-    titleKey: 'notifications.new_patient',
-    body: 'Shahnoza Ismoilova',
-    time: '08:40',
-    href: '/patients',
-    read: false,
-  },
-  {
-    id: 'n3',
-    type: 'low_inventory',
-    titleKey: 'notifications.low_inventory',
-    body: 'Anesthesia cartridges — 8 boxes left',
-    time: '08:05',
-    href: '/inventory',
-    read: false,
-  },
-  {
-    id: 'n4',
-    type: 'payment',
-    titleKey: 'notifications.payment',
-    body: 'Malika Sobirova · 450,000 UZS',
-    time: 'Yesterday',
-    href: '/finance',
-    read: true,
-  },
-  {
-    id: 'n5',
-    type: 'booking_confirmed',
-    titleKey: 'notifications.booking_confirmed',
-    body: 'Azizbek Toshmatov · Aug 25 · 11:00',
-    time: 'Yesterday',
-    href: '/appointments',
-    read: true,
-  },
-  {
-    id: 'n6',
-    type: 'schedule_changed',
-    titleKey: 'notifications.schedule_changed',
-    body: 'Dr. Dilnoza Karimova — break 13:30–14:30',
-    time: '2d',
-    href: '/doctors',
-    read: true,
-  },
-];
 
 const ICON_BY_TYPE: Record<NotifKind, typeof Bell> = {
   appointment_reminder: CalendarDays,
@@ -97,17 +47,92 @@ const ICON_BY_TYPE: Record<NotifKind, typeof Bell> = {
   payment: Coins,
   booking_confirmed: Check,
   schedule_changed: CalendarDays,
+  system: Bell,
 };
+
+function mapApiType(type: string): NotifKind {
+  const t = type.toUpperCase();
+  if (t.includes('PAYMENT')) return 'payment';
+  if (t.includes('INVENTORY')) return 'low_inventory';
+  if (t.includes('PATIENT')) return 'new_patient';
+  if (t.includes('CANCEL') || t.includes('RESCHEDULE')) return 'schedule_changed';
+  if (t.includes('APPOINTMENT') || t.includes('BOOKING')) return 'booking_confirmed';
+  if (t.includes('REMINDER')) return 'appointment_reminder';
+  return 'system';
+}
+
+function hrefFor(n: ClinicNotification): string {
+  const data = (n.data ?? {}) as Record<string, unknown>;
+  if (typeof data.patientId === 'string') return `/patients/${data.patientId}`;
+  if (typeof data.appointmentId === 'string') return '/appointments';
+  const t = n.type.toUpperCase();
+  if (t.includes('INVENTORY')) return '/inventory';
+  if (t.includes('PAYMENT')) return '/finance';
+  if (t.includes('APPOINTMENT') || t.includes('BOOKING')) return '/appointments';
+  return '/overview';
+}
+
+function formatTime(iso: string): string {
+  const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return date.toLocaleDateString();
+}
+
+function mapNotification(n: ClinicNotification): AppNotification {
+  return {
+    id: n.id,
+    type: mapApiType(n.type),
+    title: n.title,
+    body: n.body,
+    time: formatTime(n.createdAt),
+    href: hrefFor(n),
+    read: Boolean(n.read),
+  };
+}
 
 export function NotificationsMenu() {
   const { t } = useTranslation();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState(INITIAL);
+  const [items, setItems] = useState<AppNotification[]>([]);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
 
   const unread = useMemo(() => items.filter((n) => !n.read).length, [items]);
+
+  const load = useCallback(async () => {
+    if (!clinicApiEnabled()) {
+      setItems([]);
+      return;
+    }
+    const token = readPersistedSession()?.accessToken;
+    if (!token) {
+      setItems([]);
+      return;
+    }
+    try {
+      const rows = await clinicApi.notifications(token);
+      setItems(rows.map(mapNotification));
+    } catch {
+      setItems([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    if (open) void load();
+  }, [open, load]);
 
   useEffect(() => {
     if (!open) return;
@@ -130,13 +155,30 @@ export function NotificationsMenu() {
     };
   }, [open]);
 
-  function markAllRead() {
+  async function markAllRead() {
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+    const token = readPersistedSession()?.accessToken;
+    if (!token || !clinicApiEnabled()) return;
+    try {
+      await clinicApi.notificationsReadAll(token);
+    } catch {
+      void load();
+    }
   }
 
-  function openItem(item: AppNotification) {
-    setItems((prev) => prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)));
+  async function openItem(item: AppNotification) {
+    setItems((prev) =>
+      prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)),
+    );
     setOpen(false);
+    const token = readPersistedSession()?.accessToken;
+    if (token && clinicApiEnabled() && !item.read) {
+      try {
+        await clinicApi.notificationRead(token, item.id);
+      } catch {
+        /* ignore */
+      }
+    }
     router.push(item.href);
   }
 
@@ -183,7 +225,7 @@ export function NotificationsMenu() {
             {unread > 0 ? (
               <button
                 type="button"
-                onClick={markAllRead}
+                onClick={() => void markAllRead()}
                 className="shrink-0 text-xs font-semibold text-primary hover:underline"
               >
                 {t('notifications.mark_all_read')}
@@ -206,7 +248,7 @@ export function NotificationsMenu() {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => openItem(item)}
+                    onClick={() => void openItem(item)}
                     className={cn(
                       'flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition',
                       item.read
@@ -227,7 +269,7 @@ export function NotificationsMenu() {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
                         <span className="truncate text-sm font-semibold text-slate-900">
-                          {t(item.titleKey)}
+                          {item.title}
                         </span>
                         <span className="shrink-0 text-[11px] text-slate-400">
                           {item.time}

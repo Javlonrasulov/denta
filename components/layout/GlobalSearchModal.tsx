@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, View } from 'react-native';
 import { Href, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,13 +15,7 @@ import {
 
 import { SearchInput } from '@/components/ui/Input';
 import { Text } from '@/components/ui/Text';
-import {
-  MOCK_APPOINTMENTS,
-  MOCK_DOCTORS,
-  MOCK_INVENTORY,
-  MOCK_PATIENTS,
-  MOCK_ROOMS,
-} from '@/mocks/data';
+import { apiGet, useMockApi } from '@/services/apiClient';
 import { useTheme } from '@/theme';
 
 type SearchKind = 'patient' | 'doctor' | 'appointment' | 'room' | 'inventory' | 'service';
@@ -34,70 +28,12 @@ interface SearchHit {
   href: Href;
 }
 
-function normalize(value: string) {
-  return value.toLowerCase().trim();
-}
-
-function matches(query: string, ...parts: (string | undefined | null)[]) {
-  const q = normalize(query);
-  if (!q) return false;
-  return parts.some((p) => p && normalize(p).includes(q));
-}
-
-function buildIndex(): SearchHit[] {
-  const services = new Map<string, SearchHit>();
-  for (const doctor of MOCK_DOCTORS) {
-    for (const service of doctor.services) {
-      if (services.has(service.id)) continue;
-      services.set(service.id, {
-        id: service.id,
-        kind: 'service',
-        title: service.name,
-        subtitle: service.category,
-        href: '/(clinic)/(shell)/services',
-      });
-    }
-  }
-
-  return [
-    ...MOCK_PATIENTS.map((p) => ({
-      id: p.id,
-      kind: 'patient' as const,
-      title: p.fullName,
-      subtitle: p.phone,
-      href: `/(clinic)/patient/${p.id}` as Href,
-    })),
-    ...MOCK_DOCTORS.map((d) => ({
-      id: d.id,
-      kind: 'doctor' as const,
-      title: d.fullName,
-      subtitle: d.specialization,
-      href: `/(clinic)/doctor/${d.id}` as Href,
-    })),
-    ...MOCK_APPOINTMENTS.map((a) => ({
-      id: a.id,
-      kind: 'appointment' as const,
-      title: `${a.patientName} · ${a.serviceName}`,
-      subtitle: `${a.date} ${a.time} · ${a.doctorName}`,
-      href: '/(clinic)/(shell)/appointments' as Href,
-    })),
-    ...MOCK_ROOMS.map((r) => ({
-      id: r.id,
-      kind: 'room' as const,
-      title: r.name,
-      subtitle: `#${r.number}${r.doctorName ? ` · ${r.doctorName}` : ''}`,
-      href: '/(clinic)/(shell)/rooms' as Href,
-    })),
-    ...MOCK_INVENTORY.map((i) => ({
-      id: i.id,
-      kind: 'inventory' as const,
-      title: i.name,
-      subtitle: `${i.supplier} · ${i.quantity} ${i.unit}`,
-      href: '/(clinic)/(shell)/inventory' as Href,
-    })),
-    ...services.values(),
-  ];
-}
+type ApiSearchResult = {
+  type: string;
+  id: string;
+  title: string;
+  subtitle?: string;
+};
 
 const KIND_META: Record<SearchKind, { icon: LucideIcon; labelKey: string }> = {
   patient: { icon: Users, labelKey: 'crm.nav.patients' },
@@ -108,7 +44,64 @@ const KIND_META: Record<SearchKind, { icon: LucideIcon; labelKey: string }> = {
   service: { icon: Wrench, labelKey: 'crm.nav.services' },
 };
 
-const ALL_HITS = buildIndex();
+function mapApiHit(item: ApiSearchResult): SearchHit | null {
+  const type = item.type.toLowerCase();
+  if (type === 'patient') {
+    return {
+      id: item.id,
+      kind: 'patient',
+      title: item.title,
+      subtitle: item.subtitle ?? '',
+      href: `/(clinic)/patient/${item.id}`,
+    };
+  }
+  if (type === 'doctor') {
+    return {
+      id: item.id,
+      kind: 'doctor',
+      title: item.title,
+      subtitle: item.subtitle ?? '',
+      href: `/(clinic)/doctor/${item.id}`,
+    };
+  }
+  if (type === 'appointment') {
+    return {
+      id: item.id,
+      kind: 'appointment',
+      title: item.title,
+      subtitle: item.subtitle ?? '',
+      href: '/(clinic)/(shell)/appointments',
+    };
+  }
+  if (type === 'service') {
+    return {
+      id: item.id,
+      kind: 'service',
+      title: item.title,
+      subtitle: item.subtitle ?? '',
+      href: '/(clinic)/(shell)/services',
+    };
+  }
+  if (type === 'room') {
+    return {
+      id: item.id,
+      kind: 'room',
+      title: item.title,
+      subtitle: item.subtitle ?? '',
+      href: '/(clinic)/(shell)/rooms',
+    };
+  }
+  if (type === 'inventory') {
+    return {
+      id: item.id,
+      kind: 'inventory',
+      title: item.title,
+      subtitle: item.subtitle ?? '',
+      href: '/(clinic)/(shell)/inventory',
+    };
+  }
+  return null;
+}
 
 interface GlobalSearchModalProps {
   visible: boolean;
@@ -119,16 +112,60 @@ export function GlobalSearchModal({ visible, onClose }: GlobalSearchModalProps) 
   const { t } = useTranslation();
   const { colors, spacing, radius, shadows, iconSizes } = useTheme();
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchHit[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!visible) setQuery('');
+    if (!visible) {
+      setQuery('');
+      setResults([]);
+      setLoading(false);
+    }
   }, [visible]);
 
-  const results = useMemo(() => {
+  useEffect(() => {
+    if (!visible) return;
     const q = query.trim();
-    if (q.length < 1) return [];
-    return ALL_HITS.filter((hit) => matches(q, hit.title, hit.subtitle, hit.kind)).slice(0, 40);
-  }, [query]);
+    if (q.length < 2) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    const timer = setTimeout(() => {
+      void (async () => {
+        if (useMockApi()) {
+          if (!cancelled) {
+            setResults([]);
+            setLoading(false);
+          }
+          return;
+        }
+        try {
+          const data = await apiGet<{ results?: ApiSearchResult[] }>('/search', {
+            q,
+            limit: 20,
+          });
+          if (cancelled) return;
+          const hits = (data.results ?? [])
+            .map(mapApiHit)
+            .filter((hit): hit is SearchHit => hit != null);
+          setResults(hits);
+        } catch {
+          if (!cancelled) setResults([]);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, visible]);
 
   const grouped = useMemo(() => {
     const map = new Map<SearchKind, SearchHit[]>();
@@ -212,12 +249,18 @@ export function GlobalSearchModal({ visible, onClose }: GlobalSearchModalProps) 
 
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing['2xl'] }}
+            contentContainerStyle={{
+              padding: spacing.lg,
+              gap: spacing.lg,
+              paddingBottom: spacing['2xl'],
+            }}
           >
-            {query.trim().length === 0 ? (
+            {query.trim().length < 2 ? (
               <Text variant="bodySmall" muted center>
                 {t('crm.search.hint')}
               </Text>
+            ) : loading ? (
+              <ActivityIndicator color={colors.primary} />
             ) : results.length === 0 ? (
               <Text variant="bodySmall" muted center>
                 {t('search.no_results')}

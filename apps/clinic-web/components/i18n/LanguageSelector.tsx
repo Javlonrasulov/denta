@@ -6,16 +6,30 @@ import { useTranslation } from 'react-i18next';
 
 import { setAppLocale } from '@/components/i18n/I18nProvider';
 import { cn } from '@/lib/cn';
-import { LOCALE_OPTIONS, type LocaleCode } from '@/lib/i18n';
+import { LOCALE_OPTIONS, resolveLocaleCode, type LocaleCode } from '@/lib/i18n';
 
 export function LanguageSelector() {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [currentCode, setCurrentCode] = useState<LocaleCode>(() =>
+    resolveLocaleCode(i18n.resolvedLanguage ?? i18n.language),
+  );
   const rootRef = useRef<HTMLDivElement>(null);
   const listId = useId();
 
   const current =
-    LOCALE_OPTIONS.find((o) => o.code === i18n.language) ?? LOCALE_OPTIONS[0];
+    LOCALE_OPTIONS.find((o) => o.code === currentCode) ?? LOCALE_OPTIONS[0];
+
+  useEffect(() => {
+    const sync = (lng?: string) => {
+      setCurrentCode(resolveLocaleCode(lng ?? i18n.resolvedLanguage ?? i18n.language));
+    };
+    sync();
+    i18n.on('languageChanged', sync);
+    return () => {
+      i18n.off('languageChanged', sync);
+    };
+  }, [i18n]);
 
   useEffect(() => {
     if (!open) return;
@@ -30,18 +44,24 @@ export function LanguageSelector() {
       if (event.key === 'Escape') setOpen(false);
     }
 
-    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('mousedown', onPointerDown, true);
     document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('mousedown', onPointerDown, true);
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
 
   async function selectLocale(code: LocaleCode) {
     setOpen(false);
-    if (code === i18n.language) return;
-    await setAppLocale(code);
+    if (code === currentCode) return;
+    // Optimistic UI — button label updates immediately
+    setCurrentCode(code);
+    try {
+      await setAppLocale(code);
+    } catch {
+      setCurrentCode(resolveLocaleCode(i18n.resolvedLanguage ?? i18n.language));
+    }
   }
 
   return (
@@ -86,6 +106,10 @@ export function LanguageSelector() {
                 role="option"
                 aria-selected={active}
                 onClick={() => void selectLocale(option.code)}
+                onMouseDown={(e) => {
+                  // Keep focus/click on the option; don't let document outside-handler win
+                  e.stopPropagation();
+                }}
                 className={cn(
                   'flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition',
                   active

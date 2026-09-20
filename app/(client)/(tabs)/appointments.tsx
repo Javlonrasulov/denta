@@ -7,7 +7,9 @@ import { useTranslation } from 'react-i18next';
 
 import { AppointmentCard } from '@/components/appointments/AppointmentCard';
 import { MobileEmpty, MobileHeader, MobileSegmented } from '@/components/mobile';
-import { useAppointmentsStore } from '@/store/appointmentsStore';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { useAppointments } from '@/hooks/queries';
+import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments';
 import { useTheme } from '@/theme';
 import { AppointmentStatus } from '@/types';
 
@@ -18,11 +20,12 @@ export default function AppointmentsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, spacing } = useTheme();
   const [tab, setTab] = useState<AppointmentStatus>('upcoming');
-  const appointments = useAppointmentsStore((s) => s.appointments);
+  const query = useAppointments();
+  useRealtimeAppointments();
 
   const filtered = useMemo(
-    () => appointments.filter((a) => a.status === tab),
-    [appointments, tab],
+    () => (query.data ?? []).filter((a) => a.status === tab),
+    [query.data, tab],
   );
 
   const emptyTitle =
@@ -46,7 +49,9 @@ export default function AppointmentsScreen() {
         />
       </View>
 
-      {filtered.length === 0 ? (
+      {query.isLoading ? (
+        <ListSkeleton rows={4} />
+      ) : filtered.length === 0 ? (
         <MobileEmpty
           icon={CalendarDays}
           title={emptyTitle}
@@ -58,6 +63,8 @@ export default function AppointmentsScreen() {
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing['5xl'] }}
+          refreshing={query.isFetching}
+          onRefresh={() => void query.refetch()}
           renderItem={({ item }) => (
             <AppointmentCard
               appointment={item}

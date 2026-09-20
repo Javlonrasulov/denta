@@ -1,33 +1,38 @@
+import type { Coordinates } from '@/types';
+import { getClinics } from '@/services/clinicService';
+import { mockNetworkDelay, useMockApi } from './apiClient';
 import { MOCK_CLINICS } from '@/mocks/data';
-import { mockNetworkDelay } from './apiClient';
 
-export interface MapMarker {
+export type MapProvider = 'google' | 'apple' | 'osm';
+
+export type MapMarker = {
   id: string;
-  coordinate: { latitude: number; longitude: number };
+  coordinate: Coordinates;
   title: string;
   subtitle?: string;
-  type: 'clinic' | 'doctor';
+  type: 'clinic' | 'doctor' | 'other';
   rating?: number;
-}
-
-/**
- * Provider interface for Mapbox (or other map SDK) swap later.
- * UI uses `components/map/DentalMap` (react-native-maps today).
- */
-export interface MapProvider {
-  initialize(accessToken: string): Promise<void>;
-  getMarkers(): Promise<MapMarker[]>;
-  fitBounds?(markerIds: string[]): Promise<void>;
-}
+};
 
 export async function getClinicMarkers(): Promise<MapMarker[]> {
+  if (!useMockApi()) {
+    const clinics = await getClinics();
+    return clinics.map((c) => ({
+      id: c.id,
+      coordinate: c.coordinates,
+      title: c.name,
+      subtitle: c.address,
+      type: 'clinic' as const,
+      rating: c.rating,
+    }));
+  }
   await mockNetworkDelay();
-  return MOCK_CLINICS.map((clinic) => ({
-    id: clinic.id,
-    coordinate: clinic.coordinates,
-    title: clinic.name,
-    subtitle: clinic.address,
+  return MOCK_CLINICS.map((c) => ({
+    id: c.id,
+    coordinate: c.coordinates,
+    title: c.name,
+    subtitle: c.address,
     type: 'clinic' as const,
-    rating: clinic.rating,
+    rating: c.rating,
   }));
 }

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Heart } from '@/components/icons';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -19,8 +19,13 @@ export default function FavoritesScreen() {
   const [tab, setTab] = useState<'clinics' | 'doctors'>('clinics');
   const clinicIds = useFavoritesStore((s) => s.clinicIds);
   const doctorIds = useFavoritesStore((s) => s.doctorIds);
+  const hydrate = useFavoritesStore((s) => s.hydrate);
   const clinics = useClinics();
   const doctors = useDoctors();
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
 
   const favClinics = useMemo(
     () => (clinics.data ?? []).filter((c) => clinicIds.includes(c.id)),

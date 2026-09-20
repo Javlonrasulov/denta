@@ -73,6 +73,7 @@ export interface Service {
   id: string;
   name: string;
   nameKey?: string;
+  names?: Record<string, string>;
   durationMinutes: number;
   price: number;
   category: string;
@@ -140,11 +141,20 @@ export interface Appointment {
   clinicName: string;
   clinicAddress: string;
   serviceName: string;
+  serviceId?: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
   status: AppointmentStatus;
   price: number;
   notes?: string;
+  paymentStatus?: 'unpaid' | 'partially_paid' | 'paid' | 'cancelled' | null;
+  charge?: {
+    id: string;
+    amount: number;
+    paidAmount: number;
+    remainingAmount: number;
+    status: 'unpaid' | 'partially_paid' | 'paid' | 'cancelled';
+  } | null;
 }
 
 export interface TimeSlot {

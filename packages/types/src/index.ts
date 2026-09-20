@@ -301,3 +301,17 @@ export interface DoctorAvatarUploadResult {
   uri: string;
   pendingUpload: boolean;
 }
+
+/** Clinic SaaS account (self-serve registration / trial). */
+export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'blocked';
+export type ClinicAccountStatus = 'pending_verification' | 'active' | 'blocked';
+
+export interface ClinicSubscription {
+  status: SubscriptionStatus;
+  trialStartedAt: string | null;
+  trialEndsAt: string | null;
+  subscriptionStartedAt: string | null;
+  subscriptionEndsAt: string | null;
+  marketplaceBookingEnabled: boolean;
+}
+

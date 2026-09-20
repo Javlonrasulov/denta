@@ -10,13 +10,16 @@ export function AuthShell({
   children,
   footer,
   className,
+  /** Short screens center vertically; long forms (register) scroll naturally. */
+  layout = 'center',
 }: {
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  layout?: 'center' | 'scroll';
 }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-50">
+    <div className="relative flex min-h-screen flex-col bg-slate-50">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(67,56,202,0.12),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_rgba(8,145,178,0.1),_transparent_50%)]"
@@ -30,7 +33,7 @@ export function AuthShell({
         className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl"
       />
 
-      <header className="relative z-10 flex items-center justify-between px-4 py-5 tablet:px-8">
+      <header className="relative z-30 flex shrink-0 items-center justify-between px-4 py-5 tablet:px-8">
         <Link href="/login" className="group flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-lg shadow-primary/25 transition group-hover:bg-primary/90">
             D
@@ -40,15 +43,26 @@ export function AuthShell({
         <LanguageSelector />
       </header>
 
-      <main className="relative z-10 flex justify-center px-4 pb-16 pt-2 tablet:px-8">
+      <main
+        className={cn(
+          'relative z-0 flex flex-1 justify-center px-4 tablet:px-8',
+          layout === 'center'
+            ? 'items-center py-8'
+            : 'items-start py-6 pb-12',
+        )}
+      >
+        {/* Optical center: slightly above true midpoint (~24px) for short auth screens */}
         <div
           className={cn(
-            'w-full max-w-[440px] animate-in fade-in slide-in-from-bottom-2 duration-500',
+            'w-full max-w-[440px]',
+            layout === 'center' && '-translate-y-6',
             className,
           )}
         >
           {children}
-          {footer ? <div className="mt-6 text-center text-sm text-slate-500">{footer}</div> : null}
+          {footer ? (
+            <div className="mt-6 text-center text-sm text-slate-500">{footer}</div>
+          ) : null}
         </div>
       </main>
     </div>

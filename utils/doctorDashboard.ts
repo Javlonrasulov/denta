@@ -1,7 +1,9 @@
 import type { Appointment, Doctor, FinanceRecord, Patient, Room } from '@/types';
 import { generateTimeSlots } from '@/utils/slots';
 
-export const DEMO_DOCTOR_ID = 'doctor-1';
+export const DEMO_DOCTOR_ID =
+  process.env.EXPO_PUBLIC_USE_MOCK_API === 'true' ? 'doctor-1' : '';
+/** @deprecated Use authenticated /doctors/me — only for mock mode */
 
 export type TimelineKind =
   | 'completed'

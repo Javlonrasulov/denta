@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Heart } from '@/components/icons';
 import { addDays, format } from 'date-fns';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -13,27 +14,29 @@ import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { useClinic, useDoctor } from '@/hooks/queries';
+import { getDoctorSlots } from '@/services/doctorService';
+import { getDoctorReviews } from '@/services/reviewService';
 import { useAppointmentsStore } from '@/store/appointmentsStore';
 import { useFavoritesStore } from '@/store/userStore';
 import { useTheme } from '@/theme';
-import { generateTimeSlots, formatPrice } from '@/utils/slots';
+import { formatPrice } from '@/utils/slots';
 
 export default function DoctorProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, spacing, radius } = useTheme();
   const doctorQuery = useDoctor(id);
   const clinicQuery = useClinic(doctorQuery.data?.clinicId ?? '');
-  const appointments = useAppointmentsStore((s) => s.appointments);
   const setDraft = useAppointmentsStore((s) => s.setDraft);
+  const draft = useAppointmentsStore((s) => s.draft);
   const toggleDoctor = useFavoritesStore((s) => s.toggleDoctor);
   const isFavorite = useFavoritesStore((s) => s.isDoctorFavorite(id));
 
   const dates = useMemo(
     () =>
       Array.from({ length: 7 }).map((_, i) => {
-        const d = addDays(new Date('2026-08-23'), i);
+        const d = addDays(new Date(), i);
         return {
           date: format(d, 'yyyy-MM-dd'),
           label: format(d, 'd'),
@@ -45,11 +48,39 @@ export default function DoctorProfileScreen() {
 
   const [selectedDate, setSelectedDate] = useState(dates[0].date);
   const [selectedTime, setSelectedTime] = useState<string>();
+  const [selectedServiceId, setSelectedServiceId] = useState<string>();
 
-  const slots = useMemo(() => {
-    if (!doctorQuery.data) return [];
-    return generateTimeSlots(doctorQuery.data, selectedDate, appointments);
-  }, [doctorQuery.data, selectedDate, appointments]);
+  useEffect(() => {
+    const first = doctorQuery.data?.services?.[0]?.id;
+    if (first && !selectedServiceId) setSelectedServiceId(first);
+  }, [doctorQuery.data?.services, selectedServiceId]);
+
+  const slotsQuery = useQuery({
+    queryKey: [
+      'doctors',
+      id,
+      'slots',
+      selectedDate,
+      selectedServiceId,
+      doctorQuery.data?.clinicId,
+    ],
+    enabled: Boolean(id && selectedDate && doctorQuery.data && selectedServiceId),
+    queryFn: () =>
+      getDoctorSlots(id, selectedDate, [], {
+        clinicId: doctorQuery.data?.clinicId,
+        serviceId: selectedServiceId,
+      }),
+    staleTime: 15_000,
+  });
+
+  const reviewsQuery = useQuery({
+    queryKey: ['reviews', 'doctor', id],
+    enabled: Boolean(id),
+    queryFn: () => getDoctorReviews(id),
+    staleTime: 60_000,
+  });
+
+  const slots = slotsQuery.data ?? [];
 
   if (doctorQuery.isLoading) return <ListSkeleton rows={6} />;
   if (!doctorQuery.data) {
@@ -63,6 +94,22 @@ export default function DoctorProfileScreen() {
   }
 
   const doctor = doctorQuery.data;
+  const selectedService =
+    doctor.services.find((s) => s.id === selectedServiceId) ?? doctor.services[0];
+
+  function serviceLabel(svc: {
+    name: string;
+    nameKey?: string;
+    names?: Record<string, string>;
+  }): string {
+    const lang = i18n.language || 'uz';
+    if (svc.names?.[lang]) return svc.names[lang];
+    if (svc.nameKey) {
+      const translated = t(svc.nameKey);
+      if (translated !== svc.nameKey) return translated;
+    }
+    return svc.name;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -91,7 +138,7 @@ export default function DoctorProfileScreen() {
             <ArrowLeft size={20} color={colors.text} />
           </Pressable>
           <Pressable
-            onPress={() => toggleDoctor(doctor.id)}
+            onPress={() => void toggleDoctor(doctor.id)}
             style={{
               width: 44,
               height: 44,
@@ -144,32 +191,79 @@ export default function DoctorProfileScreen() {
               {t('doctor.services')}
             </Text>
             <View style={{ gap: spacing.sm }}>
-              {doctor.services.map((svc) => (
-                <View
-                  key={svc.id}
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    padding: spacing.md,
-                    backgroundColor: colors.surface,
-                    borderRadius: radius.lg,
-                    borderWidth: 1,
-                    borderColor: colors.borderSubtle,
-                  }}
-                >
-                  <Text variant="body">{svc.name}</Text>
-                  <Text variant="label" color={colors.primary}>
-                    {formatPrice(svc.price)}
-                  </Text>
-                </View>
-              ))}
+              {doctor.services.map((svc) => {
+                const active = svc.id === selectedService?.id;
+                return (
+                  <Pressable
+                    key={svc.id}
+                    onPress={() => setSelectedServiceId(svc.id)}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      padding: spacing.md,
+                      backgroundColor: active ? colors.primaryMuted ?? colors.surface : colors.surface,
+                      borderRadius: radius.lg,
+                      borderWidth: 1,
+                      borderColor: active ? colors.primary : colors.borderSubtle,
+                    }}
+                  >
+                    <Text variant="body">{serviceLabel(svc)}</Text>
+                    <Text variant="label" color={colors.primary}>
+                      {formatPrice(svc.price)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
+          {(reviewsQuery.data?.length ?? 0) > 0 ? (
+            <View>
+              <Text variant="h3" style={{ marginBottom: spacing.md }}>
+                {t('clinic.reviews')}
+              </Text>
+              <View style={{ gap: spacing.sm }}>
+                {reviewsQuery.data!.slice(0, 3).map((r) => (
+                  <View
+                    key={r.id}
+                    style={{
+                      padding: spacing.md,
+                      backgroundColor: colors.surface,
+                      borderRadius: radius.lg,
+                      borderWidth: 1,
+                      borderColor: colors.borderSubtle,
+                      gap: 4,
+                    }}
+                  >
+                    <Text variant="label">
+                      {r.authorName} · ★ {r.rating}
+                    </Text>
+                    {r.comment ? (
+                      <Text variant="bodySmall" muted>
+                        {r.comment}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           <View style={{ gap: spacing.md }}>
             <Text variant="h3">{t('booking.choose_datetime')}</Text>
-            <DateStrip dates={dates} selected={selectedDate} onSelect={setSelectedDate} />
-            <SlotPicker slots={slots} selected={selectedTime} onSelect={setSelectedTime} />
+            <DateStrip
+              dates={dates}
+              selected={selectedDate}
+              onSelect={(d) => {
+                setSelectedDate(d);
+                setSelectedTime(undefined);
+              }}
+            />
+            {slotsQuery.isLoading ? (
+              <ListSkeleton rows={2} />
+            ) : (
+              <SlotPicker slots={slots} selected={selectedTime} onSelect={setSelectedTime} />
+            )}
           </View>
         </View>
       </ScrollView>
@@ -191,17 +285,18 @@ export default function DoctorProfileScreen() {
           title={t('doctor.book_now')}
           fullWidth
           size="lg"
-          disabled={!selectedTime}
+          disabled={!selectedTime || !selectedService}
           onPress={() => {
-            const service = doctor.services[0];
+            if (!selectedService) return;
             setDraft({
               clinicId: doctor.clinicId,
               doctorId: doctor.id,
-              serviceId: service?.id,
-              serviceName: service?.name,
-              price: service?.price ?? doctor.priceFrom,
+              serviceId: selectedService.id,
+              serviceName: serviceLabel(selectedService),
+              price: selectedService.price,
               date: selectedDate,
               time: selectedTime,
+              rescheduleAppointmentId: draft.rescheduleAppointmentId,
             });
             router.push('/(client)/booking/confirm');
           }}

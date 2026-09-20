@@ -18,7 +18,7 @@ export default function ClinicSettingsScreen() {
   return (
     <AppShell title={t('crm.settings.title')} subtitle={t('crm.settings.subtitle')}>
       <View style={{ gap: spacing.xl, maxWidth: 560 }}>
-        <Section title="Smile Dental Clinic">
+        <Section title={t('crm.settings.clinic_section', { defaultValue: 'Clinic' })}>
           <Text variant="body" muted>
             {t('common.tagline')}
           </Text>

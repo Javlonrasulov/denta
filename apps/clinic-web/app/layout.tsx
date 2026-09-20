@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Onest } from 'next/font/google';
 
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { I18nProvider } from '@/components/i18n/I18nProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import './globals.css';
 
 const onest = Onest({
@@ -13,7 +15,7 @@ const onest = Onest({
 });
 
 export const metadata: Metadata = {
-  title: 'DENTA.UZ — Clinic CRM',
+  title: 'DENTA.UZ',
   description: 'Professional clinic management for dental practices',
 };
 
@@ -23,7 +25,11 @@ export default function RootLayout({
   return (
     <html lang="uz" className={onest.variable} suppressHydrationWarning>
       <body className={`${onest.className} font-sans antialiased`}>
-        <I18nProvider>{children}</I18nProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <AuthGuard>{children}</AuthGuard>
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );

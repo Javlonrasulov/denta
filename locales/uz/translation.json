@@ -843,7 +843,11 @@
       "income": "Daromad",
       "expenses": "Xarajatlar",
       "net": "Sof",
-      "patient_vendor": "Bemor / Yetkazib beruvchi"
+      "patient_vendor": "Bemor / Yetkazib beruvchi",
+      "outstanding_charges": "Qarzdorliklar",
+      "actions": "Amallar",
+      "partial_pay": "Qisman to'lov",
+      "full_pay": "To'liq to'lov"
     },
     "inventory": {
       "title": "Ombor",
@@ -1002,5 +1006,149 @@
         "dec": "Dek"
       }
     }
+  },
+  "clinicAuth": {
+    "show_password": "Parolni ko‘rsatish",
+    "hide_password": "Parolni yashirish",
+    "register": {
+      "title": "Klinikangizni ulang",
+      "subtitle": "30 kun bepul sinov — administrator tasdig‘isiz.",
+      "clinic_name": "Klinika nomi",
+      "first_name": "Administrator ismi",
+      "last_name": "Administrator familiyasi",
+      "phone": "Telefon raqami",
+      "email": "Email",
+      "password": "Parol",
+      "confirm_password": "Parolni takrorlash",
+      "terms_prefix": "Men",
+      "terms": "foydalanish shartlari",
+      "and": "va",
+      "privacy": "maxfiylik siyosati",
+      "cta": "30 kun bepul boshlash",
+      "have_account": "Akkauntingiz bormi?",
+      "sign_in": "Kirish"
+    },
+    "login": {
+      "title": "DENTA.UZ ga kirish",
+      "subtitle": "Telefon yoki email va parol bilan kiring.",
+      "identifier": "Telefon yoki email",
+      "identifier_placeholder": "+998 90 123 45 67 yoki email",
+      "password": "Parol",
+      "forgot": "Parolni unutdingizmi?",
+      "cta": "Kirish",
+      "no_account": "Akkauntingiz yo‘qmi?",
+      "start_trial": "30 kun bepul boshlash",
+      "unverified_title": "Email manzilingiz hali tasdiqlanmagan.",
+      "unverified_body": "CRM ga kirish uchun avval emailni tasdiqlang.",
+      "send_code": "Tasdiqlash kodini yuborish"
+    },
+    "verify": {
+      "title": "Emailingizni tasdiqlang",
+      "subtitle": "{{email}} manziliga 6 xonali tasdiqlash kodi yubordik.",
+      "cta": "Tasdiqlash",
+      "resend": "Kodni qayta yuborish",
+      "resend_in": "Qayta yuborish: {{time}}",
+      "change_email": "Emailni o‘zgartirish",
+      "dev_hint": "DEV kod: {{code}}"
+    },
+    "success": {
+      "title": "Xush kelibsiz, DENTA.UZ’ga!",
+      "subtitle": "Hisobingiz muvaffaqiyatli tasdiqlandi.",
+      "trial_started": "30 kunlik bepul sinov davringiz boshlandi.",
+      "ends_on": "Sinov tugash sanasi: {{date}}",
+      "cta": "Klinikani sozlash"
+    },
+    "forgot": {
+      "title": "Parolni tiklash",
+      "subtitle": "Tasdiqlangan email manzilingizni kiriting. Kod email orqali yuboriladi.",
+      "code_subtitle": "{{email}} manziliga kod yubordik.",
+      "password_subtitle": "Yangi parol yarating (kamida 8 belgi, 1 harf va 1 raqam).",
+      "send_code": "Kod yuborish",
+      "continue": "Davom etish",
+      "new_password": "Yangi parol",
+      "confirm_password": "Parolni takrorlash",
+      "save": "Parolni saqlash",
+      "done_title": "Parol yangilandi",
+      "done_subtitle": "Yangi parol bilan tizimga kiring.",
+      "go_login": "Kirish sahifasiga",
+      "back_login": "Kirishga qaytish"
+    },
+    "onboarding": {
+      "progress": "{{current}} / {{total}}",
+      "step1_title": "Klinika ma’lumotlari",
+      "step1_body": "Ro‘yxatdan o‘tishdagi ma’lumotlaringizni tekshiring.",
+      "step2_title": "Manzil",
+      "step2_body": "Klinikangiz joylashuvini kiriting.",
+      "step3_title": "Ish vaqti",
+      "step3_body": "Odatdagi ish soatlarini belgilang.",
+      "step4_title": "Xizmatlar",
+      "step4_body": "Katalogdan klinikangiz xizmatlarini tanlang va narx/davomiylikni belgilang.",
+      "step5_title": "Doktorlar",
+      "step5_body": "Jamoangiz haqida qisqa eslatma (ixtiyoriy).",
+      "step6_title": "Logo va rasmlar",
+      "step6_body": "Brendingizni keyinroq Settings orqali yuklashingiz mumkin.",
+      "city": "Shahar",
+      "address": "Manzil",
+      "open": "Ochilish",
+      "close": "Yopilish",
+      "services_placeholder": "Masalan: terapiya, implantologiya, ortodontiya…",
+      "doctors_placeholder": "Masalan: 3 stomatolog, 1 ortodont…",
+      "photos_hint": "Logo va klinik fotosuratlarini Settings bo‘limida qo‘shasiz.",
+      "skip": "O‘tkazib yuborish",
+      "next": "Keyingi",
+      "finish": "CRM ga o‘tish",
+      "services_required": "Kamida bitta xizmatni tanlang",
+      "price_uzs": "Narx (UZS)",
+      "duration_min": "Davomiylik (daq)"
+    },
+    "trial": {
+      "banner": "Pro sinov davri · {{days}} kun qoldi",
+      "details_title": "Sinov tafsilotlari",
+      "started": "Boshlandi",
+      "ends": "Tugaydi",
+      "status": "Status",
+      "status_trial": "Trial",
+      "payment_note": "To‘lov hozircha qo‘lda. Muddat tugagach DENTA.UZ bilan bog‘laning."
+    },
+    "expired": {
+      "title": "Sinov muddati yakunlandi",
+      "body": "Xizmatdan foydalanishni davom ettirish uchun DENTA.UZ bilan bog‘laning. Ma’lumotlaringiz saqlanadi.",
+      "phone": "Telefon",
+      "data_kept": "Shifokorlar, bemorlar, qabullar va moliya o‘chirilmaydi.",
+      "logout": "Chiqish"
+    },
+    "password": {
+      "weak": "Zaif parol",
+      "ok": "O‘rtacha",
+      "strong": "Kuchli parol"
+    },
+    "errors": {
+      "required": "Majburiy maydon",
+      "invalid_email": "To‘g‘ri email kiriting",
+      "invalid_phone": "Telefon formati: +998 XX XXX XX XX",
+      "invalid_password": "Parol: kamida 8 belgi, 1 harf va 1 raqam",
+      "password_mismatch": "Parollar mos kelmadi",
+      "terms_required": "Foydalanish shartlariga rozilik bildiring",
+      "email_taken": "Bu email allaqachon ishlatilmoqda.",
+      "phone_taken": "Bu telefon raqami allaqachon ro‘yxatdan o‘tgan.",
+      "invalid_credentials": "Email/telefon yoki parol noto‘g‘ri.",
+      "email_not_verified": "Email manzilingiz hali tasdiqlanmagan.",
+      "invalid_code": "Tasdiqlash kodi noto‘g‘ri.",
+      "code_expired": "Kodning amal qilish muddati tugagan.",
+      "resend_cooldown": "Kodni {{seconds}} soniyadan keyin qayta yuborishingiz mumkin.",
+      "rate_limited": "Juda ko‘p urinish. Keyinroq qayta urinib ko‘ring.",
+      "not_found": "Akkaunt topilmadi.",
+      "network": "Tarmoq xatosi. Qayta urinib ko‘ring.",
+      "unknown": "Xatolik yuz berdi. Qayta urinib ko‘ring."
+    }
+  },
+  "service": {
+    "consultation": "Konsultatsiya",
+    "professional_cleaning": "Professional tozalash",
+    "filling": "Kariyes davolash / Plomba",
+    "root_canal": "Kanal davolash",
+    "whitening": "Oqartirish",
+    "orthodontic_consult": "Ortodontik konsultatsiya",
+    "implant_consult": "Implant konsultatsiyasi"
   }
 }

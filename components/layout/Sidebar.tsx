@@ -334,7 +334,7 @@ export function Sidebar({ onNavigate, showClose, forceExpanded }: SidebarProps) 
                   numberOfLines={1}
                   style={{ fontSize: 11.5, letterSpacing: 0.15 }}
                 >
-                  Smile Dental Clinic
+                  {t('common.tagline', { defaultValue: 'Clinic workspace' })}
                 </Text>
               </View>
             </Animated.View>

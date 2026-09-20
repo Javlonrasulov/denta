@@ -834,6 +834,7 @@
       "subtitle": "Income, expenses and settlements",
       "profit": "Profit",
       "outstanding": "Outstanding",
+      "outstanding_charges": "Outstanding charges",
       "vs_expenses": "Revenue vs expenses",
       "transactions": "Transactions",
       "date": "Date",
@@ -843,7 +844,10 @@
       "income": "Income",
       "expenses": "Expenses",
       "net": "Net",
-      "patient_vendor": "Patient / Vendor"
+      "patient_vendor": "Patient / Vendor",
+      "actions": "Actions",
+      "partial_pay": "Partial pay",
+      "full_pay": "Pay in full"
     },
     "inventory": {
       "title": "Inventory",
@@ -1002,5 +1006,149 @@
         "dec": "Dec"
       }
     }
+  },
+  "clinicAuth": {
+    "show_password": "Show password",
+    "hide_password": "Hide password",
+    "register": {
+      "title": "Connect your clinic",
+      "subtitle": "Start a 30-day free trial — no admin approval required.",
+      "clinic_name": "Clinic name",
+      "first_name": "Administrator first name",
+      "last_name": "Administrator last name",
+      "phone": "Phone number",
+      "email": "Email",
+      "password": "Password",
+      "confirm_password": "Confirm password",
+      "terms_prefix": "I agree to the",
+      "terms": "Terms of Use",
+      "and": "and",
+      "privacy": "Privacy Policy",
+      "cta": "Start 30-day free trial",
+      "have_account": "Already have an account?",
+      "sign_in": "Sign in"
+    },
+    "login": {
+      "title": "Sign in to DENTA.UZ",
+      "subtitle": "Use your phone or email and password.",
+      "identifier": "Phone or email",
+      "identifier_placeholder": "+998 90 123 45 67 or email",
+      "password": "Password",
+      "forgot": "Forgot password?",
+      "cta": "Sign in",
+      "no_account": "No account yet?",
+      "start_trial": "Start 30-day free trial",
+      "unverified_title": "Your email is not verified yet.",
+      "unverified_body": "Verify your email before accessing the CRM.",
+      "send_code": "Send verification code"
+    },
+    "verify": {
+      "title": "Verify your email",
+      "subtitle": "We sent a 6-digit code to {{email}}.",
+      "cta": "Verify",
+      "resend": "Resend code",
+      "resend_in": "Resend in {{time}}",
+      "change_email": "Change email",
+      "dev_hint": "DEV code: {{code}}"
+    },
+    "success": {
+      "title": "Welcome to DENTA.UZ!",
+      "subtitle": "Your account has been verified.",
+      "trial_started": "Your 30-day free trial has started.",
+      "ends_on": "Trial ends on {{date}}",
+      "cta": "Set up clinic"
+    },
+    "forgot": {
+      "title": "Reset password",
+      "subtitle": "Enter your verified email. We will send a code there.",
+      "code_subtitle": "We sent a code to {{email}}.",
+      "password_subtitle": "Create a new password (min 8 chars, 1 letter, 1 digit).",
+      "send_code": "Send code",
+      "continue": "Continue",
+      "new_password": "New password",
+      "confirm_password": "Confirm password",
+      "save": "Save password",
+      "done_title": "Password updated",
+      "done_subtitle": "Sign in with your new password.",
+      "go_login": "Go to sign in",
+      "back_login": "Back to sign in"
+    },
+    "onboarding": {
+      "progress": "{{current}} / {{total}}",
+      "step1_title": "Clinic details",
+      "step1_body": "Review the information from registration.",
+      "step2_title": "Address",
+      "step2_body": "Add your clinic location.",
+      "step3_title": "Working hours",
+      "step3_body": "Set your usual opening hours.",
+      "step4_title": "Services",
+      "step4_body": "Select clinic services from the catalog and set price/duration.",
+      "step5_title": "Doctors",
+      "step5_body": "A short note about your team (optional).",
+      "step6_title": "Logo & photos",
+      "step6_body": "You can upload branding later in Settings.",
+      "city": "City",
+      "address": "Address",
+      "open": "Opens",
+      "close": "Closes",
+      "services_placeholder": "e.g. therapy, implants, orthodontics…",
+      "doctors_placeholder": "e.g. 3 dentists, 1 orthodontist…",
+      "photos_hint": "Add logo and clinic photos in Settings.",
+      "skip": "Skip",
+      "next": "Next",
+      "finish": "Go to CRM",
+      "services_required": "Select at least one service",
+      "price_uzs": "Price (UZS)",
+      "duration_min": "Duration (min)"
+    },
+    "trial": {
+      "banner": "Pro trial · {{days}} days left",
+      "details_title": "Trial details",
+      "started": "Started",
+      "ends": "Ends",
+      "status": "Status",
+      "status_trial": "Trial",
+      "payment_note": "Payment is manual for now. Contact DENTA.UZ when the trial ends."
+    },
+    "expired": {
+      "title": "Trial ended",
+      "body": "Contact DENTA.UZ to continue. Your data is kept.",
+      "phone": "Phone",
+      "data_kept": "Doctors, patients, appointments and finance are not deleted.",
+      "logout": "Sign out"
+    },
+    "password": {
+      "weak": "Weak password",
+      "ok": "Fair",
+      "strong": "Strong password"
+    },
+    "errors": {
+      "required": "Required field",
+      "invalid_email": "Enter a valid email",
+      "invalid_phone": "Phone format: +998 XX XXX XX XX",
+      "invalid_password": "Password: min 8 chars, 1 letter and 1 digit",
+      "password_mismatch": "Passwords do not match",
+      "terms_required": "Please accept the terms",
+      "email_taken": "This email is already in use.",
+      "phone_taken": "This phone number is already registered.",
+      "invalid_credentials": "Incorrect email/phone or password.",
+      "email_not_verified": "Your email is not verified yet.",
+      "invalid_code": "Invalid verification code.",
+      "code_expired": "This code has expired.",
+      "resend_cooldown": "You can resend the code in {{seconds}} seconds.",
+      "rate_limited": "Too many attempts. Try again later.",
+      "not_found": "Account not found.",
+      "network": "Network error. Please try again.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
+  "service": {
+    "consultation": "Consultation",
+    "professional_cleaning": "Professional cleaning",
+    "filling": "Caries treatment / Filling",
+    "root_canal": "Root canal treatment",
+    "whitening": "Whitening",
+    "orthodontic_consult": "Orthodontic consultation",
+    "implant_consult": "Implant consultation"
   }
 }

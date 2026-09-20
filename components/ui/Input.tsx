@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TextInput,
   TextInputProps,
+  TextStyle,
   View,
   Pressable,
 } from 'react-native';
@@ -12,13 +13,15 @@ import { Search, X } from '@/components/icons';
 import { Text } from './Text';
 import { useTheme } from '@/theme';
 
-const webInputReset =
+/** Web-only outline reset — cast through TextStyle for RN web typings. */
+const webInputReset: TextStyle | null =
   Platform.OS === 'web'
     ? ({
-        outlineStyle: 'none',
+        // RN-web accepts outlineStyle none; RN TextStyle union is narrower.
+        outlineStyle: 'solid',
         outlineWidth: 0,
-        boxShadow: 'none',
-      } as const)
+        outlineColor: 'transparent',
+      } as TextStyle)
     : null;
 
 interface InputProps extends TextInputProps {

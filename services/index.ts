@@ -2,6 +2,9 @@ export {
   apiDelay,
   mockNetworkDelay,
   ApiError,
+  useMockApi,
+  apiBaseUrl,
+  assertApiConfigured,
 } from './apiClient';
 
 export {
@@ -26,6 +29,7 @@ export {
   getAppointmentById,
   createAppointment,
   cancelAppointment,
+  rescheduleAppointment,
 } from './appointmentService';
 
 export { getPatients, getPatientById, createPatient, addPatientNote } from './patientService';
@@ -48,8 +52,12 @@ export {
   pickDoctorAvatar,
   uploadDoctorAvatar,
   getDoctorSessions,
+  revokeSession,
+  revokeOtherSessions,
 } from './doctorProfileService';
 export type { AvatarPickSource, AvatarPickResult } from './doctorProfileService';
+
+export { getApiErrorMessage, resolveErrorLocale } from './errorMessages';
 
 export {
   requestPermissions,

@@ -20,7 +20,8 @@ import {
   TransactionsList,
 } from '@/components/doctor/finance';
 import { ErrorState } from '@/components/states/EmptyState';
-import { queryKeys, useDoctor, useFinance, usePatients } from '@/hooks/queries';
+import { queryKeys, useFinance, usePatients } from '@/hooks/queries';
+import { useDoctorMe } from '@/hooks/useDoctorMe';
 import {
   createFinanceRecord,
   updateFinanceRecord,
@@ -28,10 +29,8 @@ import {
 } from '@/services/financeService';
 import { useToastStore } from '@/store/toastStore';
 import type { FinanceRecord } from '@/types';
-import { DEMO_DOCTOR_ID } from '@/utils/doctorDashboard';
 import {
   buildDoctorFinanceModel,
-  DEMO_DOCTOR_NAME,
   queryFinance,
   scopeDoctorFinance,
   type FinancePeriod,
@@ -52,7 +51,7 @@ export default function DoctorFinanceScreen() {
   const showToast = useToastStore((s) => s.showToast);
   const finance = useFinance();
   const patients = usePatients();
-  const doctor = useDoctor(DEMO_DOCTOR_ID);
+  const doctor = useDoctorMe();
 
   const [period, setPeriod] = useState<FinancePeriod>('today');
   const [typeFilter, setTypeFilter] = useState<FinanceTypeFilter>('all');
@@ -67,8 +66,8 @@ export default function DoctorFinanceScreen() {
     () =>
       scopeDoctorFinance(
         finance.data ?? [],
-        doctor.data?.fullName ?? DEMO_DOCTOR_NAME,
-        doctor.data?.id ?? DEMO_DOCTOR_ID,
+        doctor.data?.fullName ?? '',
+        doctor.data?.id ?? '',
       ),
     [doctor.data, finance.data],
   );
@@ -93,8 +92,8 @@ export default function DoctorFinanceScreen() {
     const payload: CreateFinanceInput = {
       ...input,
       time: input.time ?? currentTime(),
-      doctorName: input.doctorName ?? doctor.data?.fullName ?? DEMO_DOCTOR_NAME,
-      doctorId: input.doctorId ?? doctor.data?.id ?? DEMO_DOCTOR_ID,
+      doctorName: input.doctorName ?? doctor.data?.fullName ?? '',
+      doctorId: input.doctorId ?? doctor.data?.id,
     };
     if (id) {
       const updated = await updateFinanceRecord(id, payload);

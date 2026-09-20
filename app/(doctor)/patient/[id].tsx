@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -29,10 +29,9 @@ import { Text } from '@/components/ui/Text';
 import { ScalePressable } from '@/components/doctor/dashboard/ScalePressable';
 import { PatientsSkeleton } from '@/components/doctor/patients/PatientsSkeleton';
 import { queryKeys, useAppointments, usePatient } from '@/hooks/queries';
-import { addPatientNote } from '@/services/patientService';
+import { addPatientNote, getPatientOdontogram } from '@/services/patientService';
 import { useToastStore } from '@/store/toastStore';
 import { formatPatientDate } from '@/utils/doctorPatients';
-import { MOCK_ODONTOGRAM } from '@/mocks/data';
 
 export default function PatientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,6 +40,11 @@ export default function PatientDetailScreen() {
   const { canvas, colors, hairline, authSurface } = useLoginTheme();
   const patientQuery = usePatient(id);
   const appointments = useAppointments();
+  const odontogramQuery = useQuery({
+    queryKey: ['patients', id, 'odontogram'],
+    enabled: Boolean(id),
+    queryFn: () => getPatientOdontogram(id),
+  });
   const queryClient = useQueryClient();
   const showToast = useToastStore((s) => s.showToast);
   const [tab, setTab] = useState<PatientDetailTab>('overview');
@@ -201,7 +205,7 @@ export default function PatientDetailScreen() {
           {tab === 'chart' ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={{ minWidth: 320 }}>
-                <Odontogram teeth={MOCK_ODONTOGRAM} />
+                <Odontogram teeth={odontogramQuery.data ?? []} />
               </View>
             </ScrollView>
           ) : null}

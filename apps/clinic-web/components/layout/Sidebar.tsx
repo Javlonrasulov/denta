@@ -5,7 +5,9 @@ import { usePathname } from 'next/navigation';
 import { Building2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CLINIC_NAME } from '@denta/mocks';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { clinicApi } from '@/lib/api/clinic-api';
+import { useClinicQuery } from '@/lib/api/useClinicData';
 import { NAV_BOTTOM, NAV_CLINIC, NAV_MAIN, NAV_OPS, type NavItem } from '@/lib/nav';
 import { cn } from '@/lib/cn';
 
@@ -236,6 +238,10 @@ export function Sidebar({
   /** Desktop permanent sidebar shows collapse row in footer */
   showToggle?: boolean;
 }) {
+  const { user } = useAuth();
+  const clinicQuery = useClinicQuery('sidebar-clinic', clinicApi.clinicMe);
+  const clinicName = clinicQuery.data?.name ?? user?.clinicName ?? '—';
+
   return (
     <aside
       className={cn(
@@ -267,7 +273,7 @@ export function Sidebar({
             DENTA.UZ
           </p>
           <p className="mt-0.5 truncate whitespace-nowrap text-caption text-sidebar-muted">
-            {CLINIC_NAME}
+            {clinicName}
           </p>
         </div>
       </div>

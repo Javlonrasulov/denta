@@ -1,10 +1,15 @@
-import { MOCK_PATIENTS } from '@/mocks/data';
-import type { CreatePatientInput, Patient } from '@/types';
+import type { CreatePatientInput, Patient, ToothRecord } from '@/types';
 import { matchesPatientQuery } from '@/utils/doctorPatients';
 import { localDateKey } from '@/utils/doctorDashboard';
-import { mockNetworkDelay } from './apiClient';
+import {
+  apiGet,
+  apiPatch,
+  apiPost,
+  mockNetworkDelay,
+  useMockApi,
+} from './apiClient';
+import { MOCK_PATIENTS } from '@/mocks/data';
 
-/** Module-level mutable store for mock create/update. Swap for NestJS later. */
 let patients: Patient[] = MOCK_PATIENTS.map((p) => ({
   ...p,
   treatments: p.treatments ? p.treatments.map((tx) => ({ ...tx })) : undefined,
@@ -21,6 +26,9 @@ function nextDisplayId(): string {
 }
 
 export async function getPatients(query?: string): Promise<Patient[]> {
+  if (!useMockApi()) {
+    return apiGet<Patient[]>('/patients', { q: query });
+  }
   await mockNetworkDelay();
   const all = patients.map((p) => ({ ...p }));
   if (!query?.trim()) return all;
@@ -28,12 +36,22 @@ export async function getPatients(query?: string): Promise<Patient[]> {
 }
 
 export async function getPatientById(id: string): Promise<Patient | null> {
+  if (!useMockApi()) {
+    try {
+      return await apiGet<Patient>(`/patients/${id}`);
+    } catch {
+      return null;
+    }
+  }
   await mockNetworkDelay();
   const found = patients.find((p) => p.id === id);
   return found ? { ...found } : null;
 }
 
 export async function createPatient(input: CreatePatientInput): Promise<Patient> {
+  if (!useMockApi()) {
+    return apiPost<Patient>('/patients', input);
+  }
   await mockNetworkDelay();
   const firstName = input.firstName.trim();
   const lastName = input.lastName.trim();
@@ -61,6 +79,9 @@ export async function createPatient(input: CreatePatientInput): Promise<Patient>
 }
 
 export async function addPatientNote(id: string, note: string): Promise<Patient> {
+  if (!useMockApi()) {
+    return apiPatch<Patient>(`/patients/${id}/notes`, { notes: note });
+  }
   await mockNetworkDelay();
   const index = patients.findIndex((p) => p.id === id);
   if (index === -1) {
@@ -72,4 +93,13 @@ export async function addPatientNote(id: string, note: string): Promise<Patient>
   const updated: Patient = { ...current, notes: nextNotes };
   patients = [...patients.slice(0, index), updated, ...patients.slice(index + 1)];
   return { ...updated };
+}
+
+export async function getPatientOdontogram(id: string): Promise<ToothRecord[]> {
+  if (!useMockApi()) {
+    const res = await apiGet<{ teeth: ToothRecord[] }>(`/patients/${id}/odontogram`);
+    return res.teeth ?? [];
+  }
+  await mockNetworkDelay();
+  return [];
 }

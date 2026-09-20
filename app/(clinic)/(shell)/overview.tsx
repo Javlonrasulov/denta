@@ -10,6 +10,7 @@ import {
   Receipt,
 } from '@/components/icons';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
 import { router } from 'expo-router';
 
 import { AppShell } from '@/components/layout/AppShell';
@@ -28,9 +29,12 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Text } from '@/components/ui/Text';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { useAppointments, useClinicStats, useDoctors, usePatients } from '@/hooks/queries';
+import { apiGet, useMockApi } from '@/services/apiClient';
 import { MOCK_ROOMS } from '@/mocks/data';
 import { useTheme } from '@/theme';
 import { formatPrice } from '@/utils/slots';
+import type { Room } from '@/types';
+import { useQuery } from '@tanstack/react-query';
 
 export default function ClinicOverviewScreen() {
   const { t } = useTranslation();
@@ -41,10 +45,19 @@ export default function ClinicOverviewScreen() {
   const doctors = useDoctors();
   const patients = usePatients();
   const wide = isDesktop || isTablet;
+  const roomsQuery = useQuery({
+    queryKey: ['rooms'],
+    queryFn: async () => {
+      if (useMockApi()) return MOCK_ROOMS as Room[];
+      return apiGet<Room[]>('/rooms');
+    },
+  });
+  const rooms = roomsQuery.data ?? [];
 
   const todayApts = useMemo((): TimelineItem[] => {
+    const todayKey = format(new Date(), 'yyyy-MM-dd');
     const list = (appointments.data ?? [])
-      .filter((a) => a.date === '2026-08-23')
+      .filter((a) => a.date === todayKey)
       .sort((a, b) => a.time.localeCompare(b.time));
     const items: TimelineItem[] = list.map((a) => ({
       id: a.id,
@@ -82,11 +95,26 @@ export default function ClinicOverviewScreen() {
       .slice(0, 4);
   }, [doctors.data]);
 
-  const recentPatients = useMemo(() => (patients.data ?? []).slice(0, 6), [patients.data]);
+  const aptCounts = useMemo(() => {
+    const list = appointments.data ?? [];
+    return {
+      total: list.length,
+      upcoming: list.filter((a) => a.status === 'upcoming').length,
+      completed: list.filter((a) => a.status === 'completed').length,
+      cancelled: list.filter((a) => a.status === 'cancelled').length,
+    };
+  }, [appointments.data]);
+
+  const revenueValue = stats.data?.revenue ?? 0;
+
+  const recentPatients = useMemo(
+    () => (patients.data ?? []).slice(0, 6),
+    [patients.data],
+  );
 
   const occupancy = stats.data
     ? Math.round(
-        ((MOCK_ROOMS.length - (stats.data.availableRooms ?? 0)) / Math.max(MOCK_ROOMS.length, 1)) * 100,
+        ((rooms.length - (stats.data.availableRooms ?? 0)) / Math.max(rooms.length, 1)) * 100,
       )
     : 0;
 
@@ -187,7 +215,7 @@ export default function ClinicOverviewScreen() {
             <Section title={t('crm.dashboard.revenue_analytics')}>
               <LineChartCard
                 title=""
-                totalValue={`${formatPrice(35_400_000)}`}
+                totalValue={`${formatPrice(revenueValue)}`}
                 totalLabel={t('crm.dashboard.week_total')}
                 range={range}
                 onRangeChange={setRange}
@@ -196,19 +224,18 @@ export default function ClinicOverviewScreen() {
                   { value: '30d', label: t('crm.dashboard.range_30d') },
                   { value: '12m', label: t('crm.dashboard.range_12m') },
                 ]}
-                points={range === '7d' ? [42, 55, 48, 62, 70, 58, 75] : range === '30d' ? [40, 44, 50, 48, 55, 60, 58, 62, 70, 68] : [30, 35, 40, 48, 55, 60, 70, 68, 72, 80, 78, 85]}
+                points={[]}
               />
             </Section>
             <Section title={t('clinic_crm.appointments_chart')}>
               <DonutChartCard
                 title=""
-                centerValue="140"
+                centerValue={String(aptCounts.total)}
                 centerLabel={t('tabs.appointments')}
                 segments={[
-                  { label: t('appointments.status_upcoming'), value: 64, color: colors.success },
-                  { label: t('finance.pending'), value: 18, color: colors.warning },
-                  { label: t('appointments.status_cancelled'), value: 11, color: colors.error },
-                  { label: t('appointments.status_completed'), value: 7, color: colors.chartTertiary },
+                  { label: t('appointments.status_upcoming'), value: aptCounts.upcoming || 0, color: colors.success },
+                  { label: t('appointments.status_cancelled'), value: aptCounts.cancelled || 0, color: colors.error },
+                  { label: t('appointments.status_completed'), value: aptCounts.completed || 0, color: colors.chartTertiary },
                 ]}
               />
             </Section>
@@ -217,7 +244,7 @@ export default function ClinicOverviewScreen() {
 
         <Section title={t('crm.dashboard.rooms')}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-            {MOCK_ROOMS.map((room) => (
+            {rooms.map((room) => (
               <View
                 key={room.id}
                 style={{

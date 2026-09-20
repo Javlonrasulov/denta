@@ -1,13 +1,13 @@
-import {
-  MOCK_APPOINTMENTS,
-  MOCK_DOCTORS,
-  MOCK_FINANCE,
-  MOCK_PATIENTS,
-  MOCK_ROOMS,
-} from '@/mocks/data';
 import type { FinanceRecord, PaymentMethod, PaymentStatus } from '@/types';
-import { DEMO_DOCTOR_ID, localDateKey } from '@/utils/doctorDashboard';
-import { mockNetworkDelay } from './apiClient';
+import { localDateKey } from '@/utils/doctorDashboard';
+import {
+  apiGet,
+  apiPatch,
+  apiPost,
+  mockNetworkDelay,
+  useMockApi,
+} from './apiClient';
+import { MOCK_FINANCE } from '@/mocks/data';
 
 export type FinanceFilter = 'today' | 'week' | 'month' | 'year';
 
@@ -21,63 +21,34 @@ export type CreateFinanceInput = {
   patientId?: string;
   doctorName?: string;
   doctorId?: string;
+  appointmentId?: string;
+  chargeId?: string;
   paymentStatus?: PaymentStatus;
   paymentMethod?: PaymentMethod;
   notes?: string;
 };
 
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function parseRecordDate(dateStr: string): Date {
-  return startOfDay(new Date(dateStr + 'T00:00:00'));
-}
-
-function filterByPeriod(
-  records: FinanceRecord[],
-  filter?: FinanceFilter,
-): FinanceRecord[] {
-  if (!filter) return records;
-
-  const today = startOfDay(new Date());
-  const from = new Date(today);
-
-  switch (filter) {
-    case 'today':
-      break;
-    case 'week':
-      from.setDate(from.getDate() - 6);
-      break;
-    case 'month':
-      from.setMonth(from.getMonth() - 1);
-      break;
-    case 'year':
-      from.setFullYear(from.getFullYear() - 1);
-      break;
-  }
-
-  return records.filter((r) => {
-    const d = parseRecordDate(r.date);
-    return d >= from && d <= today;
-  });
-}
-
-/** Module-level store so doctor create/update flows persist until refresh. */
 let records: FinanceRecord[] = MOCK_FINANCE.map((row) => ({ ...row }));
 
 export async function getFinanceRecords(
   filter?: FinanceFilter,
 ): Promise<FinanceRecord[]> {
+  if (!useMockApi()) {
+    return apiGet<FinanceRecord[]>('/finance', { period: filter ?? 'month' });
+  }
   await mockNetworkDelay();
-  return filterByPeriod(records.map((row) => ({ ...row })), filter);
+  return records.map((row) => ({ ...row }));
 }
 
 export async function createFinanceRecord(
   input: CreateFinanceInput,
 ): Promise<FinanceRecord> {
+  if (!useMockApi()) {
+    return apiPost<FinanceRecord>('/finance', {
+      ...input,
+      date: input.date ?? localDateKey(),
+    });
+  }
   await mockNetworkDelay();
   const created: FinanceRecord = {
     id: `fin-${Date.now()}`,
@@ -86,7 +57,7 @@ export async function createFinanceRecord(
     patientName: input.patientName,
     patientId: input.patientId,
     doctorName: input.doctorName,
-    doctorId: input.doctorId ?? DEMO_DOCTOR_ID,
+    doctorId: input.doctorId,
     serviceName: input.serviceName.trim(),
     amount: input.amount,
     type: input.type,
@@ -100,20 +71,15 @@ export async function createFinanceRecord(
 
 export async function updateFinanceRecord(
   id: string,
-  patch: Partial<CreateFinanceInput> & { paymentStatus?: PaymentStatus },
+  input: Partial<CreateFinanceInput> & { paymentStatus?: PaymentStatus },
 ): Promise<FinanceRecord> {
-  await mockNetworkDelay();
-  const index = records.findIndex((row) => row.id === id);
-  if (index === -1) {
-    throw new Error(`Finance record not found: ${id}`);
+  if (!useMockApi()) {
+    return apiPatch<FinanceRecord>(`/finance/${id}`, input);
   }
-  const current = records[index];
-  const updated: FinanceRecord = {
-    ...current,
-    ...patch,
-    serviceName: patch.serviceName?.trim() || current.serviceName,
-    notes: patch.notes === undefined ? current.notes : patch.notes.trim() || undefined,
-  };
+  await mockNetworkDelay();
+  const index = records.findIndex((r) => r.id === id);
+  if (index === -1) throw new Error(`Finance record not found: ${id}`);
+  const updated = { ...records[index], ...input } as FinanceRecord;
   records = [...records.slice(0, index), updated, ...records.slice(index + 1)];
   return { ...updated };
 }
@@ -124,27 +90,22 @@ export async function getDoctorTodayStats(): Promise<{
   upcoming: number;
   income: number;
 }> {
+  if (!useMockApi()) {
+    const dash = await apiGet<{
+      patientsToday?: number;
+      completedAppointments?: number;
+      remainingAppointments?: number;
+      todayRevenue?: number;
+    }>('/doctors/me/dashboard');
+    return {
+      patients: dash.patientsToday ?? 0,
+      completed: dash.completedAppointments ?? 0,
+      upcoming: dash.remainingAppointments ?? 0,
+      income: dash.todayRevenue ?? 0,
+    };
+  }
   await mockNetworkDelay();
-
-  const todayStr = startOfDay(new Date()).toISOString().slice(0, 10);
-  // Mock: stats for the primary demo doctor
-  const doctorId = 'doctor-1';
-  const todayAppts = MOCK_APPOINTMENTS.filter(
-    (a) => a.doctorId === doctorId && a.date === todayStr,
-  );
-
-  const completed = todayAppts.filter((a) => a.status === 'completed').length;
-  const upcoming = todayAppts.filter((a) => a.status === 'upcoming').length;
-  const patients = new Set(
-    todayAppts
-      .filter((a) => a.status !== 'cancelled')
-      .map((a) => a.patientId),
-  ).size;
-  const income = todayAppts
-    .filter((a) => a.status !== 'cancelled')
-    .reduce((sum, a) => sum + a.price, 0);
-
-  return { patients, completed, upcoming, income };
+  return { patients: 0, completed: 0, upcoming: 0, income: 0 };
 }
 
 export async function getClinicDashboardStats(): Promise<{
@@ -155,18 +116,16 @@ export async function getClinicDashboardStats(): Promise<{
   availableRooms: number;
   cancelled: number;
 }> {
+  if (!useMockApi()) {
+    return apiGet('/analytics/dashboard');
+  }
   await mockNetworkDelay();
-
-  const revenue = records
-    .filter((r) => r.type === 'income')
-    .reduce((sum, r) => sum + r.amount, 0);
-
   return {
-    revenue,
-    appointments: MOCK_APPOINTMENTS.length,
-    patients: MOCK_PATIENTS.filter((p) => p.status === 'active').length,
-    doctors: MOCK_DOCTORS.length,
-    availableRooms: MOCK_ROOMS.filter((r) => r.status === 'available').length,
-    cancelled: MOCK_APPOINTMENTS.filter((a) => a.status === 'cancelled').length,
+    revenue: 0,
+    appointments: 0,
+    patients: 0,
+    doctors: 0,
+    availableRooms: 0,
+    cancelled: 0,
   };
 }

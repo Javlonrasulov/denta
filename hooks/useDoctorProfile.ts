@@ -1,22 +1,25 @@
 import { useMemo } from 'react';
 
-import { useAppointments, useClinic, useDoctor, usePatients } from '@/hooks/queries';
+import { useAppointments, useClinic, usePatients } from '@/hooks/queries';
+import { useDoctorMe } from '@/hooks/useDoctorMe';
+import { updateMyDoctorProfile, replaceMyDoctorSchedule } from '@/services/doctorService';
+import { useMockApi } from '@/services/apiClient';
 import { useDoctorProfileStore } from '@/store/doctorProfileStore';
-import { DEMO_DOCTOR_ID } from '@/utils/doctorDashboard';
 import {
   buildDoctorProfile,
   buildProfileStats,
   profileCompletion,
 } from '@/utils/doctorProfile';
+import type { UpdateDoctorProfileInput } from '@/types';
 
 export function useDoctorProfile() {
-  const doctor = useDoctor(DEMO_DOCTOR_ID);
+  const doctor = useDoctorMe();
   const clinic = useClinic(doctor.data?.clinicId ?? '');
   const patients = usePatients();
   const appointments = useAppointments();
   const overrides = useDoctorProfileStore((s) => s.overrides);
   const notificationSettings = useDoctorProfileStore((s) => s.notificationSettings);
-  const patchProfile = useDoctorProfileStore((s) => s.patchProfile);
+  const storePatch = useDoctorProfileStore((s) => s.patchProfile);
   const setNotification = useDoctorProfileStore((s) => s.setNotification);
   const biometricEnabled = useDoctorProfileStore((s) => s.biometricEnabled);
   const setBiometricEnabled = useDoctorProfileStore((s) => s.setBiometricEnabled);
@@ -24,6 +27,36 @@ export function useDoctorProfile() {
   const privacyVisibleInSearch = useDoctorProfileStore((s) => s.privacyVisibleInSearch);
   const privacyAnalytics = useDoctorProfileStore((s) => s.privacyAnalytics);
   const setPrivacy = useDoctorProfileStore((s) => s.setPrivacy);
+
+  const patchProfile = (patch: UpdateDoctorProfileInput) => {
+    storePatch(patch);
+    if (useMockApi()) return;
+    void (async () => {
+      const body: Record<string, unknown> = {};
+      if (patch.firstName) body.firstName = patch.firstName;
+      if (patch.lastName) body.lastName = patch.lastName;
+      if (patch.bio) body.bio = patch.bio;
+      if (patch.phone) body.phone = patch.phone;
+      if (patch.specialty) body.specialty = patch.specialty;
+      if (Object.keys(body).length) {
+        await updateMyDoctorProfile(body);
+        void doctor.refetch();
+      }
+      if (patch.weeklySchedule?.length) {
+        await replaceMyDoctorSchedule(
+          patch.weeklySchedule
+            .filter((d) => !d.closed)
+            .map((d) => ({
+              dayOfWeek: d.day,
+              startTime: d.start,
+              endTime: d.end,
+              slotDuration: patch.appointmentDuration,
+            })),
+        );
+        void doctor.refetch();
+      }
+    })();
+  };
 
   const profile = useMemo(() => {
     if (!doctor.data) return null;
@@ -44,7 +77,10 @@ export function useDoctorProfile() {
     });
   }, [profile, patients.data, appointments.data]);
 
-  const completion = useMemo(() => (profile ? profileCompletion(profile) : null), [profile]);
+  const completion = useMemo(
+    () => (profile ? profileCompletion(profile) : null),
+    [profile],
+  );
 
   return {
     profile,

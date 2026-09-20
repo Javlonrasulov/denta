@@ -1,6 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Calendar, Clock, MapPin } from '@/components/icons';
+import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -9,8 +11,10 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
-import { useAppointment } from '@/hooks/queries';
+import { queryKeys, useAppointment } from '@/hooks/queries';
+import { cancelAppointment } from '@/services/appointmentService';
 import { useAppointmentsStore } from '@/store/appointmentsStore';
+import { useToastStore } from '@/store/toastStore';
 import { useTheme } from '@/theme';
 import { formatPrice } from '@/utils/slots';
 
@@ -20,11 +24,13 @@ export default function AppointmentDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors, spacing, radius } = useTheme();
   const query = useAppointment(id);
-  const updateStatus = useAppointmentsStore((s) => s.updateAppointmentStatus);
-  const storeApt = useAppointmentsStore((s) => s.appointments.find((a) => a.id === id));
-  const appointment = storeApt ?? query.data;
+  const queryClient = useQueryClient();
+  const setDraft = useAppointmentsStore((s) => s.setDraft);
+  const showToast = useToastStore((s) => s.showToast);
+  const [cancelling, setCancelling] = useState(false);
+  const appointment = query.data;
 
-  if (query.isLoading && !storeApt) return <ListSkeleton rows={5} />;
+  if (query.isLoading) return <ListSkeleton rows={5} />;
   if (!appointment) {
     return (
       <ErrorState
@@ -109,17 +115,39 @@ export default function AppointmentDetailScreen() {
             title={t('appointments.reschedule')}
             variant="outline"
             fullWidth
-            onPress={() =>
-              router.push(`/(client)/doctor/${appointment.doctorId}`)
-            }
+            onPress={() => {
+              setDraft({
+                clinicId: appointment.clinicId,
+                doctorId: appointment.doctorId,
+                rescheduleAppointmentId: appointment.id,
+              });
+              router.push(`/(client)/doctor/${appointment.doctorId}`);
+            }}
           />
           <Button
             title={t('appointments.cancel_appointment')}
             variant="danger"
             fullWidth
+            loading={cancelling}
             onPress={() => {
-              updateStatus(appointment.id, 'cancelled');
-              router.back();
+              setCancelling(true);
+              void (async () => {
+                try {
+                  await cancelAppointment(appointment.id);
+                  await queryClient.invalidateQueries({
+                    queryKey: queryKeys.appointments.all,
+                  });
+                  router.back();
+                } catch (err) {
+                  showToast({
+                    tone: 'error',
+                    title: t('error.something_wrong'),
+                    message: err instanceof Error ? err.message : '',
+                  });
+                } finally {
+                  setCancelling(false);
+                }
+              })();
             }}
           />
         </View>

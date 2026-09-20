@@ -1,10 +1,13 @@
 'use client';
 
-import { Menu, Search } from 'lucide-react';
+import { LogOut, Menu, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
+import { TrialBanner } from '@/components/auth/TrialBanner';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 import { NotificationsMenu } from '@/components/layout/NotificationsMenu';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export function TopHeader({
   title,
@@ -16,6 +19,20 @@ export function TopHeader({
   onMenuClick?: () => void;
 }) {
   const { t } = useTranslation();
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const initials = user
+    ? `${user.adminFirstName.charAt(0)}${user.adminLastName.charAt(0)}`.toUpperCase()
+    : 'AD';
+  const displayName = user
+    ? `${user.adminFirstName} ${user.adminLastName}`.trim()
+    : t('crm.header.admin');
+
+  async function onLogout() {
+    await logout();
+    router.replace('/login');
+  }
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 font-sans backdrop-blur">
@@ -39,6 +56,8 @@ export function TopHeader({
         </div>
 
         <div className="hidden items-center gap-2 tablet:flex laptop:gap-3">
+          <TrialBanner />
+
           <label className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -52,24 +71,42 @@ export function TopHeader({
 
           <NotificationsMenu />
 
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-3">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-semibold tracking-normal text-white">
-              AD
+              {initials}
             </div>
             <div className="hidden min-w-0 leading-tight desktop:block">
-              <p className="truncate text-sm font-medium tracking-normal text-slate-900">
-                {t('crm.header.admin')}
+              <p className="max-w-[120px] truncate text-sm font-medium tracking-normal text-slate-900">
+                {displayName}
               </p>
               <p className="truncate text-caption text-slate-500">
-                {t('crm.header.role_manager')}
+                {user?.clinicName ?? t('crm.header.role_manager')}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => void onLogout()}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              aria-label={t('clinicAuth.expired.logout')}
+              title={t('clinicAuth.expired.logout')}
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
         <div className="flex items-center gap-2 tablet:hidden">
+          <TrialBanner />
           <LanguageSelector />
           <NotificationsMenu />
+          <button
+            type="button"
+            onClick={() => void onLogout()}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600"
+            aria-label={t('clinicAuth.expired.logout')}
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </header>

@@ -1,85 +1,58 @@
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 
 import { AppShell } from '@/components/layout/AppShell';
-import { Section, StatusDot } from '@/components/crm';
 import { Text } from '@/components/ui/Text';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { apiGet, useMockApi } from '@/services/apiClient';
 import { MOCK_ROOMS } from '@/mocks/data';
 import { useTheme } from '@/theme';
+import type { Room } from '@/types';
 
 export default function ClinicRoomsScreen() {
   const { t } = useTranslation();
-  const { colors, spacing, radius, isDesktop, isTablet, isMobile } = useTheme();
+  const { colors, spacing, radius } = useTheme();
+  const roomsQuery = useQuery({
+    queryKey: ['rooms'],
+    queryFn: async () => {
+      if (useMockApi()) return MOCK_ROOMS;
+      return apiGet<Room[]>('/rooms');
+    },
+  });
+
+  if (roomsQuery.isLoading) return <ListSkeleton rows={4} />;
+  const rooms = roomsQuery.data ?? [];
 
   return (
-    <AppShell title={t('crm.rooms.title')} subtitle={t('crm.rooms.subtitle')}>
-      <View
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: spacing.md,
-        }}
-      >
-        {MOCK_ROOMS.map((room) => {
-          const tone =
-            room.status === 'available' ? 'success' : room.status === 'occupied' ? 'warning' : 'neutral';
-          const bg =
-            room.status === 'available'
-              ? colors.successMuted
-              : room.status === 'occupied'
-                ? colors.warningMuted
-                : colors.surfaceSoft;
-          return (
+    <AppShell title={t('crm.nav.rooms')}>
+      <View style={{ gap: spacing.md }}>
+        {rooms.length === 0 ? (
+          <Text variant="body" muted>
+            {t('empty.no_data')}
+          </Text>
+        ) : (
+          rooms.map((room) => (
             <View
               key={room.id}
               style={{
-                width: isDesktop ? '23%' : isTablet ? '31%' : '47%',
-                minWidth: isMobile ? undefined : 150,
-                flexGrow: 1,
-                flexBasis: isMobile ? '46%' : undefined,
-                maxWidth: '100%',
-                backgroundColor: colors.surface,
+                padding: spacing.lg,
                 borderRadius: radius.lg,
+                backgroundColor: colors.surface,
                 borderWidth: 1,
                 borderColor: colors.borderSubtle,
-                padding: spacing.lg,
-                gap: spacing.sm,
-                minHeight: 120,
+                gap: 4,
               }}
             >
-              <View
-                style={{
-                  alignSelf: 'flex-start',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  backgroundColor: bg,
-                  paddingHorizontal: spacing.sm,
-                  paddingVertical: 4,
-                  borderRadius: radius.full,
-                }}
-              >
-                <StatusDot tone={tone} />
-                <Text variant="caption" weight="semibold">
-                  {room.status === 'available'
-                    ? t('common.available')
-                    : room.status === 'occupied'
-                      ? t('common.occupied')
-                      : t('common.maintenance')}
-                </Text>
-              </View>
-              <Text variant="h3">{room.name}</Text>
-              <Text variant="caption" muted>
-                #{room.number}
+              <Text variant="label">
+                {room.name} · #{room.number}
               </Text>
-              {room.doctorName ? (
-                <Text variant="bodySmall" color={colors.textSecondary}>
-                  {room.doctorName}
-                </Text>
-              ) : null}
+              <Text variant="bodySmall" muted>
+                {room.doctorName ?? '—'} · {room.status}
+              </Text>
             </View>
-          );
-        })}
+          ))
+        )}
       </View>
     </AppShell>
   );

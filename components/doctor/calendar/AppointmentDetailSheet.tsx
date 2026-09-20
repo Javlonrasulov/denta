@@ -55,6 +55,8 @@ export function AppointmentDetailSheet({
   onEdit,
   onCancel,
   onStart,
+  onComplete,
+  onPay,
 }: {
   slot: CalendarSlot | null;
   patient?: Patient;
@@ -65,6 +67,8 @@ export function AppointmentDetailSheet({
   onEdit?: () => void;
   onCancel?: () => void;
   onStart?: () => void;
+  onComplete?: () => void;
+  onPay?: () => void;
 }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -73,6 +77,12 @@ export function AppointmentDetailSheet({
   const visible = Boolean(slot && appointment);
   const tone = slot ? SLOT_TONE[slot.kind] : SLOT_TONE.pending;
   const canAct = slot?.kind === 'pending' || slot?.kind === 'confirmed' || slot?.kind === 'in_progress';
+  const isCompleted = appointment?.status === 'completed' || slot?.kind === 'completed';
+  const charge = appointment?.charge;
+  const unpaid =
+    charge &&
+    (charge.status === 'unpaid' || charge.status === 'partially_paid') &&
+    charge.remainingAmount > 0;
 
   return (
     <Modal
@@ -294,6 +304,30 @@ export function AppointmentDetailSheet({
                       {t('doctor_app.start_visit')}
                     </Text>
                   </ScalePressable>
+                  <ScalePressable
+                    accessibilityLabel={t('appointments.status_completed')}
+                    onPress={onComplete}
+                    style={{
+                      height: 46,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: field,
+                      borderWidth: 1,
+                      borderColor: hairline,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: 'GolosText_600SemiBold',
+                        fontSize: 14,
+                        lineHeight: 18,
+                        color: colors.text,
+                      }}
+                    >
+                      {t('appointments.status_completed')}
+                    </Text>
+                  </ScalePressable>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <ScalePressable
                       accessibilityLabel={t('doctor_app.edit_appointment')}
@@ -347,6 +381,47 @@ export function AppointmentDetailSheet({
                       </Text>
                     </ScalePressable>
                   </View>
+                </View>
+              ) : null}
+
+              {isCompleted ? (
+                <View style={{ gap: 8 }}>
+                  <Text
+                    style={{
+                      fontFamily: 'GolosText_500Medium',
+                      fontSize: 13,
+                      lineHeight: 18,
+                      color: colors.textSecondary,
+                    }}
+                  >
+                    {charge
+                      ? `${t('crm.finance.outstanding', { defaultValue: 'Outstanding' })}: ${charge.remainingAmount.toLocaleString()} / ${charge.amount.toLocaleString()} (${charge.status})`
+                      : t('doctor_app.no_charge', { defaultValue: 'No charge' })}
+                  </Text>
+                  {unpaid ? (
+                    <ScalePressable
+                      accessibilityLabel={t('crm.finance.full_pay', { defaultValue: 'Pay in full' })}
+                      onPress={onPay}
+                      style={{
+                        height: 50,
+                        borderRadius: 16,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: colors.primary,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: 'GolosText_600SemiBold',
+                          fontSize: 15,
+                          lineHeight: 20,
+                          color: ctaText,
+                        }}
+                      >
+                        {t('crm.finance.full_pay', { defaultValue: 'Pay in full' })}
+                      </Text>
+                    </ScalePressable>
+                  ) : null}
                 </View>
               ) : null}
             </ScrollView>

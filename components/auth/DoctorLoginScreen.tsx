@@ -143,19 +143,20 @@ export function DoctorLoginScreen() {
 
     clearErrors();
     setLoading(true);
-    setTimeout(() => {
-      const name = trimmedLogin.includes('@')
-        ? trimmedLogin.split('@')[0]
-        : trimmedLogin;
-      login({
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        login: trimmedLogin,
-        password,
-      });
-      if (LOCKED_ROLE) setRole(LOCKED_ROLE);
-      setLoading(false);
-      router.replace('/');
-    }, 450);
+    void (async () => {
+      try {
+        const { loginWithPassword } = await import('@/services/authService');
+        await loginWithPassword(trimmedLogin, password);
+        if (LOCKED_ROLE) setRole(LOCKED_ROLE);
+        router.replace('/');
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : t('auth.invalid_credentials');
+        setFormError(message);
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   return (

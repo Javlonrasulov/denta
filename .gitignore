@@ -32,6 +32,12 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+!.env.example
+
+# API build
+apps/api/dist/
+apps/api/.uploads/
 
 # typescript
 *.tsbuildinfo
@@ -42,3 +48,5 @@ yarn-error.*
 /android-client
 /android-doctor
 /android-clinic
+
+apps/api/.api-*.log

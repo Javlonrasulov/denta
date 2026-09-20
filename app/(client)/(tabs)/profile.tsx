@@ -38,9 +38,7 @@ export default function ProfileScreen() {
     setThemeMode,
     notificationsEnabled,
     setNotificationsEnabled,
-    logout,
   } = useSettingsStore();
-
   const isDark = themeMode === 'dark';
 
   const Row = ({
@@ -169,8 +167,11 @@ export default function ProfileScreen() {
 
       <Pressable
         onPress={() => {
-          logout();
-          router.replace('/login');
+          void (async () => {
+            const { logout: apiLogout } = await import('@/services/authService');
+            await apiLogout();
+            router.replace('/login');
+          })();
         }}
         style={({ pressed }) => ({
           flexDirection: 'row',

@@ -43,11 +43,19 @@ export function PatientFlowCard() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    void fetchPatientFlow(period).then((data) => {
-      if (cancelled) return;
-      setSeries(data);
-      setLoading(false);
-    });
+    setSeries(null);
+    void fetchPatientFlow(period)
+      .then((data) => {
+        if (cancelled) return;
+        setSeries(data);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSeries(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
