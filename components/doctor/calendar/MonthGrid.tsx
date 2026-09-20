@@ -67,7 +67,7 @@ export function MonthGrid({
           ))}
         </View>
 
-        {Array.from({ length: 6 }, (_, row) => (
+        {Array.from({ length: Math.ceil(cells.length / 7) }, (_, row) => (
           <View key={row} style={{ flexDirection: 'row' }}>
             {cells.slice(row * 7, row * 7 + 7).map((cell) => {
               const selected = cell.isSelected;

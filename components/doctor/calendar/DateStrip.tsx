@@ -8,7 +8,7 @@ import { ScalePressable } from '@/components/doctor/dashboard/ScalePressable';
 import { Text } from '@/components/ui/Text';
 import type { DateStripItem } from '@/utils/doctorCalendar';
 
-const ITEM_WIDTH = 52;
+const ITEM_WIDTH = 58;
 const ITEM_GAP = 8;
 
 export function DateStrip({
@@ -62,11 +62,11 @@ export function DateStrip({
             >
               <Text
                 maxFontSizeMultiplier={1}
+                numberOfLines={1}
                 style={{
-                  fontFamily: 'Geologica_600SemiBold',
+                  fontFamily: 'GolosText_600SemiBold',
                   fontSize: 11,
                   lineHeight: 14,
-                  letterSpacing: 0.4,
                   color: selected ? 'rgba(255,255,255,0.78)' : colors.textMuted,
                 }}
               >

@@ -145,7 +145,7 @@ function buildAlerts(params: {
   const unpaid = finance.find(
     (r) =>
       r.type === 'income' &&
-      (r.paymentStatus === 'pending' || r.paymentStatus === 'overdue') &&
+      (r.paymentStatus === 'pending' || r.paymentStatus === 'overdue' || r.paymentStatus === 'partial') &&
       r.doctorName === doctorName &&
       Boolean(r.patientName),
   );

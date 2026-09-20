@@ -8,7 +8,7 @@ import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-nati
 import { useLoginTheme } from '@/components/auth/loginTheme';
 import { SLOT_TONE, statusKey } from '@/components/doctor/calendar/calendarTokens';
 import { ScalePressable } from '@/components/doctor/dashboard/ScalePressable';
-import { Pencil, Phone, Play, UserRound, X } from '@/components/icons';
+import { CalendarClock, Phone, Play, UserRound, X } from '@/components/icons';
 import { Avatar } from '@/components/ui/Avatar';
 import { Text } from '@/components/ui/Text';
 import type { FinanceRecord, Patient } from '@/types';
@@ -311,7 +311,7 @@ export function AppointmentDetailSheet({
                         borderColor: hairline,
                       }}
                     >
-                      <Pencil size={15} color={colors.textSecondary} strokeWidth={1.8} />
+                      <CalendarClock size={15} color={colors.textSecondary} strokeWidth={1.8} />
                       <Text
                         style={{
                           fontFamily: 'GolosText_600SemiBold',

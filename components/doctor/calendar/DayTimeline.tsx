@@ -97,41 +97,48 @@ export function DayTimeline({
             pointerEvents="none"
             style={{
               position: 'absolute',
-              left: 40,
+              left: 0,
               right: 0,
               top: nowTop,
               flexDirection: 'row',
               alignItems: 'center',
-              zIndex: 4,
+              zIndex: 6,
             }}
           >
             <View
               style={{
-                paddingHorizontal: 6,
-                paddingVertical: 2,
-                borderRadius: 6,
-                backgroundColor: colors.error,
-                marginRight: 6,
+                width: 44,
+                alignItems: 'flex-start',
+                marginTop: -8,
               }}
             >
-              <Text
-                maxFontSizeMultiplier={1}
+              <View
                 style={{
-                  fontFamily: 'Geologica_700Bold',
-                  fontSize: 9,
-                  lineHeight: 12,
-                  letterSpacing: 0.4,
-                  color: '#FFFFFF',
+                  paddingHorizontal: 5,
+                  paddingVertical: 2,
+                  borderRadius: 6,
+                  backgroundColor: colors.error,
                 }}
               >
-                {t('doctor_app.now_indicator')}
-              </Text>
+                <Text
+                  maxFontSizeMultiplier={1}
+                  style={{
+                    fontFamily: 'Geologica_700Bold',
+                    fontSize: 8,
+                    lineHeight: 10,
+                    letterSpacing: 0.2,
+                    color: '#FFFFFF',
+                  }}
+                >
+                  {t('doctor_app.now_indicator')}
+                </Text>
+              </View>
             </View>
-            <View style={{ flex: 1, height: 2, borderRadius: 1, backgroundColor: colors.error }} />
+            <View style={{ flex: 1, height: 1.5, borderRadius: 1, backgroundColor: colors.error, opacity: 0.85 }} />
             <View
               style={{
-                width: 8,
-                height: 8,
+                width: 7,
+                height: 7,
                 borderRadius: 4,
                 backgroundColor: colors.error,
                 marginLeft: -2,

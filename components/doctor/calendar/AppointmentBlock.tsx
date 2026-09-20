@@ -108,7 +108,7 @@ export function AppointmentBlock({
     <ScalePressable
       accessibilityLabel={appointment.patientName}
       onPress={onPress}
-      style={{ flex: 1 }}
+      style={{ flex: 1, height: '100%', width: '100%' }}
     >
       {body}
     </ScalePressable>

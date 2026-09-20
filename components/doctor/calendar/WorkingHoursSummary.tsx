@@ -4,68 +4,18 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { useLoginTheme } from '@/components/auth/loginTheme';
 import { Text } from '@/components/ui/Text';
-import type { WorkingHoursSummary } from '@/utils/doctorCalendar';
-
-function Stat({
-  label,
-  value,
-  last,
-}: {
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
-  const { colors, hairline } = useLoginTheme();
-  return (
-    <View
-      style={{
-        flex: 1,
-        minWidth: 0,
-        paddingRight: last ? 0 : 10,
-        borderRightWidth: last ? 0 : 1,
-        borderRightColor: hairline,
-        gap: 3,
-      }}
-    >
-      <Text
-        maxFontSizeMultiplier={1}
-        style={{
-          fontFamily: 'Geologica_600SemiBold',
-          fontSize: 10,
-          lineHeight: 13,
-          letterSpacing: 0.7,
-          color: colors.textMuted,
-        }}
-      >
-        {label}
-      </Text>
-      <Text
-        maxFontSizeMultiplier={1}
-        numberOfLines={1}
-        style={{
-          fontFamily: 'Geologica_700Bold',
-          fontSize: 14,
-          lineHeight: 18,
-          color: colors.text,
-          fontVariant: ['tabular-nums'],
-          ...(Platform.OS === 'android' ? { paddingRight: 4 } : null),
-        }}
-      >
-        {value}
-      </Text>
-    </View>
-  );
-}
+import type { WorkingHoursSummary as Summary } from '@/utils/doctorCalendar';
 
 export function WorkingHoursSummary({
   summary,
   isToday,
 }: {
-  summary: WorkingHoursSummary;
+  summary: Summary;
   isToday?: boolean;
 }) {
   const { t } = useTranslation();
   const { colors, hairline, isDark } = useLoginTheme();
+  const androidPad = Platform.OS === 'android' ? { paddingRight: 4 } : null;
 
   return (
     <Animated.View
@@ -75,52 +25,39 @@ export function WorkingHoursSummary({
         borderWidth: 1,
         borderColor: hairline,
         backgroundColor: isDark ? '#151D2E' : '#F4F6FB',
-        padding: 16,
-        gap: 14,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        gap: 10,
       }}
     >
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Stat
-          label={t('doctor_app.working_time')}
-          value={`${summary.start} – ${summary.end}`}
-        />
-        <Stat
-          label={t('doctor_app.break_time')}
-          value={`${summary.breakStart} – ${summary.breakEnd}`}
-        />
-        <Stat
-          label={t('doctor_app.visit_length')}
-          value={t('doctor_app.minutes_short', { count: summary.durationMinutes })}
-          last
-        />
-      </View>
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-          paddingTop: 12,
-          borderTopWidth: 1,
-          borderTopColor: hairline,
-        }}
-      >
-        <Text
-          maxFontSizeMultiplier={1.05}
-          style={{
-            flex: 1,
-            fontFamily: 'GolosText_500Medium',
-            fontSize: 13,
-            lineHeight: 18,
-            color: colors.textSecondary,
-          }}
-        >
-          {t('doctor_app.slots_busy_free', {
-            booked: summary.bookedSlots,
-            free: summary.freeSlots,
-          })}
-        </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ gap: 2, flexShrink: 0 }}>
+          <Text
+            maxFontSizeMultiplier={1}
+            style={{
+              fontFamily: 'Geologica_600SemiBold',
+              fontSize: 10,
+              lineHeight: 13,
+              letterSpacing: 0.7,
+              color: colors.textMuted,
+            }}
+          >
+            {t('doctor_app.working_time')}
+          </Text>
+          <Text
+            maxFontSizeMultiplier={1}
+            style={{
+              fontFamily: 'Geologica_700Bold',
+              fontSize: 20,
+              lineHeight: 24,
+              color: colors.text,
+              fontVariant: ['tabular-nums'],
+              ...androidPad,
+            }}
+          >
+            {summary.start}–{summary.end}
+          </Text>
+        </View>
         {summary.nextAppointment ? (
           <View
             style={{
@@ -139,12 +76,70 @@ export function WorkingHoursSummary({
                 color: colors.primary,
               }}
             >
-              {isToday ? t('doctor_app.next_label') : t('doctor_app.first_label')}{' '}
-              {summary.nextAppointment.time}
+              {isToday ? t('doctor_app.next_label') : t('doctor_app.first_label')} {summary.nextAppointment.time}
             </Text>
           </View>
         ) : null}
       </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View
+          style={{
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: 10,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)',
+          }}
+        >
+          <Text
+            maxFontSizeMultiplier={1}
+            style={{
+              fontFamily: 'GolosText_500Medium',
+              fontSize: 12,
+              lineHeight: 16,
+              color: colors.textSecondary,
+              fontVariant: ['tabular-nums'],
+            }}
+          >
+            {t('doctor_app.break_time')} {summary.breakStart}–{summary.breakEnd}
+          </Text>
+        </View>
+        <View
+          style={{
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: 10,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)',
+          }}
+        >
+          <Text
+            maxFontSizeMultiplier={1}
+            style={{
+              fontFamily: 'GolosText_500Medium',
+              fontSize: 12,
+              lineHeight: 16,
+              color: colors.textSecondary,
+            }}
+          >
+            {t('doctor_app.minutes_short', { count: summary.durationMinutes })}
+          </Text>
+        </View>
+      </View>
+
+      <Text
+        maxFontSizeMultiplier={1.05}
+        style={{
+          fontFamily: 'GolosText_500Medium',
+          fontSize: 13,
+          lineHeight: 18,
+          color: colors.textSecondary,
+        }}
+      >
+        {t('doctor_app.slots_busy_free', {
+          booked: summary.bookedSlots,
+          free: summary.freeSlots,
+        })}
+      </Text>
     </Animated.View>
   );
 }

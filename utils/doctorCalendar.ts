@@ -415,6 +415,8 @@ export function buildDoctorCalendar(params: {
       count: countsByDate[key] ?? 0,
     };
   });
+  const trimmedMonthCells =
+    monthCells.slice(35).every((cell) => !cell.inMonth) ? monthCells.slice(0, 35) : monthCells;
 
   return {
     selectedKey,
@@ -437,7 +439,7 @@ export function buildDoctorCalendar(params: {
     visibleTimeline,
     cancelledOnDay,
     weekDays,
-    monthCells,
+    monthCells: trimmedMonthCells,
     monthLabelKey: selectedKey,
     dateStrip,
     dayAppointments,
@@ -467,7 +469,7 @@ export function financeForPatient(
       r.patientName === patientName &&
       r.type === 'income' &&
       (!doctorName || r.doctorName === doctorName) &&
-      (r.paymentStatus === 'pending' || r.paymentStatus === 'overdue'),
+      (r.paymentStatus === 'pending' || r.paymentStatus === 'overdue' || r.paymentStatus === 'partial'),
   );
 }
 

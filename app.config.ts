@@ -80,6 +80,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-secure-store',
     'expo-localization',
     [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'Allow DENTA Doctor to access your photos so you can update your profile picture.',
+        cameraPermission:
+          'Allow DENTA Doctor to use the camera to take a profile picture.',
+        microphonePermission: false,
+      },
+    ],
+    [
       'expo-location',
       {
         locationWhenInUsePermission:

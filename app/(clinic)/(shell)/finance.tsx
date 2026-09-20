@@ -117,7 +117,7 @@ export default function ClinicFinanceScreen() {
                     title: t('common.status'),
                     render: (r) => (
                       <Text variant="caption" muted>
-                        {t(`finance.${r.paymentStatus === 'paid' ? 'paid' : r.paymentStatus === 'pending' ? 'pending' : 'overdue'}`)}
+                        {t(`finance.${r.paymentStatus}`)}
                       </Text>
                     ),
                   },

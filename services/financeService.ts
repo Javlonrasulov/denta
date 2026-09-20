@@ -5,10 +5,26 @@ import {
   MOCK_PATIENTS,
   MOCK_ROOMS,
 } from '@/mocks/data';
-import type { FinanceRecord } from '@/types';
+import type { FinanceRecord, PaymentMethod, PaymentStatus } from '@/types';
+import { DEMO_DOCTOR_ID, localDateKey } from '@/utils/doctorDashboard';
 import { mockNetworkDelay } from './apiClient';
 
 export type FinanceFilter = 'today' | 'week' | 'month' | 'year';
+
+export type CreateFinanceInput = {
+  type: 'income' | 'expense';
+  amount: number;
+  serviceName: string;
+  date?: string;
+  time?: string;
+  patientName?: string;
+  patientId?: string;
+  doctorName?: string;
+  doctorId?: string;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: PaymentMethod;
+  notes?: string;
+};
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -49,11 +65,57 @@ function filterByPeriod(
   });
 }
 
+/** Module-level store so doctor create/update flows persist until refresh. */
+let records: FinanceRecord[] = MOCK_FINANCE.map((row) => ({ ...row }));
+
 export async function getFinanceRecords(
   filter?: FinanceFilter,
 ): Promise<FinanceRecord[]> {
   await mockNetworkDelay();
-  return filterByPeriod([...MOCK_FINANCE], filter);
+  return filterByPeriod(records.map((row) => ({ ...row })), filter);
+}
+
+export async function createFinanceRecord(
+  input: CreateFinanceInput,
+): Promise<FinanceRecord> {
+  await mockNetworkDelay();
+  const created: FinanceRecord = {
+    id: `fin-${Date.now()}`,
+    date: input.date ?? localDateKey(),
+    time: input.time,
+    patientName: input.patientName,
+    patientId: input.patientId,
+    doctorName: input.doctorName,
+    doctorId: input.doctorId ?? DEMO_DOCTOR_ID,
+    serviceName: input.serviceName.trim(),
+    amount: input.amount,
+    type: input.type,
+    paymentStatus: input.paymentStatus ?? 'paid',
+    paymentMethod: input.paymentMethod,
+    notes: input.notes?.trim() || undefined,
+  };
+  records = [created, ...records];
+  return { ...created };
+}
+
+export async function updateFinanceRecord(
+  id: string,
+  patch: Partial<CreateFinanceInput> & { paymentStatus?: PaymentStatus },
+): Promise<FinanceRecord> {
+  await mockNetworkDelay();
+  const index = records.findIndex((row) => row.id === id);
+  if (index === -1) {
+    throw new Error(`Finance record not found: ${id}`);
+  }
+  const current = records[index];
+  const updated: FinanceRecord = {
+    ...current,
+    ...patch,
+    serviceName: patch.serviceName?.trim() || current.serviceName,
+    notes: patch.notes === undefined ? current.notes : patch.notes.trim() || undefined,
+  };
+  records = [...records.slice(0, index), updated, ...records.slice(index + 1)];
+  return { ...updated };
 }
 
 export async function getDoctorTodayStats(): Promise<{
@@ -95,10 +157,9 @@ export async function getClinicDashboardStats(): Promise<{
 }> {
   await mockNetworkDelay();
 
-  const revenue = MOCK_FINANCE.filter((r) => r.type === 'income').reduce(
-    (sum, r) => sum + r.amount,
-    0,
-  );
+  const revenue = records
+    .filter((r) => r.type === 'income')
+    .reduce((sum, r) => sum + r.amount, 0);
 
   return {
     revenue,

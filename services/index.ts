@@ -28,19 +28,28 @@ export {
   cancelAppointment,
 } from './appointmentService';
 
-export { getPatients, getPatientById } from './patientService';
+export { getPatients, getPatientById, createPatient, addPatientNote } from './patientService';
 
 export {
   getFinanceRecords,
+  createFinanceRecord,
+  updateFinanceRecord,
   getDoctorTodayStats,
   getClinicDashboardStats,
 } from './financeService';
-export type { FinanceFilter } from './financeService';
+export type { FinanceFilter, CreateFinanceInput } from './financeService';
 
 export { getInventory, getLowStock } from './inventoryService';
 
 export { getClinicMarkers } from './mapService';
 export type { MapMarker, MapProvider } from './mapService';
+
+export {
+  pickDoctorAvatar,
+  uploadDoctorAvatar,
+  getDoctorSessions,
+} from './doctorProfileService';
+export type { AvatarPickSource, AvatarPickResult } from './doctorProfileService';
 
 export {
   requestPermissions,

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useLoginTheme } from '@/components/auth/loginTheme';
 import { SLOT_TONE } from '@/components/doctor/calendar/calendarTokens';
-import { Coffee } from '@/components/icons';
+import { Clock } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
 import type { CalendarSlot } from '@/utils/doctorCalendar';
 
@@ -29,7 +29,7 @@ export function BreakBlock({ slot }: { slot: CalendarSlot }) {
         gap: 10,
       }}
     >
-      <Coffee size={16} color={colors.textMuted} strokeWidth={1.8} />
+      <Clock size={16} color={colors.textMuted} strokeWidth={1.8} />
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text
           maxFontSizeMultiplier={1}
