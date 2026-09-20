@@ -102,6 +102,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.style.fontSize = WEB_ROOT_FONT[fontSize] ?? WEB_ROOT_FONT.md;
   }, [fontSize]);
 
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
+
   const value = useMemo<ThemeValue>(
     () => ({
       mode: themeMode,

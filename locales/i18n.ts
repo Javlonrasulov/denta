@@ -13,6 +13,12 @@ export const resources = {
   en: { translation: en },
 } as const;
 
+function applyResourceBundles() {
+  (Object.keys(resources) as Array<keyof typeof resources>).forEach((lng) => {
+    i18n.addResourceBundle(lng, 'translation', resources[lng].translation, true, true);
+  });
+}
+
 if (!i18n.isInitialized) {
   i18n.use(initReactI18next).init({
     resources,
@@ -20,7 +26,10 @@ if (!i18n.isInitialized) {
     fallbackLng: 'uz',
     compatibilityJSON: 'v4',
     interpolation: { escapeValue: false },
+    returnNull: false,
   });
+} else {
+  applyResourceBundles();
 }
 
 export default i18n;

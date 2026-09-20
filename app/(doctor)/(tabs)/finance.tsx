@@ -23,7 +23,7 @@ export default function DoctorFinanceScreen() {
   const expenses =
     finance.data?.filter((r) => r.type === 'expense').reduce((s, r) => s + r.amount, 0) ?? 0;
 
-  if (finance.isLoading) return <ListSkeleton rows={5} />;
+  if (finance.isLoading) return <ListSkeleton rows={8} fullPage />;
 
   return (
     <MobileScreen contentStyle={{ gap: spacing.xl }}>

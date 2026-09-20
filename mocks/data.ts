@@ -25,6 +25,16 @@ const monSatHours = [
 const defaultWorking = { start: '09:00', end: '18:00' };
 const defaultBreak = { start: '13:00', end: '14:00' };
 
+function localIsoDate(offsetDays = 0): string {
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + offsetDays);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 const therapistServices: Service[] = [
   {
     id: 'svc-consult',
@@ -1374,7 +1384,7 @@ export const MOCK_PATIENTS: Patient[] = [
 ];
 
 export const MOCK_APPOINTMENTS: Appointment[] = [
-  // Today 2026-08-23 — booked slots for doctor-1 at 10:00 and 15:30
+  // Rolling "today" for doctor-1 — keeps the doctor workspace populated
   {
     id: 'appt-1',
     doctorId: 'doctor-1',
@@ -1385,11 +1395,56 @@ export const MOCK_APPOINTMENTS: Appointment[] = [
     clinicName: 'Smile Dental',
     clinicAddress: "Amir Temur ko'chasi 15, Yunusobod, Toshkent",
     serviceName: 'Consultation',
-    date: '2026-08-23',
+    date: localIsoDate(0),
     time: '10:00',
-    status: 'upcoming',
+    status: 'completed',
     price: 150_000,
     notes: 'Follow-up on filling sensitivity',
+  },
+  {
+    id: 'appt-51',
+    doctorId: 'doctor-1',
+    clinicId: 'clinic-1',
+    patientId: 'patient-6',
+    patientName: 'Nilufar Abdullayeva',
+    doctorName: 'Dr. Alisher Aliyev',
+    clinicName: 'Smile Dental',
+    clinicAddress: "Amir Temur ko'chasi 15, Yunusobod, Toshkent",
+    serviceName: 'Professional Cleaning',
+    date: localIsoDate(0),
+    time: '09:00',
+    status: 'completed',
+    price: 350_000,
+  },
+  {
+    id: 'appt-52',
+    doctorId: 'doctor-1',
+    clinicId: 'clinic-1',
+    patientId: 'patient-4',
+    patientName: 'Gulnora Saidova',
+    doctorName: 'Dr. Alisher Aliyev',
+    clinicName: 'Smile Dental',
+    clinicAddress: "Amir Temur ko'chasi 15, Yunusobod, Toshkent",
+    serviceName: 'Composite Filling',
+    date: localIsoDate(0),
+    time: '10:30',
+    status: 'completed',
+    price: 450_000,
+  },
+  {
+    id: 'appt-53',
+    doctorId: 'doctor-1',
+    clinicId: 'clinic-1',
+    patientId: 'patient-3',
+    patientName: 'Azizbek Toshmatov',
+    doctorName: 'Dr. Alisher Aliyev',
+    clinicName: 'Smile Dental',
+    clinicAddress: "Amir Temur ko'chasi 15, Yunusobod, Toshkent",
+    serviceName: 'Consultation',
+    date: localIsoDate(0),
+    time: '14:00',
+    status: 'upcoming',
+    price: 150_000,
   },
   {
     id: 'appt-2',
@@ -1401,10 +1456,40 @@ export const MOCK_APPOINTMENTS: Appointment[] = [
     clinicName: 'Smile Dental',
     clinicAddress: "Amir Temur ko'chasi 15, Yunusobod, Toshkent",
     serviceName: 'Composite Filling',
-    date: '2026-08-23',
+    date: localIsoDate(0),
     time: '15:30',
     status: 'upcoming',
     price: 450_000,
+  },
+  {
+    id: 'appt-54',
+    doctorId: 'doctor-1',
+    clinicId: 'clinic-1',
+    patientId: 'patient-2',
+    patientName: 'Malika Sobirova',
+    doctorName: 'Dr. Alisher Aliyev',
+    clinicName: 'Smile Dental',
+    clinicAddress: "Amir Temur ko'chasi 15, Yunusobod, Toshkent",
+    serviceName: 'Ultrasonic Scaling',
+    date: localIsoDate(-1),
+    time: '10:00',
+    status: 'completed',
+    price: 800_000,
+  },
+  {
+    id: 'appt-55',
+    doctorId: 'doctor-1',
+    clinicId: 'clinic-1',
+    patientId: 'patient-5',
+    patientName: 'Otabek Usmonov',
+    doctorName: 'Dr. Alisher Aliyev',
+    clinicName: 'Smile Dental',
+    clinicAddress: "Amir Temur ko'chasi 15, Yunusobod, Toshkent",
+    serviceName: 'Teeth Whitening',
+    date: localIsoDate(-1),
+    time: '15:00',
+    status: 'completed',
+    price: 850_000,
   },
   {
     id: 'appt-3',
@@ -2529,6 +2614,26 @@ export const MOCK_FINANCE: FinanceRecord[] = [
     amount: 1_200_000,
     type: 'expense',
     paymentStatus: 'pending',
+  },
+  {
+    id: 'fin-16',
+    date: localIsoDate(0),
+    patientName: 'Azizbek Toshmatov',
+    doctorName: 'Dr. Alisher Aliyev',
+    serviceName: 'Consultation',
+    amount: 150_000,
+    type: 'income',
+    paymentStatus: 'pending',
+  },
+  {
+    id: 'fin-17',
+    date: localIsoDate(0),
+    patientName: 'Gulnora Saidova',
+    doctorName: 'Dr. Alisher Aliyev',
+    serviceName: 'Composite Filling',
+    amount: 450_000,
+    type: 'income',
+    paymentStatus: 'paid',
   },
 ];
 

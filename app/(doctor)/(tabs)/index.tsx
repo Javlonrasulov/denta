@@ -1,131 +1,165 @@
+import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
-import {
-  CalendarDays,
-  CalendarPlus,
-  CheckCircle2,
-  Clock,
-  UserPlus,
-  Users,
-  Wallet,
-} from '@/components/icons';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { useLoginTheme } from '@/components/auth/loginTheme';
 import {
-  MobileCard,
-  MobileEmpty,
-  MobileHeader,
-  MobileQuickActions,
-  MobileScreen,
-  MobileSection,
-  MobileStatRow,
-} from '@/components/mobile';
-import { ListSkeleton } from '@/components/ui/Skeleton';
-import { Text } from '@/components/ui/Text';
-import { useAppointments, useDoctorStats } from '@/hooks/queries';
-import { useTheme } from '@/theme';
-import { formatPrice } from '@/utils/slots';
+  AvailableSlot,
+  CurrentAppointmentBar,
+  DashboardSkeleton,
+  DoctorAlerts,
+  DoctorDashboardHeader,
+  DoctorNotificationsSheet,
+  DoctorQuickActions,
+  NextAppointmentHero,
+  RevenueWidget,
+  TodayProgress,
+  TodayTimeline,
+} from '@/components/doctor/dashboard';
+import { MobileScreen } from '@/components/mobile';
+import { ErrorState } from '@/components/states/EmptyState';
+import { useDoctorDashboard } from '@/hooks/useDoctorDashboard';
+import {
+  buildDoctorNotifications,
+  doctorGreetingName,
+  parseMinutes,
+  type DoctorNotification,
+} from '@/utils/doctorDashboard';
 
 export default function DoctorDashboardScreen() {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
-  const stats = useDoctorStats();
-  const appointments = useAppointments('upcoming');
+  const { canvas } = useLoginTheme();
+  const { model, doctor, patients, isLoading, isError, refetch } = useDoctorDashboard();
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [readIds, setReadIds] = useState<string[]>([]);
 
-  const today = (appointments.data ?? [])
-    .filter((a) => a.date === '2026-08-23')
-    .sort((a, b) => a.time.localeCompare(b.time));
+  const notifications = useMemo(() => {
+    return buildDoctorNotifications(model).map((item) => ({
+      ...item,
+      unread: item.unread && !readIds.includes(item.id),
+    }));
+  }, [model, readIds]);
+  const unreadCount = notifications.filter((item) => item.unread).length;
 
-  if (stats.isLoading) return <ListSkeleton rows={6} />;
+  const openNotification = (item: DoctorNotification) => {
+    setReadIds((prev) => (prev.includes(item.id) ? prev : [...prev, item.id]));
+    setNotifyOpen(false);
+    if (item.target === 'finance') {
+      router.push('/(doctor)/(tabs)/finance');
+      return;
+    }
+    if (item.target === 'calendar') {
+      router.push('/(doctor)/(tabs)/calendar');
+      return;
+    }
+    if (item.patientId) {
+      router.push(`/(doctor)/patient/${item.patientId}`);
+    }
+  };
+
+  const openPatient = (patientId?: string) => {
+    if (!patientId) return;
+    router.push(`/(doctor)/patient/${patientId}`);
+  };
+  const openCalendar = () => router.push('/(doctor)/(tabs)/calendar');
+  const openPatients = () => router.push('/(doctor)/(tabs)/patients');
+  const openFinance = () => router.push('/(doctor)/(tabs)/finance');
+  const openProfile = () => router.push('/(doctor)/(tabs)/profile');
+
+  if (isLoading) return <DashboardSkeleton />;
+  if (isError) {
+    return (
+      <ErrorState
+        title={t('error.something_wrong')}
+        onRetry={refetch}
+        retryLabel={t('common.retry')}
+      />
+    );
+  }
+
+  const doctorName = doctorGreetingName(doctor?.fullName ?? t('common.app_name'));
+  const nextPhone = patients.find((p) => p.id === model.nextAppointment?.patientId)?.phone;
+  const workingRange = doctor
+    ? `${doctor.workingHours.start} – ${doctor.workingHours.end}`
+    : undefined;
+  const emptyDay = model.todayAppointments.length === 0;
+  const currentElapsed = model.currentAppointment
+    ? model.nowMinutes - parseMinutes(model.currentAppointment.time)
+    : 0;
+  const total =
+    model.completedAppointments.length + model.remainingAppointments.length;
 
   return (
-    <MobileScreen contentStyle={{ gap: spacing.xl }}>
-      <MobileHeader
-        large
-        title={t('tabs.dashboard')}
-        subtitle={t('doctor_app.todays_appointments')}
+    <MobileScreen
+      style={{ backgroundColor: canvas }}
+      contentStyle={{ gap: 22, paddingTop: 8 }}
+      onRefresh={refetch}
+    >
+      <DoctorDashboardHeader
+        doctorName={doctorName}
+        photoUrl={doctor?.photoUrl}
+        alertCount={unreadCount}
+        onNotify={() => setNotifyOpen(true)}
+        onProfile={openProfile}
       />
 
-      <MobileStatRow
-        stats={[
-          {
-            id: 'patients',
-            label: t('doctor_app.todays_patients'),
-            value: String(stats.data?.patients ?? 0),
-            icon: Users,
-          },
-          {
-            id: 'completed',
-            label: t('doctor_app.completed'),
-            value: String(stats.data?.completed ?? 0),
-            icon: CheckCircle2,
-          },
-          {
-            id: 'upcoming',
-            label: t('doctor_app.upcoming'),
-            value: String(stats.data?.upcoming ?? 0),
-            icon: CalendarDays,
-          },
-          {
-            id: 'income',
-            label: t('doctor_app.todays_income'),
-            value: formatPrice(stats.data?.income ?? 0),
-            icon: Wallet,
-          },
-        ]}
+      {model.currentAppointment ? (
+        <CurrentAppointmentBar
+          appointment={model.currentAppointment}
+          doctor={doctor}
+          elapsedMinutes={currentElapsed}
+          onPatient={() => openPatient(model.currentAppointment?.patientId)}
+          onOpen={() => openPatient(model.currentAppointment?.patientId)}
+        />
+      ) : null}
+
+      <NextAppointmentHero
+        appointment={model.nextAppointment}
+        doctor={doctor}
+        room={model.room}
+        nowMinutes={model.nowMinutes}
+        workingRange={workingRange}
+        phone={nextPhone}
+        onPatient={() => openPatient(model.nextAppointment?.patientId)}
+        onCreate={openCalendar}
       />
 
-      <MobileQuickActions
-        actions={[
-          { id: 'p', label: t('doctor_app.add_patient'), icon: UserPlus, onPress: () => undefined },
-          {
-            id: 'a',
-            label: t('doctor_app.add_appointment'),
-            icon: CalendarPlus,
-            onPress: () => undefined,
-          },
-          {
-            id: 's',
-            label: t('doctor_app.manage_schedule'),
-            icon: Clock,
-            onPress: () => undefined,
-          },
-        ]}
+      <TodayProgress
+        patients={model.patientsToday}
+        completed={model.completedAppointments.length}
+        remaining={model.remainingAppointments.length}
+        total={total}
       />
 
-      <MobileSection title={t('doctor_app.todays_appointments')} style={{ marginBottom: 0 }}>
-        {today.length === 0 ? (
-          <MobileEmpty icon={CalendarDays} title={t('appointments.no_upcoming')} />
-        ) : (
-          <View style={{ gap: spacing.sm }}>
-            {today.map((apt) => (
-              <MobileCard
-                key={apt.id}
-                onPress={() =>
-                  router.push(`/(doctor)/patient/${apt.id.replace('apt-', 'patient-')}`)
-                }
-              >
-                <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' }}>
-                  <Text variant="label" color={colors.primary} style={{ minWidth: 48 }}>
-                    {apt.time}
-                  </Text>
-                  <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
-                    <Text variant="label" numberOfLines={1}>
-                      {apt.patientName}
-                    </Text>
-                    <Text variant="caption" muted numberOfLines={1}>
-                      {apt.serviceName}
-                    </Text>
-                  </View>
-                  <Text variant="caption" color={colors.primary}>
-                    {t('appointments.status_upcoming')}
-                  </Text>
-                </View>
-              </MobileCard>
-            ))}
-          </View>
-        )}
-      </MobileSection>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        <RevenueWidget amount={model.todayRevenue} deltaPct={model.revenueDeltaPct} />
+        <AvailableSlot slot={model.nextAvailableSlot} onPress={openCalendar} />
+      </View>
+
+      <DoctorQuickActions
+        onPatient={openPatients}
+        onAppointment={openCalendar}
+        onSlot={openCalendar}
+        onFinance={openFinance}
+      />
+
+      <TodayTimeline
+        items={model.timeline}
+        empty={emptyDay}
+        onCreate={openCalendar}
+        onItemPress={(item) => openPatient(item.appointment?.patientId)}
+      />
+
+      <DoctorAlerts alerts={model.alerts} onPress={(alert) => openPatient(alert.patientId)} />
+
+      <DoctorNotificationsSheet
+        visible={notifyOpen}
+        items={notifications}
+        onClose={() => setNotifyOpen(false)}
+        onOpen={openNotification}
+        onMarkAllRead={() => setReadIds(notifications.map((item) => item.id))}
+      />
     </MobileScreen>
   );
 }

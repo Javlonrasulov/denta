@@ -22,16 +22,22 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { Platform, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '@/locales/i18n';
 import { useSettingsStore } from '@/store/settingsStore';
 import { ThemeProvider, useTheme } from '@/theme';
+import { GlassToastHost } from '@/components/ui/GlassToastHost';
 
 export { ErrorBoundary } from 'expo-router';
 
-SplashScreen.preventAutoHideAsync();
+if (Platform.OS !== 'web') {
+  void SplashScreen.hideAsync();
+}
+
+LogBox.ignoreAllLogs(true);
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -46,7 +52,7 @@ export default function RootLayout() {
       }),
   );
 
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, error] = useFonts({
     Geologica_500Medium,
     Geologica_600SemiBold,
     Geologica_700Bold,
@@ -64,14 +70,12 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+    if (Platform.OS !== 'web') void SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
   useEffect(() => {
     void i18n.changeLanguage(locale);
   }, [locale]);
-
-  if (!loaded) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -107,6 +111,7 @@ function RootNavigator() {
         <Stack.Screen name="(doctor)" />
         <Stack.Screen name="(clinic)" />
       </Stack>
+      <GlassToastHost />
     </>
   );
 }

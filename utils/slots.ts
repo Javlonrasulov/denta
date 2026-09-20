@@ -54,6 +54,12 @@ export function formatPrice(amount: number, locale = 'uz-UZ'): string {
   }).format(amount);
 }
 
+export function formatSom(amount: number): string {
+  const abs = Math.round(Math.abs(amount));
+  const grouped = String(abs).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+  return amount < 0 ? `-${grouped}` : grouped;
+}
+
 export function formatDistance(km?: number): string {
   if (km == null) return '';
   if (km < 1) return `${Math.round(km * 1000)} m`;

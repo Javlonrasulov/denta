@@ -13,16 +13,22 @@ import { useTheme } from '@/theme';
 type Props = {
   id: string;
   coordinate: { latitude: number; longitude: number };
-  rating: number;
+  title: string;
   selected?: boolean;
   availableToday?: boolean;
   onPress?: (id: string) => void;
 };
 
+function shortTitle(name: string, max = 16) {
+  const cleaned = name.replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= max) return cleaned;
+  return `${cleaned.slice(0, max - 1)}…`;
+}
+
 export function ClinicMarker({
   id,
   coordinate,
-  rating,
+  title,
   selected,
   availableToday,
   onPress,
@@ -44,6 +50,7 @@ export function ClinicMarker({
     <Marker
       coordinate={coordinate}
       tracksViewChanges={false}
+      title={title}
       onPress={() => {
         void Haptics.selectionAsync();
         scale.value = withSpring(1.12, { damping: 12 });
@@ -68,9 +75,10 @@ export function ClinicMarker({
         >
           <Text
             variant="caption"
-            style={{ color: colors.textInverse, fontWeight: '700' }}
+            numberOfLines={1}
+            style={{ color: colors.textInverse, fontWeight: '700', maxWidth: 120 }}
           >
-            {rating.toFixed(1)} ★
+            {shortTitle(title)}
           </Text>
         </View>
         <View style={[styles.stem, { borderTopColor: bg }]} />
@@ -84,7 +92,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderWidth: 2,
-    minWidth: 52,
+    maxWidth: 140,
     alignItems: 'center',
   },
   stem: {

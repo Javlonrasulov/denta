@@ -36,3 +36,27 @@ export const mobileTabLabelStyle = {
   fontWeight: '600' as const,
   letterSpacing: 0.1,
 };
+
+export function doctorTabBarStyle(
+  colors: ThemeColors,
+  bottomInset: number,
+  isDark: boolean,
+) {
+  return {
+    backgroundColor: isDark ? '#151D2E' : '#F4F6FB',
+    borderTopColor: isDark ? 'rgba(148, 163, 184, 0.18)' : 'rgba(15, 23, 42, 0.08)',
+    borderTopWidth: 1,
+    height: 56 + Math.max(bottomInset, 10),
+    paddingBottom: Math.max(bottomInset, 10),
+    paddingTop: 6,
+    elevation: 0,
+    shadowOpacity: 0,
+  };
+}
+
+export const doctorTabLabelStyle = {
+  fontSize: 11,
+  fontWeight: '600' as const,
+  letterSpacing: 0.05,
+  includeFontPadding: false,
+};

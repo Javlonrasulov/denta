@@ -33,7 +33,7 @@ export default function DoctorPatientsScreen() {
       </View>
 
       {patients.isLoading ? (
-        <ListSkeleton rows={6} />
+        <ListSkeleton rows={8} />
       ) : !patients.data?.length ? (
         <MobileEmpty icon={Users} title={t('patients.search')} />
       ) : (

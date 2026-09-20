@@ -25,7 +25,7 @@ export default function PatientDetailScreen() {
   const { colors, spacing } = useTheme();
   const patient = usePatient(id);
 
-  if (patient.isLoading) return <ListSkeleton rows={5} />;
+  if (patient.isLoading) return <ListSkeleton rows={8} fullPage />;
   if (!patient.data) {
     return (
       <ErrorState

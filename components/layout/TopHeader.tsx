@@ -16,6 +16,12 @@ import {
 } from '@/components/icons';
 
 import { Avatar } from '@/components/ui/Avatar';
+import {
+  LANGUAGE_MENU_WIDTH,
+  LanguageMenuItems,
+  languageMenuCardStyle,
+  LOCALE_OPTIONS,
+} from '@/components/ui/LanguageMenu';
 import { Text } from '@/components/ui/Text';
 import { CredentialsModal } from '@/components/layout/CredentialsModal';
 import { FontSizeControl } from '@/components/layout/FontSizeControl';
@@ -26,16 +32,7 @@ import {
 } from '@/components/layout/NotificationsPanel';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/theme';
-import { LocaleCode } from '@/types';
 
-const LOCALES: { code: LocaleCode; label: string; short: string; flag: string }[] = [
-  { code: 'uz', label: 'O‘zbekcha', short: 'UZ', flag: '🇺🇿' },
-  { code: 'uz-Cyrl', label: 'Ўзбекча', short: 'ЎЗ', flag: '🇺🇿' },
-  { code: 'ru', label: 'Русский', short: 'RU', flag: '🇷🇺' },
-  { code: 'en', label: 'English', short: 'EN', flag: '🇬🇧' },
-];
-
-const LANG_MENU_WIDTH = 240;
 const ACCOUNT_MENU_WIDTH = 268;
 
 interface TopHeaderProps {
@@ -69,13 +66,13 @@ export function TopHeader({ title, subtitle, onMenuPress, showMenu }: TopHeaderP
   const accountBtnRef = useRef<View>(null);
   const notifBtnRef = useRef<View>(null);
 
-  const currentLocale = LOCALES.find((item) => item.code === locale) ?? LOCALES[0];
+  const currentLocale = LOCALE_OPTIONS.find((item) => item.code === locale) ?? LOCALE_OPTIONS[0];
   const compact = !isDesktop;
 
   const openLanguageMenu = () => {
     langBtnRef.current?.measureInWindow((x, y, width, height) => {
-      const centered = x + width / 2 - LANG_MENU_WIDTH / 2;
-      const left = Math.min(Math.max(8, centered), windowWidth - LANG_MENU_WIDTH - 8);
+      const centered = x + width / 2 - LANGUAGE_MENU_WIDTH / 2;
+      const left = Math.min(Math.max(8, centered), windowWidth - LANGUAGE_MENU_WIDTH - 8);
       setLangPos({ top: y + height + 8, left });
       setLangOpen(true);
     });
@@ -85,7 +82,7 @@ export function TopHeader({ title, subtitle, onMenuPress, showMenu }: TopHeaderP
     setAccountOpen(false);
     setLangPos({
       top: accountPos.top,
-      left: Math.max(8, windowWidth - accountPos.right - LANG_MENU_WIDTH),
+      left: Math.max(8, windowWidth - accountPos.right - LANGUAGE_MENU_WIDTH),
     });
     setLangOpen(true);
   };
@@ -313,63 +310,16 @@ export function TopHeader({ title, subtitle, onMenuPress, showMenu }: TopHeaderP
             position: 'absolute',
             top: langPos.top,
             left: langPos.left,
-            width: Math.min(LANG_MENU_WIDTH, windowWidth - 16),
-            backgroundColor: colors.surfaceElevated,
-            borderRadius: radius.xl,
-            borderWidth: 1,
-            borderColor: colors.borderSubtle,
-            padding: spacing.xs,
-            ...shadows.lg,
+            ...languageMenuCardStyle(colors, shadows),
           }}
         >
-          <Text
-            variant="caption"
-            muted
-            style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}
-          >
-            {t('profile.language')}
-          </Text>
-          {LOCALES.map((item) => {
-            const active = item.code === locale;
-            return (
-              <Pressable
-                key={item.code}
-                onPress={() => {
-                  setLocale(item.code);
-                  setLangOpen(false);
-                }}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing.md,
-                  paddingHorizontal: spacing.md,
-                  paddingVertical: 12,
-                  borderRadius: radius.md,
-                  backgroundColor: active
-                    ? colors.primaryMuted
-                    : pressed
-                      ? colors.surfaceSoft
-                      : 'transparent',
-                })}
-              >
-                <Text variant="body" style={{ fontSize: 18, lineHeight: 22 }}>
-                  {item.flag}
-                </Text>
-                <Text variant="caption" muted numberOfLines={1}>
-                  {item.short}
-                </Text>
-                <Text
-                  variant="label"
-                  color={active ? colors.primary : colors.text}
-                  numberOfLines={1}
-                  style={{ flex: 1, minWidth: 0 }}
-                >
-                  {item.label}
-                </Text>
-                {active ? <Check size={16} color={colors.primary} /> : null}
-              </Pressable>
-            );
-          })}
+          <LanguageMenuItems
+            locale={locale}
+            onSelect={(code) => {
+              setLocale(code);
+              setLangOpen(false);
+            }}
+          />
         </View>
       </DropdownModal>
 

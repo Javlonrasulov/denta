@@ -1,4 +1,6 @@
-export { DentalMap, type DentalMapHandle } from './DentalMap';
+export { OsmTileMap } from './OsmTileMap';
+export { DentalMap } from './DentalMap';
+export type { DentalMapHandle } from './DentalMap';
 export { ClinicMarker } from './ClinicMarker';
 export { MapFilters } from './MapFilters';
 export { ClinicPreviewSheet } from './ClinicPreviewSheet';

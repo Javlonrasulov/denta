@@ -6,6 +6,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
 
@@ -54,18 +55,55 @@ export function ClinicCardSkeleton() {
   );
 }
 
-export function ListSkeleton({ rows = 4 }: { rows?: number }) {
+function SkeletonRow() {
   const { spacing } = useTheme();
   return (
-    <View style={{ gap: spacing.lg, padding: spacing.lg }}>
-      {Array.from({ length: rows }).map((_, i) => (
-        <View key={i} style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
-          <Skeleton width={56} height={56} radius={28} />
-          <View style={{ flex: 1, gap: spacing.sm }}>
-            <Skeleton width="60%" height={16} />
-            <Skeleton width="40%" height={12} />
+    <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
+      <Skeleton width={48} height={48} radius={16} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <Skeleton width="68%" height={14} />
+        <Skeleton width="42%" height={11} />
+      </View>
+      <Skeleton width={56} height={18} radius={9} />
+    </View>
+  );
+}
+
+export function ListSkeleton({
+  rows = 8,
+  fullPage = false,
+}: {
+  rows?: number;
+  fullPage?: boolean;
+}) {
+  const { colors, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingHorizontal: spacing.xl,
+        paddingTop: fullPage ? insets.top + 16 : spacing.lg,
+        paddingBottom: spacing['3xl'],
+        gap: 18,
+      }}
+    >
+      {fullPage ? (
+        <>
+          <View style={{ gap: 10 }}>
+            <Skeleton width="36%" height={22} />
+            <Skeleton width="52%" height={13} />
           </View>
-        </View>
+          <Skeleton height={48} radius={16} />
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Skeleton height={76} radius={18} style={{ flex: 1 }} />
+            <Skeleton height={76} radius={18} style={{ flex: 1 }} />
+          </View>
+        </>
+      ) : null}
+      {Array.from({ length: rows }).map((_, i) => (
+        <SkeletonRow key={i} />
       ))}
     </View>
   );

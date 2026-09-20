@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -7,20 +7,18 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 
 import {
   Bell,
   CalendarDays,
-  Check,
   ChevronDown,
   Heart,
+  MapPin,
   Maximize2,
   Moon,
   RefreshCw,
@@ -29,27 +27,17 @@ import {
   Sun,
 } from '@/components/icons';
 import { ClinicCard } from '@/components/clinic/ClinicCard';
-import { DentalMap, TASHKENT_REGION, type DentalMapHandle } from '@/components/map';
+import { OsmTileMap } from '@/components/map/OsmTileMap';
+import {
+  LanguageMenuItems,
+  languageMenuCardStyle,
+  LOCALE_OPTIONS,
+} from '@/components/ui/LanguageMenu';
 import { Text } from '@/components/ui/Text';
 import { useClinics, usePopularClinics } from '@/hooks/queries';
-import { useAppointmentsStore } from '@/store/appointmentsStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { useFavoritesStore, useUserStore } from '@/store/userStore';
+import { useUserStore } from '@/store/userStore';
 import { useTheme } from '@/theme';
-import { LocaleCode } from '@/types';
-
-const LOCALES: { code: LocaleCode; label: string; short: string }[] = [
-  { code: 'uz', label: 'O‘zbekcha', short: 'UZ' },
-  { code: 'uz-Cyrl', label: 'Ўзбекча', short: 'ЎЗ' },
-  { code: 'ru', label: 'Русский', short: 'RU' },
-  { code: 'en', label: 'English', short: 'EN' },
-];
-
-const KPI_GRADIENTS: [string, string][] = [
-  ['#6D28D9', '#4F46E5'],
-  ['#0891B2', '#2563EB'],
-  ['#EA580C', '#F43F5E'],
-];
 
 export default function HomeDashboardScreen() {
   const { t } = useTranslation();
@@ -63,101 +51,55 @@ export default function HomeDashboardScreen() {
   const locale = useSettingsStore((s) => s.locale);
   const setLocale = useSettingsStore((s) => s.setLocale);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
-  const favoriteClinicIds = useFavoritesStore((s) => s.clinicIds);
-  const appointments = useAppointmentsStore((s) => s.appointments);
 
   const { data: clinics = [], isLoading, refetch } = useClinics();
   const { data: popular = [] } = usePopularClinics(6);
 
-  const mapRef = useRef<DentalMapHandle>(null);
   const langBtnRef = useRef<View>(null);
   const [langOpen, setLangOpen] = useState(false);
   const [langPos, setLangPos] = useState({ top: 56, right: 16 });
   const [refreshing, setRefreshing] = useState(false);
   const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [mapActive, setMapActive] = useState(false);
 
-  const currentLocale = LOCALES.find((item) => item.code === locale) ?? LOCALES[0];
+  const currentLocale = LOCALE_OPTIONS.find((item) => item.code === locale) ?? LOCALE_OPTIONS[0];
   const displayName = user.fullName.split(' ')[0] ?? user.fullName;
-  const upcomingCount = appointments.filter((a) => a.status === 'upcoming').length;
   const openCount = clinics.filter((c) => c.isOpenNow).length;
-
-  const kpis = [
-    { label: t('home.stat_appointments'), value: String(upcomingCount) },
-    { label: t('home.stat_nearby'), value: String(clinics.length) },
-    { label: t('home.stat_favorites'), value: String(favoriteClinicIds.length) },
-  ];
 
   const actions = [
     {
       id: 'search',
       label: t('tabs.search'),
       icon: Search,
-      tint: colors.warningMuted,
-      iconColor: colors.warning,
+      tint: isDark ? 'rgba(251, 191, 36, 0.16)' : '#FFF7ED',
+      iconColor: isDark ? '#FBBF24' : '#EA580C',
       onPress: () => router.push('/(client)/(tabs)/search'),
     },
     {
       id: 'book',
       label: t('home.book'),
       icon: CalendarDays,
-      tint: colors.successMuted,
-      iconColor: colors.success,
+      tint: isDark ? 'rgba(74, 222, 128, 0.14)' : '#ECFDF5',
+      iconColor: isDark ? '#4ADE80' : '#059669',
       onPress: () => router.push('/(client)/(tabs)/search'),
     },
     {
       id: 'doctors',
       label: t('home.top_doctors'),
       icon: Stethoscope,
-      tint: colors.errorMuted,
-      iconColor: colors.error,
+      tint: isDark ? 'rgba(251, 113, 133, 0.14)' : '#FFF1F2',
+      iconColor: isDark ? '#FB7185' : '#E11D48',
       onPress: () => router.push('/(client)/(tabs)/search'),
     },
     {
       id: 'favorites',
       label: t('tabs.favorites'),
       icon: Heart,
-      tint: colors.primaryMuted,
-      iconColor: colors.primary,
+      tint: isDark ? 'rgba(129, 140, 248, 0.16)' : '#EEF2FF',
+      iconColor: isDark ? '#A5B4FC' : '#4F46E5',
       onPress: () => router.push('/(client)/(tabs)/favorites'),
     },
   ];
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-        const enabled = await Location.hasServicesEnabledAsync();
-        if (!enabled) return;
-        const last = await Location.getLastKnownPositionAsync();
-        if (last) {
-          setUserLocation({
-            latitude: last.coords.latitude,
-            longitude: last.coords.longitude,
-          });
-        }
-        const pos = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        setUserLocation({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-      } catch {
-        // Emulator / GPS off
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (!clinics.length) return;
-    const tmr = setTimeout(() => mapRef.current?.fitToClinics(clinics), 500);
-    return () => clearTimeout(tmr);
-  }, [clinics]);
 
   const openLanguageMenu = () => {
     langBtnRef.current?.measureInWindow((x, y, width, height) => {
@@ -191,6 +133,8 @@ export default function HomeDashboardScreen() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <ScrollView
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={false}
+        scrollEnabled={!mapActive}
         contentContainerStyle={{
           paddingTop: insets.top + spacing.md,
           paddingBottom: 120,
@@ -269,77 +213,75 @@ export default function HomeDashboardScreen() {
           </View>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: spacing.xl, gap: 12 }}
-        >
-          {kpis.map((kpi, index) => (
-            <LinearGradient
-              key={kpi.label}
-              colors={KPI_GRADIENTS[index]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[
-                shadows.md,
-                {
-                  width: 168,
-                  minHeight: 92,
-                  borderRadius: 22,
-                  padding: 16,
-                  justifyContent: 'space-between',
-                },
-              ]}
-            >
-              <Text variant="caption" color="rgba(255,255,255,0.82)">
-                {kpi.label}
-              </Text>
-              <Text variant="kpi" color="#FFFFFF">
-                {kpi.value}
-              </Text>
-            </LinearGradient>
-          ))}
-        </ScrollView>
-
         <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md }}>
           <Text variant="h3">{t('home.quick_actions')}</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View
+            style={[
+              shadows.sm,
+              {
+                width: '100%',
+                backgroundColor: colors.surface,
+                borderRadius: 24,
+                borderWidth: 1,
+                borderColor: colors.borderSubtle,
+                paddingVertical: 16,
+                paddingHorizontal: 4,
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+              },
+            ]}
+          >
             {actions.map((action) => {
               const Icon = action.icon;
+              // Explicit equal columns — Pressable flex:1 often collapses on Android
+              const cellWidth = Math.floor((windowWidth - spacing.xl * 2 - 10) / 4);
               return (
-                <Pressable
+                <View
                   key={action.id}
-                  onPress={action.onPress}
-                  style={({ pressed }) => [
-                    shadows.sm,
-                    {
-                      flex: 1,
-                      backgroundColor: colors.surface,
-                      borderRadius: 20,
-                      paddingVertical: 14,
-                      paddingHorizontal: 6,
-                      alignItems: 'center',
-                      gap: 10,
-                      opacity: pressed ? 0.9 : 1,
-                    },
-                  ]}
+                  style={{
+                    width: cellWidth,
+                    alignItems: 'center',
+                  }}
                 >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 16,
-                      backgroundColor: action.tint,
+                  <Pressable
+                    onPress={action.onPress}
+                    style={({ pressed }) => ({
+                      width: '100%',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
+                      gap: 8,
+                      opacity: pressed ? 0.75 : 1,
+                    })}
                   >
-                    <Icon size={20} color={action.iconColor} strokeWidth={2} />
-                  </View>
-                  <Text variant="caption" weight="semibold" center numberOfLines={2}>
-                    {action.label}
-                  </Text>
-                </Pressable>
+                    <View
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 18,
+                        backgroundColor: action.tint,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Icon size={22} color={action.iconColor} strokeWidth={1.9} />
+                    </View>
+                    <Text
+                      variant="caption"
+                      weight="semibold"
+                      center
+                      numberOfLines={2}
+                      style={{
+                        fontSize: 11,
+                        lineHeight: 14,
+                        letterSpacing: 0.1,
+                        width: '100%',
+                        paddingHorizontal: 2,
+                      }}
+                    >
+                      {action.label}
+                    </Text>
+                  </Pressable>
+                </View>
               );
             })}
           </View>
@@ -352,63 +294,88 @@ export default function HomeDashboardScreen() {
               {
                 backgroundColor: colors.surface,
                 borderRadius: 24,
-                padding: 14,
-                gap: 12,
+                borderWidth: 1,
+                borderColor: colors.borderSubtle,
+                padding: 16,
+                gap: 14,
               },
             ]}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-              <View style={{ flex: 1 }}>
-                <Text variant="h3">{t('home.clinics_map')}</Text>
-                <Text variant="caption" muted style={{ marginTop: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 14,
+                  backgroundColor: isDark ? 'rgba(129, 140, 248, 0.16)' : '#EEF2FF',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <MapPin size={18} color={colors.primary} strokeWidth={2} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text variant="h3" numberOfLines={1}>
+                  {t('home.clinics_map')}
+                </Text>
+                <Text variant="caption" muted style={{ marginTop: 2 }} numberOfLines={1}>
                   {t('home.map_subtitle')}
                 </Text>
               </View>
               <View
                 style={{
-                  backgroundColor: colors.successMuted,
+                  backgroundColor: isDark ? 'rgba(74, 222, 128, 0.14)' : '#ECFDF5',
                   paddingHorizontal: 10,
-                  paddingVertical: 6,
+                  paddingVertical: 7,
                   borderRadius: radius.full,
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(74, 222, 128, 0.28)' : '#A7F3D0',
                 }}
               >
-                <Text variant="caption" weight="semibold" color={colors.success}>
+                <Text
+                  variant="caption"
+                  weight="semibold"
+                  color={isDark ? '#4ADE80' : '#059669'}
+                >
                   {t('home.open_count', { count: openCount })}
                 </Text>
               </View>
               <Pressable
                 onPress={() => router.push('/(client)/map')}
                 accessibilityRole="button"
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 12,
+                style={({ pressed }) => ({
+                  width: 40,
+                  height: 40,
+                  borderRadius: 14,
                   backgroundColor: colors.surfaceSoft,
+                  borderWidth: 1,
+                  borderColor: colors.borderSubtle,
                   alignItems: 'center',
                   justifyContent: 'center',
-                }}
+                  opacity: pressed ? 0.8 : 1,
+                })}
               >
-                <Maximize2 size={16} color={colors.text} />
+                <Maximize2 size={16} color={colors.text} strokeWidth={2} />
               </Pressable>
             </View>
 
             <View
               style={{
-                height: 220,
+                height: 260,
                 borderRadius: 18,
                 overflow: 'hidden',
-                backgroundColor: colors.surfaceSoft,
+                backgroundColor: isDark ? '#1E293B' : '#E7E5E4',
+                borderWidth: 1,
+                borderColor: colors.borderSubtle,
               }}
+              onTouchStart={() => setMapActive(true)}
+              onTouchEnd={() => setMapActive(false)}
+              onTouchCancel={() => setMapActive(false)}
             >
-              <DentalMap
-                ref={mapRef}
-                compact
+              <OsmTileMap
                 clinics={clinics}
-                userLocation={userLocation}
-                mapType={mapType}
-                initialRegion={TASHKENT_REGION}
+                satellite={mapType === 'satellite'}
                 onSelectClinic={(id) => router.push(`/(client)/clinic/${id}`)}
-                style={{ flex: 1 }}
               />
               <View
                 style={{
@@ -416,9 +383,11 @@ export default function HomeDashboardScreen() {
                   left: 10,
                   bottom: 10,
                   flexDirection: 'row',
-                  backgroundColor: colors.surface,
+                  backgroundColor: isDark ? 'rgba(17, 24, 39, 0.92)' : 'rgba(255,255,255,0.94)',
                   borderRadius: radius.full,
                   padding: 3,
+                  borderWidth: 1,
+                  borderColor: colors.borderSubtle,
                   ...shadows.sm,
                 }}
               >
@@ -448,10 +417,10 @@ export default function HomeDashboardScreen() {
               </View>
             </View>
 
-            <View style={{ flexDirection: 'row', gap: spacing.lg, paddingHorizontal: 4 }}>
+            <View style={{ flexDirection: 'row', gap: spacing.lg, paddingHorizontal: 2 }}>
               {[
                 { color: colors.primary, label: t('home.legend_clinics') },
-                { color: colors.success, label: t('home.legend_open') },
+                { color: isDark ? '#4ADE80' : '#059669', label: t('home.legend_open') },
                 { color: colors.textMuted, label: t('home.legend_closed') },
               ].map((item) => (
                 <View
@@ -503,51 +472,28 @@ export default function HomeDashboardScreen() {
       </ScrollView>
 
       <Modal visible={langOpen} transparent animationType="fade" onRequestClose={() => setLangOpen(false)}>
-        <Pressable style={{ flex: 1 }} onPress={() => setLangOpen(false)}>
+        <View style={{ flex: 1 }}>
+          <Pressable
+            style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+            onPress={() => setLangOpen(false)}
+          />
           <View
-            style={[
-              shadows.lg,
-              {
-                position: 'absolute',
-                top: langPos.top,
-                right: langPos.right,
-                width: 200,
-                backgroundColor: colors.surface,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: colors.borderSubtle,
-                overflow: 'hidden',
-                paddingVertical: 6,
-              },
-            ]}
+            style={{
+              position: 'absolute',
+              top: langPos.top,
+              right: langPos.right,
+              ...languageMenuCardStyle(colors, shadows),
+            }}
           >
-            {LOCALES.map((item) => {
-              const active = item.code === locale;
-              return (
-                <Pressable
-                  key={item.code}
-                  onPress={() => {
-                    setLocale(item.code);
-                    setLangOpen(false);
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                    backgroundColor: active ? colors.primaryMuted : 'transparent',
-                  }}
-                >
-                  <Text variant="body" weight={active ? 'semibold' : 'regular'}>
-                    {item.label}
-                  </Text>
-                  {active ? <Check size={16} color={colors.primary} /> : null}
-                </Pressable>
-              );
-            })}
+            <LanguageMenuItems
+              locale={locale}
+              onSelect={(code) => {
+                setLocale(code);
+                setLangOpen(false);
+              }}
+            />
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
