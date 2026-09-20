@@ -1,9 +1,10 @@
 'use client';
 
-import { Bell, Building2, ChevronDown, Menu, Search } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
+import { NotificationsMenu } from '@/components/layout/NotificationsMenu';
 
 export function TopHeader({
   title,
@@ -47,25 +48,9 @@ export function TopHeader({
             />
           </label>
 
-          <button
-            type="button"
-            className="inline-flex h-10 max-w-[9.5rem] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium tracking-normal text-slate-700"
-          >
-            <Building2 className="h-4 w-4 shrink-0 text-primary" />
-            <span className="truncate">{t('crm.header.clinic_short')}</span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-          </button>
-
           <LanguageSelector />
 
-          <button
-            type="button"
-            className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600"
-            aria-label={t('crm.header.notifications')}
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
-          </button>
+          <NotificationsMenu />
 
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-semibold tracking-normal text-white">
@@ -84,6 +69,7 @@ export function TopHeader({
 
         <div className="flex items-center gap-2 tablet:hidden">
           <LanguageSelector />
+          <NotificationsMenu />
         </div>
       </div>
     </header>

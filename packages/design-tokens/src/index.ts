@@ -29,7 +29,7 @@ export const colors = {
 } as const;
 
 export const layout = {
-  sidebarWidth: 260,
+  sidebarWidth: 252,
   sidebarCollapsedWidth: 80,
   headerHeight: 64,
   contentMaxWidth: 1280,

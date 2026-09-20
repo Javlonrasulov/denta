@@ -711,7 +711,7 @@
   },
   "crm": {
     "nav": {
-      "overview": "Overview",
+      "overview": "Home",
       "appointments": "Appointments",
       "patients": "Patients",
       "doctors": "Doctors",
@@ -726,8 +726,8 @@
       "section_clinic": "Clinic",
       "section_ops": "Operations",
       "online": "Online",
-      "collapse_sidebar": "Collapse sidebar",
-      "expand_sidebar": "Expand sidebar"
+      "collapse_sidebar": "Collapse",
+      "expand_sidebar": "Expand"
     },
     "search": {
       "placeholder": "Search patients, doctors...",
@@ -942,6 +942,65 @@
       "debt": "Debt",
       "low": "Low",
       "ok": "OK"
+    },
+    "patient_flow": {
+      "title": "Patient flow",
+      "subtitle": "Daily visit dynamics",
+      "period_label": "Period",
+      "total": "Total patients",
+      "average": "Average daily flow",
+      "best_day": "Peak day",
+      "growth": "Growth",
+      "patients_unit": "patients",
+      "new_patients": "New patients",
+      "returning_patients": "Returning patients",
+      "legend_total": "Total flow",
+      "empty_title": "Patient flow data is not available yet",
+      "empty_subtitle": "Dynamics will appear here once visits start coming in.",
+      "day_n": "Day {{n}}",
+      "periods": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "3m": "3 mo",
+        "12m": "12 mo"
+      },
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "weeks": {
+        "w1": "Week 1",
+        "w2": "Week 2",
+        "w3": "Week 3",
+        "w4": "Week 4",
+        "w5": "Week 5",
+        "w6": "Week 6",
+        "w7": "Week 7",
+        "w8": "Week 8",
+        "w9": "Week 9",
+        "w10": "Week 10",
+        "w11": "Week 11",
+        "w12": "Week 12"
+      },
+      "months": {
+        "jan": "Jan",
+        "feb": "Feb",
+        "mar": "Mar",
+        "apr": "Apr",
+        "may": "May",
+        "jun": "Jun",
+        "jul": "Jul",
+        "aug": "Aug",
+        "sep": "Sep",
+        "oct": "Oct",
+        "nov": "Nov",
+        "dec": "Dec"
+      }
     }
   }
 }

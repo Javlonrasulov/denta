@@ -711,7 +711,7 @@
   },
   "crm": {
     "nav": {
-      "overview": "Umumiy",
+      "overview": "Bosh sahifa",
       "appointments": "Qabullar",
       "patients": "Bemorlar",
       "doctors": "Shifokorlar",
@@ -726,8 +726,8 @@
       "section_clinic": "Klinika",
       "section_ops": "Operatsiyalar",
       "online": "Onlayn",
-      "collapse_sidebar": "Sidebarni yig‘ish",
-      "expand_sidebar": "Sidebarni ochish"
+      "collapse_sidebar": "Kichraytirish",
+      "expand_sidebar": "Kengaytirish"
     },
     "search": {
       "placeholder": "Bemor yoki shifokor qidiring...",
@@ -942,6 +942,65 @@
       "debt": "Qarz",
       "low": "Kam",
       "ok": "Yetarli"
+    },
+    "patient_flow": {
+      "title": "Bemorlar oqimi",
+      "subtitle": "Kunlik tashriflar dinamikasi",
+      "period_label": "Davr",
+      "total": "Jami bemorlar",
+      "average": "O‘rtacha kunlik oqim",
+      "best_day": "Eng yuqori kun",
+      "growth": "O‘sish",
+      "patients_unit": "bemor",
+      "new_patients": "Yangi bemorlar",
+      "returning_patients": "Qaytgan bemorlar",
+      "legend_total": "Umumiy oqim",
+      "empty_title": "Bemorlar oqimi ma’lumotlari hali mavjud emas",
+      "empty_subtitle": "Bemor tashriflari paydo bo‘lgach bu yerda dinamika ko‘rinadi.",
+      "day_n": "{{n}}-kun",
+      "periods": {
+        "7d": "7 kun",
+        "30d": "30 kun",
+        "3m": "3 oy",
+        "12m": "12 oy"
+      },
+      "days": {
+        "mon": "Dush",
+        "tue": "Sesh",
+        "wed": "Chor",
+        "thu": "Pay",
+        "fri": "Jum",
+        "sat": "Shan",
+        "sun": "Yak"
+      },
+      "weeks": {
+        "w1": "1-hafta",
+        "w2": "2-hafta",
+        "w3": "3-hafta",
+        "w4": "4-hafta",
+        "w5": "5-hafta",
+        "w6": "6-hafta",
+        "w7": "7-hafta",
+        "w8": "8-hafta",
+        "w9": "9-hafta",
+        "w10": "10-hafta",
+        "w11": "11-hafta",
+        "w12": "12-hafta"
+      },
+      "months": {
+        "jan": "Yan",
+        "feb": "Fev",
+        "mar": "Mar",
+        "apr": "Apr",
+        "may": "May",
+        "jun": "Iyun",
+        "jul": "Iyul",
+        "aug": "Avg",
+        "sep": "Sen",
+        "oct": "Okt",
+        "nov": "Noy",
+        "dec": "Dek"
+      }
     }
   }
 }

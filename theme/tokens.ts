@@ -239,8 +239,8 @@ export const inputSizes = {
 } as const;
 
 export const layout = {
-  sidebarWidth: 268,
-  sidebarCollapsedWidth: 76,
+  sidebarWidth: 252,
+  sidebarCollapsedWidth: 80,
   headerHeight: 64,
   contentMaxWidth: 1440,
   contentPadding: 24,

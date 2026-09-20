@@ -24,7 +24,7 @@ export function AppShell({ title, subtitle, children }: AppShellProps) {
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.background, minWidth: 0 }}>
       {isDesktop ? (
-        <View style={{ flexShrink: 0, height: '100%' }}>
+        <View style={{ flexShrink: 0, height: '100%', zIndex: 40 }}>
           <Sidebar />
         </View>
       ) : null}

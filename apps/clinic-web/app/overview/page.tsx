@@ -8,6 +8,7 @@ import {
   MOCK_ROOMS,
 } from '@denta/mocks';
 import { todayIso } from '@denta/utils';
+import { PatientFlowCard } from '@/components/analytics/PatientFlowCard';
 import { AppShell } from '@/components/layout/AppShell';
 import { Badge, DataTable, KpiCard, Panel } from '@/components/ui/crm';
 import { useCrmI18n } from '@/lib/i18n/useCrmI18n';
@@ -48,6 +49,8 @@ export default function OverviewPage() {
             hint={t('crm.dashboard.rooms_free', { count: stats.availableRooms })}
           />
         </div>
+
+        <PatientFlowCard />
 
         <div className="grid gap-6 laptop:grid-cols-5">
           <Panel title={t('crm.dashboard.todays_schedule')} className="laptop:col-span-3">

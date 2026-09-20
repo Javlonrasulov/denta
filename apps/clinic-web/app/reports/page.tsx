@@ -29,18 +29,16 @@ export default function ReportsPage() {
 
         <div className="grid gap-6 laptop:grid-cols-2">
           <Panel title={t('crm.reports.revenue_summary')}>
-            <p className="text-3xl font-semibold tracking-tight text-slate-900">
-              {money(stats.revenue)}
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="text-kpi text-slate-900">{money(stats.revenue)}</p>
+            <p className="mt-2 text-sm font-normal text-slate-500">
               {t('crm.reports.revenue_summary_hint')}
             </p>
           </Panel>
           <Panel title={t('crm.reports.room_utilization')}>
-            <p className="text-3xl font-semibold tracking-tight text-slate-900">
+            <p className="text-kpi text-slate-900">
               {MOCK_ROOMS.filter((r) => r.status === 'occupied').length}/{MOCK_ROOMS.length}
             </p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm font-normal text-slate-500">
               {t('crm.reports.room_utilization_hint')}
             </p>
           </Panel>

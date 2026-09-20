@@ -18,12 +18,10 @@ export default function RoomsPage() {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-caption font-medium uppercase tracking-[0.04em] text-slate-400">
                   {t('crm.rooms.room_n', { number: room.number })}
                 </p>
-                <h3 className="mt-1 font-display text-lg font-semibold text-slate-900">
-                  {room.name}
-                </h3>
+                <h3 className="mt-1 text-section-title text-slate-900">{room.name}</h3>
               </div>
               <Badge status={room.status}>{status(room.status)}</Badge>
             </div>

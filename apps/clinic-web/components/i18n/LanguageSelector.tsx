@@ -54,7 +54,7 @@ export function LanguageSelector() {
         aria-label={t('crm.header.language')}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'inline-flex h-10 items-center gap-1.5 rounded-xl border bg-white px-2.5 text-sm font-semibold tracking-wide text-slate-700 transition',
+          'inline-flex h-10 items-center gap-1.5 rounded-xl border bg-white px-2.5 text-sm font-semibold tracking-normal text-slate-700 transition',
           open
             ? 'border-primary ring-2 ring-primary/20'
             : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',
