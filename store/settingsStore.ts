@@ -16,6 +16,7 @@ interface SettingsState {
   sidebarCollapsed: boolean;
   role: UserRole | null;
   isAuthenticated: boolean;
+  patientOnboardingDone: boolean;
   adminName: string;
   adminLogin: string;
   adminPassword: string;
@@ -26,6 +27,7 @@ interface SettingsState {
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebarCollapsed: () => void;
   setRole: (role: UserRole | null) => void;
+  setPatientOnboardingDone: (done: boolean) => void;
   login: (payload: { name?: string; login: string; password: string }) => void;
   updateCredentials: (payload: {
     login?: string;
@@ -45,6 +47,7 @@ export const useSettingsStore = create<SettingsState>()(
       sidebarCollapsed: false,
       role: null,
       isAuthenticated: false,
+      patientOnboardingDone: true,
       adminName: 'Admin',
       adminLogin: 'admin@denta.uz',
       adminPassword: '',
@@ -55,6 +58,7 @@ export const useSettingsStore = create<SettingsState>()(
       setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
       toggleSidebarCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setRole: (role) => set({ role }),
+      setPatientOnboardingDone: (patientOnboardingDone) => set({ patientOnboardingDone }),
       login: ({ name = 'Admin', login, password }) =>
         set({
           isAuthenticated: true,
@@ -86,6 +90,7 @@ export const useSettingsStore = create<SettingsState>()(
           isAuthenticated: false,
           role: null,
           adminName: 'Admin',
+          patientOnboardingDone: true,
         }),
     }),
     {

@@ -213,24 +213,20 @@ describe('Booking concurrency (e2e)', () => {
     if (login.body?.session?.accessToken) {
       patientToken = login.body.session.accessToken;
     } else {
-      // Fallback: use register patient endpoint then login
+      // Fallback: register patient → immediate session (no email OTP at signup)
+      const email = `pat2-conc-${suffix}@test.local`;
       const reg = await request(app.getHttpServer())
         .post('/api/v1/auth/patient/register')
         .send({
           firstName: 'Pat2',
           lastName: 'Conc',
           phone: `+99894${String(suffix).slice(-7)}`,
-          email: `pat2-conc-${suffix}@test.local`,
+          email,
           password: 'Test1234',
         });
       expect(reg.status).toBeLessThan(400);
-      const login2 = await request(app.getHttpServer())
-        .post('/api/v1/auth/login')
-        .send({
-          identifier: `pat2-conc-${suffix}@test.local`,
-          password: 'Test1234',
-        });
-      patientToken = login2.body.session.accessToken;
+      patientToken =
+        reg.body.accessToken ?? reg.body.session?.accessToken;
       // Use this patient's profile for booking
       const me = await request(app.getHttpServer())
         .get('/api/v1/auth/me')

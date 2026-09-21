@@ -124,14 +124,35 @@ export class RegisterPatientDto {
   @MaxLength(80)
   lastName!: string;
 
+  @IsEmail()
+  email!: string;
+
   @IsString()
   phone!: string;
 
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   password!: string;
+}
+
+export class UpdatePatientProfileDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  avatarUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  gender?: 'MALE' | 'FEMALE';
+
+  @IsOptional()
+  @IsString()
+  birthDate?: string;
+}
+
+export class CheckEmailDto {
+  @IsString()
+  @MinLength(3)
+  @MaxLength(254)
+  email!: string;
 }

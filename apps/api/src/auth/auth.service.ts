@@ -9,10 +9,11 @@ import {
 } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { createHash, randomInt, randomUUID } from 'crypto';
+import { promises as dns } from 'dns';
 import { addDays, addMinutes, differenceInCalendarDays } from 'date-fns';
 import { AppError } from '../common/filters/global-exception.filter';
 import { AuthUser, JwtPayload } from '../common/guards/auth.guards';
-import { isValidPassword, slugify } from '../common/utils/password.util';
+import { isValidPassword, isValidPatientPassword, slugify } from '../common/utils/password.util';
 import {
   isValidEmail,
   normalizeEmail,
@@ -189,11 +190,11 @@ export class AuthService {
     return { email, resendAvailableIn: cooldown };
   }
 
-  async registerPatient(dto: RegisterPatientDto) {
-    if (!isValidPassword(dto.password)) {
+  async registerPatient(dto: RegisterPatientDto, meta: SessionMeta = {}) {
+    if (!isValidPatientPassword(dto.password)) {
       throw new AppError(
-        'INVALID_PASSWORD',
-        'Password must be at least 8 characters with a letter and a digit',
+        'WEAK_PASSWORD',
+        'Password must be at least 6 characters',
         400,
       );
     }
@@ -201,20 +202,29 @@ export class AuthService {
     if (!phone) {
       throw new AppError('INVALID_PHONE', 'Invalid Uzbek phone number', 400);
     }
-    const email = dto.email ? normalizeEmail(dto.email) : null;
-    if (email && !isValidEmail(email)) {
+    const email = normalizeEmail(dto.email);
+    if (!isValidEmail(email)) {
       throw new AppError('INVALID_EMAIL', 'Invalid email', 400);
+    }
+
+    const existingEmail = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingEmail) {
+      throw new AppError(
+        'EMAIL_ALREADY_EXISTS',
+        'Email already registered',
+        409,
+      );
     }
 
     const existingPhone = await this.prisma.user.findUnique({ where: { phone } });
     if (existingPhone) {
-      throw new AppError('PHONE_TAKEN', 'Phone already registered', 409);
-    }
-    if (email) {
-      const existingEmail = await this.prisma.user.findUnique({ where: { email } });
-      if (existingEmail) {
-        throw new AppError('EMAIL_TAKEN', 'Email already registered', 409);
-      }
+      throw new AppError(
+        'PHONE_ALREADY_EXISTS',
+        'Phone already registered',
+        409,
+      );
     }
 
     const passwordHash = await argon2.hash(dto.password);
@@ -227,7 +237,7 @@ export class AuthService {
           firstName: dto.firstName.trim(),
           lastName: dto.lastName.trim(),
           phoneVerifiedAt: new Date(),
-          emailVerifiedAt: email ? null : new Date(),
+          // Email verification is optional — done later from profile
         },
       });
 
@@ -245,7 +255,175 @@ export class AuthService {
       return createdUser;
     });
 
-    return this.createSession(user.id);
+    return this.createSession(user.id, meta);
+  }
+
+  async checkEmail(emailRaw: string): Promise<{
+    available: boolean;
+    formatValid: boolean;
+    domainValid: boolean;
+    reason?: 'INVALID_EMAIL' | 'INVALID_DOMAIN' | 'EMAIL_ALREADY_EXISTS';
+  }> {
+    const email = normalizeEmail(emailRaw);
+    if (!email || !isValidEmail(email)) {
+      return {
+        available: false,
+        formatValid: false,
+        domainValid: false,
+        reason: 'INVALID_EMAIL',
+      };
+    }
+
+    const domain = email.split('@')[1] ?? '';
+    const domainValid = await this.isEmailDomainDeliverable(domain);
+    if (!domainValid) {
+      return {
+        available: false,
+        formatValid: true,
+        domainValid: false,
+        reason: 'INVALID_DOMAIN',
+      };
+    }
+
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (existing) {
+      return {
+        available: false,
+        formatValid: true,
+        domainValid: true,
+        reason: 'EMAIL_ALREADY_EXISTS',
+      };
+    }
+
+    return {
+      available: true,
+      formatValid: true,
+      domainValid: true,
+    };
+  }
+
+  private async isEmailDomainDeliverable(domain: string): Promise<boolean> {
+    if (!domain || domain.length < 3 || !domain.includes('.')) return false;
+    const timeoutMs = 2500;
+
+    const withTimeout = <T>(promise: Promise<T>): Promise<T> =>
+      Promise.race([
+        promise,
+        new Promise<T>((_, reject) => {
+          setTimeout(() => reject(new Error('DNS_TIMEOUT')), timeoutMs);
+        }),
+      ]);
+
+    try {
+      const mx = await withTimeout(dns.resolveMx(domain));
+      if (Array.isArray(mx) && mx.length > 0) return true;
+    } catch {
+      /* try A / AAAA fallback */
+    }
+
+    try {
+      const a = await withTimeout(dns.resolve4(domain));
+      if (Array.isArray(a) && a.length > 0) return true;
+    } catch {
+      /* try AAAA */
+    }
+
+    try {
+      const aaaa = await withTimeout(dns.resolve6(domain));
+      return Array.isArray(aaaa) && aaaa.length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  async verifyPatientEmail(
+    dto: VerifyEmailDto,
+    meta: SessionMeta = {},
+  ): Promise<AuthSessionDto> {
+    const email = normalizeEmail(dto.email);
+    try {
+      await this.consumeOtp(email, OtpPurpose.EMAIL_VERIFICATION, dto.code);
+    } catch (err) {
+      if (err instanceof AppError) {
+        if (err.code === 'INVALID_CODE') {
+          throw new AppError('INVALID_OTP', 'Invalid code', 400);
+        }
+        if (err.code === 'CODE_EXPIRED') {
+          throw new AppError('OTP_EXPIRED', 'Code expired', 400);
+        }
+      }
+      throw err;
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { roles: true },
+    });
+    if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
+    const isPatient = user.roles.some((r) => r.role === UserRole.PATIENT);
+    if (!isPatient) {
+      throw new AppError('FORBIDDEN', 'Patient account required', 403);
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerifiedAt: new Date() },
+    });
+
+    return this.createSession(user.id, meta);
+  }
+
+  async resendPatientVerification(emailRaw: string) {
+    const email = normalizeEmail(emailRaw);
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { roles: true },
+    });
+    if (!user || !user.roles.some((r) => r.role === UserRole.PATIENT)) {
+      return {
+        resendAvailableIn:
+          this.config.get<number>('app.otp.resendCooldownSeconds') ?? 60,
+      };
+    }
+    if (user.emailVerifiedAt) {
+      throw new AppError('EMAIL_ALREADY_EXISTS', 'Email already verified', 400);
+    }
+    const cooldown = await this.issueOtp(
+      email,
+      OtpPurpose.EMAIL_VERIFICATION,
+      user.id,
+    );
+    return { resendAvailableIn: cooldown };
+  }
+
+  async updatePatientProfile(
+    userId: string,
+    dto: { avatarUrl?: string; gender?: string; birthDate?: string },
+  ) {
+    const profile = await this.prisma.patientProfile.findUnique({
+      where: { userId },
+    });
+    if (!profile) throw new AppError('NOT_FOUND', 'Patient profile not found', 404);
+
+    const gender =
+      dto.gender === 'MALE' || dto.gender === 'FEMALE' ? dto.gender : undefined;
+    const birthDate = dto.birthDate ? new Date(dto.birthDate) : undefined;
+    if (birthDate && Number.isNaN(birthDate.getTime())) {
+      throw new AppError('VALIDATION_ERROR', 'Invalid birth date', 400);
+    }
+
+    await this.prisma.patientProfile.update({
+      where: { userId },
+      data: {
+        ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl || null } : {}),
+        ...(gender !== undefined ? { gender } : {}),
+        ...(birthDate !== undefined ? { birthDate } : {}),
+      },
+    });
+
+    return this.getCurrentUser(userId);
   }
 
   async verifyEmail(dto: VerifyEmailDto): Promise<AuthSessionDto> {
@@ -351,13 +529,13 @@ export class AuthService {
       throw new AppError('INVALID_CREDENTIALS', 'Invalid credentials', 401);
     }
 
-    const isPatient = user.roles.some((r) => r.role === UserRole.PATIENT);
     const isDoctor = user.roles.some((r) => r.role === UserRole.DOCTOR);
+    const isPatient = user.roles.some((r) => r.role === UserRole.PATIENT);
     const verified =
       Boolean(user.emailVerifiedAt) ||
       Boolean(user.phoneVerifiedAt) ||
-      isPatient ||
-      isDoctor;
+      isDoctor ||
+      isPatient;
 
     if (!verified) {
       return {

@@ -1,4 +1,4 @@
-import { View, Pressable } from 'react-native';
+import { Platform, Pressable, Text as RNText, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -8,7 +8,6 @@ import {
   Search,
   UserRound,
 } from '@/components/icons';
-import { Text } from '@/components/ui/Text';
 import { tabBarBottomInset } from '@/components/mobile';
 import { useTheme } from '@/theme';
 
@@ -37,22 +36,29 @@ type TabBarProps = {
 };
 
 export function ClientTabBar({ state, descriptors, navigation }: TabBarProps) {
-  const { colors, shadows, isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const bottom = tabBarBottomInset(insets.bottom);
+  const bottomPad = tabBarBottomInset(insets.bottom);
 
   return (
     <View
       style={[
-        shadows.md,
+        styles.bar,
         {
-          flexDirection: 'row',
           backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: isDark ? colors.borderSubtle : 'rgba(15,23,42,0.06)',
-          paddingTop: 8,
-          paddingBottom: bottom,
-          paddingHorizontal: 6,
+          borderTopColor: isDark ? colors.borderSubtle : 'rgba(15,23,42,0.07)',
+          paddingBottom: bottomPad,
+          ...Platform.select({
+            ios: {
+              shadowColor: '#0F172A',
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+            },
+            android: {
+              elevation: 8,
+            },
+          }),
         },
       ]}
     >
@@ -68,6 +74,8 @@ export function ClientTabBar({ state, descriptors, navigation }: TabBarProps) {
             key={route.key}
             accessibilityRole="button"
             accessibilityState={focused ? { selected: true } : {}}
+            accessibilityLabel={label.replace(/\n/g, ' ')}
+            hitSlop={4}
             onPress={() => {
               const event = navigation.emit({
                 type: 'tabPress',
@@ -78,37 +86,76 @@ export function ClientTabBar({ state, descriptors, navigation }: TabBarProps) {
                 navigation.navigate(route.name, route.params);
               }
             }}
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              gap: 4,
-              paddingVertical: 2,
-            }}
+            style={styles.item}
           >
             <View
-              style={{
-                width: 42,
-                height: 32,
-                borderRadius: 12,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: focused ? colors.primaryMuted : 'transparent',
-              }}
+              style={[
+                styles.iconWrap,
+                {
+                  backgroundColor: focused ? colors.primaryMuted : 'transparent',
+                },
+              ]}
             >
-              <Icon size={20} color={color} strokeWidth={focused ? 2.25 : 1.75} />
+              <Icon
+                size={22}
+                color={color}
+                strokeWidth={focused ? 2.3 : 1.8}
+                fill={focused && route.name === 'favorites' ? color : 'transparent'}
+              />
             </View>
-            <Text
-              variant="caption"
-              weight={focused ? 'semibold' : 'medium'}
-              color={color}
-              numberOfLines={1}
-              style={{ fontSize: 10, lineHeight: 12, letterSpacing: -0.2 }}
+            <RNText
+              allowFontScaling={false}
+              numberOfLines={2}
+              // System UI font — custom fonts clip / inflate Cyrillic on Android
+              style={[
+                styles.label,
+                {
+                  color,
+                  fontWeight: focused ? '700' : '500',
+                },
+              ]}
             >
               {label}
-            </Text>
+            </RNText>
           </Pressable>
         );
       })}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderTopWidth: 1,
+    paddingTop: 10,
+    paddingHorizontal: 4,
+  },
+  item: {
+    flex: 1,
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 2,
+  },
+  iconWrap: {
+    width: 44,
+    height: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  label: {
+    width: '100%',
+    minHeight: 26,
+    textAlign: 'center',
+    textAlignVertical: 'top',
+    fontSize: 10,
+    lineHeight: 12,
+    letterSpacing: -0.2,
+    includeFontPadding: false,
+    ...(Platform.OS === 'android' ? { fontFamily: 'sans-serif-medium' } : {}),
+  },
+});

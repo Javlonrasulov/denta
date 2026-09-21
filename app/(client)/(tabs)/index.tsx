@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
+  Text as RNText,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -19,22 +21,21 @@ import {
   BadgeCheck,
   Bell,
   Building2,
+  CalendarClock,
   CalendarPlus,
   ChevronDown,
-  ChevronRight,
   Clock,
   Heart,
   MapPin,
-  Maximize2,
   Moon,
   Search,
-  Shield,
   Stethoscope,
   Sun,
 } from '@/components/icons';
 import { FeaturedClinicCard } from '@/components/client/home/FeaturedClinicCard';
 import { FeaturedDoctorCard } from '@/components/client/home/FeaturedDoctorCard';
-import { OsmTileMap } from '@/components/map/OsmTileMap';
+import { ClientNotificationsCenter } from '@/components/client/notifications/ClientNotificationsCenter';
+import { HomeMapCard } from '@/components/map';
 import {
   LanguageMenuItems,
   languageMenuCardStyle,
@@ -43,9 +44,12 @@ import {
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { useClinics, usePopularClinics, useTopDoctors } from '@/hooks/queries';
+import { useUnreadNotificationCount } from '@/hooks/useInboxNotifications';
+import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useUserStore } from '@/store/userStore';
 import { useTheme } from '@/theme';
+import { formatUnreadBadge } from '@/utils/inboxNotifications';
 
 export default function HomeDashboardScreen() {
   const { t } = useTranslation();
@@ -70,6 +74,10 @@ export default function HomeDashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
   const [mapActive, setMapActive] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  useRealtimeAppointments();
 
   const currentLocale = LOCALE_OPTIONS.find((item) => item.code === locale) ?? LOCALE_OPTIONS[0];
   const displayName = user.fullName.split(' ')[0] ?? user.fullName;
@@ -114,17 +122,21 @@ export default function HomeDashboardScreen() {
   ] as const;
 
   const trustItems = [
-    { icon: BadgeCheck, label: t('home.trust_verified') },
-    { icon: Stethoscope, label: t('home.trust_doctors') },
-    { icon: Clock, label: t('home.trust_booking') },
-    { icon: Shield, label: t('home.trust_slots') },
+    { id: 'verified', icon: BadgeCheck, label: t('home.trust_verified') },
+    { id: 'doctors', icon: Stethoscope, label: t('home.trust_doctors') },
+    { id: 'booking', icon: Clock, label: t('home.trust_booking') },
+    { id: 'slots', icon: CalendarClock, label: t('home.trust_slots') },
   ] as const;
 
   const openLanguageMenu = () => {
     langBtnRef.current?.measureInWindow((x, y, width, height) => {
+      const edge = 12;
+      const menuWidth = 236;
+      const preferredRight = Math.max(edge, windowWidth - x - width);
+      const maxRight = Math.max(edge, windowWidth - menuWidth - edge);
       setLangPos({
         top: y + height + 8,
-        right: Math.max(8, windowWidth - x - width),
+        right: Math.min(preferredRight, maxRight),
       });
       setLangOpen(true);
     });
@@ -141,8 +153,8 @@ export default function HomeDashboardScreen() {
   const cardWidth = Math.min(280, windowWidth * 0.72);
 
   const clusterBtn = {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   };
@@ -154,7 +166,7 @@ export default function HomeDashboardScreen() {
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={false}
         scrollEnabled={!mapActive}
-        contentContainerStyle={{ paddingBottom: 36 }}
+        contentContainerStyle={{ paddingBottom: 112 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing || isLoading}
@@ -171,7 +183,7 @@ export default function HomeDashboardScreen() {
               : ['#EEF2FF', '#ECFEFF', colors.background]
           }
           locations={[0, 0.62, 1]}
-          style={{ paddingTop: insets.top + 8, paddingBottom: 8, overflow: 'hidden' }}
+          style={{ paddingTop: insets.top + 8, paddingBottom: 10 }}
         >
           <View
             pointerEvents="none"
@@ -207,29 +219,42 @@ export default function HomeDashboardScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: 18,
+              marginBottom: 16,
             }}
           >
             <Pressable
               onPress={goMap}
+              hitSlop={4}
               style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: radius.full,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.78)',
+                paddingLeft: 12,
+                paddingRight: 12,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.92)',
                 borderWidth: 1,
                 borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.95)',
                 opacity: pressed ? 0.85 : 1,
+                justifyContent: 'center',
               })}
             >
-              <MapPin size={14} color={colors.primary} strokeWidth={2.2} />
-              <Text variant="caption" weight="semibold">
-                {t('home.city_tashkent')}
-              </Text>
-              <ChevronDown size={13} color={colors.textMuted} />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <MapPin size={14} color={colors.primary} strokeWidth={2.2} />
+                <RNText
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 18,
+                    letterSpacing: 0,
+                    fontWeight: '600',
+                    color: colors.text,
+                    includeFontPadding: false,
+                    marginLeft: 6,
+                    marginRight: 4,
+                  }}
+                >
+                  {t('home.city_tashkent')}
+                </RNText>
+                <ChevronDown size={13} color={colors.textMuted} />
+              </View>
             </Pressable>
 
             <View
@@ -239,44 +264,104 @@ export default function HomeDashboardScreen() {
                 backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.78)',
                 borderWidth: 1,
                 borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.95)',
-                borderRadius: radius.full,
-                paddingHorizontal: 4,
+                borderRadius: 22,
+                height: 44,
+                paddingHorizontal: 2,
               }}
             >
               <View ref={langBtnRef} collapsable={false}>
                 <Pressable
                   onPress={openLanguageMenu}
-                  accessibilityRole="button"
                   accessibilityLabel={t('profile.language')}
-                  style={[clusterBtn, { width: undefined, paddingHorizontal: 8, flexDirection: 'row', gap: 2 }]}
+                  style={{
+                    height: 44,
+                    minWidth: 52,
+                    paddingHorizontal: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  <Text variant="caption" weight="semibold">
+                  <RNText
+                    style={{
+                      fontSize: 13,
+                      lineHeight: 16,
+                      letterSpacing: 0,
+                      fontWeight: '600',
+                      color: colors.text,
+                      marginRight: 3,
+                      includeFontPadding: false,
+                      paddingRight: 2,
+                    }}
+                  >
                     {currentLocale.short}
-                  </Text>
+                  </RNText>
                   <ChevronDown size={12} color={colors.textMuted} />
                 </Pressable>
               </View>
-              <View style={{ width: 1, height: 16, backgroundColor: colors.border }} />
+              <View style={{ width: 1, height: 16, backgroundColor: colors.border, opacity: 0.65 }} />
               <Pressable
                 onPress={() => setThemeMode(isDark ? 'light' : 'dark')}
-                accessibilityRole="button"
+                accessibilityLabel={t('profile.dark_mode')}
                 style={clusterBtn}
               >
                 {isDark ? <Sun size={16} color={colors.text} /> : <Moon size={16} color={colors.text} />}
               </Pressable>
-              <View style={{ width: 1, height: 16, backgroundColor: colors.border }} />
+              <View style={{ width: 1, height: 16, backgroundColor: colors.border, opacity: 0.65 }} />
               <Pressable
-                onPress={() => router.push('/(client)/(tabs)/profile')}
-                accessibilityRole="button"
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setNotifOpen(true);
+                }}
+                accessibilityLabel={t('notifications.title')}
                 style={clusterBtn}
               >
-                <Bell size={16} color={colors.text} />
+                <View>
+                  <Bell size={16} color={colors.text} />
+                  {unreadCount > 0 ? (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: -6,
+                        right: -8,
+                        minWidth: 16,
+                        height: 16,
+                        paddingHorizontal: 3,
+                        borderRadius: 8,
+                        backgroundColor: colors.error,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 1.5,
+                        borderColor: isDark ? colors.surface : '#FFFFFF',
+                      }}
+                    >
+                      <RNText
+                        style={{
+                          fontSize: 9,
+                          lineHeight: 11,
+                          fontWeight: '700',
+                          color: '#FFFFFF',
+                          includeFontPadding: false,
+                        }}
+                      >
+                        {formatUnreadBadge(unreadCount)}
+                      </RNText>
+                    </View>
+                  ) : null}
+                </View>
               </Pressable>
             </View>
           </View>
 
-          <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.lg }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.md }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                alignSelf: 'flex-start',
+                marginBottom: 14,
+              }}
+            >
               <View
                 style={{
                   width: 32,
@@ -285,31 +370,43 @@ export default function HomeDashboardScreen() {
                   backgroundColor: isDark ? 'rgba(34,211,238,0.18)' : 'rgba(8,145,178,0.14)',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  marginRight: 8,
                 }}
               >
                 <Stethoscope size={16} color={colors.secondary} strokeWidth={2} />
               </View>
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={colors.secondary}
-                style={{ letterSpacing: 1.2, fontSize: 11, textTransform: 'uppercase' }}
+              <RNText
+                style={{
+                  fontSize: 15,
+                  lineHeight: 20,
+                  letterSpacing: 0,
+                  fontWeight: '700',
+                  color: colors.secondary,
+                  includeFontPadding: false,
+                  paddingRight: 12,
+                }}
               >
-                {t('home.hero_kicker')}
-              </Text>
+                DENTA.UZ
+              </RNText>
             </View>
 
-            <Text variant="caption" muted style={{ marginBottom: 6 }}>
+            <Text variant="caption" muted style={{ marginBottom: 8 }}>
               {t('home.assalamu_alaykum')}
               {displayName ? `, ${displayName}` : ''}
             </Text>
-            <Text
-              variant="h1"
-              style={{ fontSize: 30, lineHeight: 36, letterSpacing: -0.7, maxWidth: 300 }}
+            <RNText
+              style={{
+                fontSize: windowWidth < 360 ? 26 : 28,
+                lineHeight: windowWidth < 360 ? 34 : 36,
+                letterSpacing: -0.4,
+                fontFamily: 'Geologica_700Bold',
+                color: colors.text,
+                includeFontPadding: false,
+              }}
             >
               {t('home.hero_title')}
-            </Text>
-            <Text variant="body" muted style={{ marginTop: 8, maxWidth: 310, lineHeight: 21 }}>
+            </RNText>
+            <Text variant="body" muted style={{ marginTop: 8, lineHeight: 21, paddingRight: 8 }}>
               {t('home.hero_subtitle')}
             </Text>
 
@@ -319,7 +416,7 @@ export default function HomeDashboardScreen() {
                 goSearch();
               }}
               accessibilityRole="search"
-              style={({ pressed }) => ({ opacity: pressed ? 0.96 : 1, marginTop: 20 })}
+              style={({ pressed }) => ({ opacity: pressed ? 0.96 : 1, marginTop: 18 })}
             >
               <View
                 style={[
@@ -329,98 +426,90 @@ export default function HomeDashboardScreen() {
                     alignItems: 'center',
                     backgroundColor: colors.surface,
                     borderRadius: 20,
-                    paddingLeft: 8,
-                    paddingRight: 8,
-                    paddingVertical: 8,
+                    paddingLeft: 16,
+                    paddingRight: 6,
+                    paddingVertical: 6,
                     borderWidth: 1,
                     borderColor: isDark ? colors.border : 'rgba(255,255,255,0.9)',
                   },
                 ]}
               >
+                <Text
+                  variant="body"
+                  muted
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={{ flex: 1, minWidth: 0, marginRight: 8 }}
+                >
+                  {t('home.search_placeholder')}
+                </Text>
                 <View
                   style={{
                     width: 42,
                     height: 42,
                     borderRadius: 14,
-                    backgroundColor: colors.primaryMuted,
+                    backgroundColor: colors.primary,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginRight: 10,
                   }}
                 >
-                  <Search size={18} color={colors.primary} strokeWidth={2.1} />
-                </View>
-                <Text variant="body" muted numberOfLines={1} style={{ flex: 1, marginRight: 8 }}>
-                  {t('home.search_placeholder')}
-                </Text>
-                <View
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderRadius: 14,
-                    backgroundColor: colors.primary,
-                    flexShrink: 0,
-                  }}
-                >
-                  <Text variant="caption" weight="semibold" color={colors.textInverse}>
-                    {t('home.cta_find_clinic')}
-                  </Text>
+                  <Search size={18} color={colors.textInverse} strokeWidth={2.2} />
                 </View>
               </View>
             </Pressable>
           </View>
         </LinearGradient>
 
-        {/* ── Shortcuts ──────────────────────────────────────── */}
-        <View style={{ paddingHorizontal: spacing.xl, paddingTop: 4, paddingBottom: 8 }}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+        {/* ── Shortcuts (single premium row) ──────────────────── */}
+        <View style={{ paddingHorizontal: spacing.xl, paddingTop: 8, paddingBottom: 6 }}>
+          <View style={{ flexDirection: 'row', width: '100%', alignItems: 'flex-start' }}>
             {actions.map((action) => {
               const Icon = action.icon;
               return (
-                <Pressable
-                  key={action.id}
-                  onPress={() => {
-                    void Haptics.selectionAsync();
-                    action.onPress();
-                  }}
-                  style={({ pressed }) => [
-                    shadows.sm,
-                    {
-                      flex: 1,
-                      alignItems: 'center',
-                      gap: 8,
-                      paddingVertical: 14,
-                      paddingHorizontal: 4,
-                      borderRadius: 18,
-                      backgroundColor: colors.surface,
-                      borderWidth: 1,
-                      borderColor: colors.borderSubtle,
-                      opacity: pressed ? 0.88 : 1,
-                    },
-                  ]}
-                >
-                  <View
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 14,
-                      backgroundColor: colors.primaryMuted,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                <View key={action.id} style={{ flex: 1, alignItems: 'center' }}>
+                  <Pressable
+                    onPress={() => {
+                      void Haptics.selectionAsync();
+                      action.onPress();
                     }}
+                    style={({ pressed }) => ({
+                      width: '100%',
+                      alignItems: 'center',
+                      paddingVertical: 6,
+                      paddingHorizontal: 2,
+                      opacity: pressed ? 0.82 : 1,
+                    })}
                   >
-                    <Icon size={18} color={colors.primary} strokeWidth={1.9} />
-                  </View>
-                  <Text
-                    variant="caption"
-                    weight="semibold"
-                    numberOfLines={1}
-                    center
-                    style={{ fontSize: 11, lineHeight: 14 }}
-                  >
-                    {action.label}
-                  </Text>
-                </Pressable>
+                    <View
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 16,
+                        backgroundColor: colors.primaryMuted,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 8,
+                      }}
+                    >
+                      <Icon size={20} color={colors.primary} strokeWidth={1.9} />
+                    </View>
+                    <RNText
+                      style={{
+                        width: '100%',
+                        textAlign: 'center',
+                        fontSize: windowWidth < 360 ? 10 : windowWidth < 400 ? 11 : 12,
+                        lineHeight: windowWidth < 360 ? 14 : windowWidth < 400 ? 15 : 16,
+                        letterSpacing: -0.15,
+                        fontWeight: '600',
+                        color: colors.text,
+                        includeFontPadding: false,
+                        paddingHorizontal: 1,
+                      }}
+                    >
+                      {action.label}
+                    </RNText>
+                  </Pressable>
+                </View>
               );
             })}
           </View>
@@ -428,193 +517,19 @@ export default function HomeDashboardScreen() {
 
         {/* ── Map centerpiece ────────────────────────────────── */}
         <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.lg }}>
-          <View
-            style={[
-              shadows.lg,
-              {
-                backgroundColor: colors.surface,
-                borderRadius: 26,
-                borderWidth: 1,
-                borderColor: colors.borderSubtle,
-                overflow: 'hidden',
-              },
-            ]}
-          >
-            <View style={{ height: 292, backgroundColor: colors.surfaceSoft }}>
-              <View
-                style={{ flex: 1 }}
-                onTouchStart={() => setMapActive(true)}
-                onTouchEnd={() => setMapActive(false)}
-                onTouchCancel={() => setMapActive(false)}
-              >
-                <OsmTileMap
-                  clinics={nearbyPreview}
-                  satellite={mapType === 'satellite'}
-                  onSelectClinic={(id) => {
-                    void Haptics.selectionAsync();
-                    router.push(`/(client)/clinic/${id}`);
-                  }}
-                />
-              </View>
-
-              <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 88 }}>
-                <LinearGradient
-                  colors={['rgba(15,23,42,0.55)', 'transparent']}
-                  style={{ flex: 1 }}
-                />
-              </View>
-
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 12,
-                  left: 12,
-                  right: 12,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <View
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    backgroundColor: isDark ? 'rgba(17,24,39,0.88)' : 'rgba(255,255,255,0.94)',
-                    borderRadius: 16,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)',
-                  }}
-                >
-                  <Text variant="label" numberOfLines={1} style={{ fontSize: 14 }}>
-                    {t('home.clinics_map')}
-                  </Text>
-                  <Text variant="caption" muted numberOfLines={1} style={{ marginTop: 1 }}>
-                    {t('home.map_subtitle')}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    backgroundColor: colors.success,
-                    paddingHorizontal: 10,
-                    paddingVertical: 8,
-                    borderRadius: radius.full,
-                    flexShrink: 0,
-                  }}
-                >
-                  <Text variant="caption" weight="semibold" color="#FFFFFF" style={{ fontSize: 11 }}>
-                    {t('home.open_now_short', { count: openCount })}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={goMap}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('home.map_cta')}
-                  style={({ pressed }) => ({
-                    width: 40,
-                    height: 40,
-                    borderRadius: 14,
-                    backgroundColor: isDark ? 'rgba(17,24,39,0.88)' : 'rgba(255,255,255,0.94)',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: pressed ? 0.85 : 1,
-                  })}
-                >
-                  <Maximize2 size={16} color={colors.primary} strokeWidth={2} />
-                </Pressable>
-              </View>
-
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 12,
-                  bottom: 12,
-                  flexDirection: 'row',
-                  backgroundColor: isDark ? 'rgba(17,24,39,0.92)' : 'rgba(255,255,255,0.96)',
-                  borderRadius: radius.full,
-                  padding: 3,
-                  borderWidth: 1,
-                  borderColor: colors.borderSubtle,
-                }}
-              >
-                {(['standard', 'satellite'] as const).map((type) => {
-                  const active = mapType === type;
-                  return (
-                    <Pressable
-                      key={type}
-                      onPress={() => setMapType(type)}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 7,
-                        borderRadius: radius.full,
-                        backgroundColor: active ? colors.primary : 'transparent',
-                      }}
-                    >
-                      <Text
-                        variant="caption"
-                        weight="semibold"
-                        color={active ? colors.textInverse : colors.textMuted}
-                        style={{ fontSize: 11 }}
-                      >
-                        {type === 'standard' ? t('home.map_view') : t('home.satellite')}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                gap: 10,
-              }}
-            >
-              <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {[
-                  { color: colors.primary, label: t('home.legend_clinics') },
-                  { color: colors.success, label: t('home.legend_open') },
-                  { color: colors.textMuted, label: t('home.legend_closed') },
-                ].map((item) => (
-                  <View
-                    key={item.label}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: radius.full,
-                      backgroundColor: colors.surfaceSoft,
-                    }}
-                  >
-                    <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: item.color }} />
-                    <Text variant="caption" muted numberOfLines={1} style={{ fontSize: 11 }}>
-                      {item.label}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-              <Pressable
-                onPress={goMap}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 2,
-                  opacity: pressed ? 0.7 : 1,
-                })}
-              >
-                <Text variant="caption" weight="semibold" color={colors.primary}>
-                  {t('home.map_cta')}
-                </Text>
-                <ChevronRight size={14} color={colors.primary} />
-              </Pressable>
-            </View>
-          </View>
+          <HomeMapCard
+            clinics={nearbyPreview}
+            openCount={openCount}
+            mapType={mapType}
+            onMapTypeChange={setMapType}
+            onOpenFullMap={goMap}
+            onSelectClinic={(id) => {
+              void Haptics.selectionAsync();
+              router.push(`/(client)/clinic/${id}`);
+            }}
+            onMapInteractionStart={() => setMapActive(true)}
+            onMapInteractionEnd={() => setMapActive(false)}
+          />
         </View>
 
         {/* ── Featured clinics ───────────────────────────────── */}
@@ -712,42 +627,95 @@ export default function HomeDashboardScreen() {
         </View>
 
         {/* ── Trust ──────────────────────────────────────────── */}
-        <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing['3xl'], paddingBottom: 24 }}>
-          <View
+        <View
+          style={{
+            paddingHorizontal: spacing.xl,
+            paddingTop: spacing['2xl'],
+            paddingBottom: 8,
+          }}
+        >
+          <RNText
             style={{
-              backgroundColor: isDark ? colors.surface : colors.surface,
-              borderRadius: 22,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: colors.borderSubtle,
-              gap: 12,
+              fontSize: 18,
+              lineHeight: 24,
+              fontWeight: '700',
+              color: colors.text,
+              includeFontPadding: false,
+              letterSpacing: -0.2,
             }}
           >
-            <Text variant="label">{t('home.trust_title')}</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {trustItems.map((item) => {
-                const Icon = item.icon;
-                return (
+            {t('home.trust_title')}
+          </RNText>
+          <RNText
+            style={{
+              marginTop: 6,
+              marginBottom: 14,
+              fontSize: 13,
+              lineHeight: 18,
+              color: colors.textMuted,
+              includeFontPadding: false,
+              paddingRight: 8,
+            }}
+          >
+            {t('home.trust_subtitle')}
+          </RNText>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              rowGap: 10,
+            }}
+          >
+            {trustItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <View
+                  key={item.id}
+                  style={{
+                    width: '48.5%',
+                    minHeight: 92,
+                    borderRadius: 18,
+                    paddingVertical: 14,
+                    paddingHorizontal: 12,
+                    backgroundColor: isDark ? 'rgba(99,102,241,0.10)' : 'rgba(238,242,255,0.95)',
+                    borderWidth: 1,
+                    borderColor: isDark ? 'rgba(129,140,248,0.18)' : 'rgba(99,102,241,0.12)',
+                  }}
+                >
                   <View
-                    key={item.label}
                     style={{
-                      flexDirection: 'row',
+                      width: 36,
+                      height: 36,
+                      borderRadius: 12,
                       alignItems: 'center',
-                      gap: 8,
-                      paddingVertical: 8,
-                      paddingHorizontal: 12,
-                      borderRadius: radius.full,
-                      backgroundColor: colors.primaryMuted,
+                      justifyContent: 'center',
+                      marginBottom: 10,
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(99,102,241,0.10)',
                     }}
                   >
-                    <Icon size={14} color={colors.primary} strokeWidth={2} />
-                    <Text variant="caption" weight="semibold" numberOfLines={1}>
-                      {item.label}
-                    </Text>
+                    <Icon size={18} color={colors.primary} strokeWidth={2} />
                   </View>
-                );
-              })}
-            </View>
+                  <RNText
+                    numberOfLines={2}
+                    ellipsizeMode="clip"
+                    style={{
+                      fontSize: 13,
+                      lineHeight: 17,
+                      fontWeight: '600',
+                      fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : undefined,
+                      color: colors.text,
+                      includeFontPadding: false,
+                    }}
+                  >
+                    {item.label}
+                  </RNText>
+                </View>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -759,12 +727,14 @@ export default function HomeDashboardScreen() {
             onPress={() => setLangOpen(false)}
           />
           <View
-            style={{
-              position: 'absolute',
-              top: langPos.top,
-              right: langPos.right,
-              ...languageMenuCardStyle(colors, shadows),
-            }}
+            style={[
+              languageMenuCardStyle(colors, shadows),
+              {
+                position: 'absolute',
+                top: langPos.top,
+                right: langPos.right,
+              },
+            ]}
           >
             <LanguageMenuItems
               locale={locale}
@@ -776,6 +746,8 @@ export default function HomeDashboardScreen() {
           </View>
         </View>
       </Modal>
+
+      <ClientNotificationsCenter visible={notifOpen} onClose={() => setNotifOpen(false)} />
     </View>
   );
 }

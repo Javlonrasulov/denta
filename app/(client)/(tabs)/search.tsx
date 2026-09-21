@@ -1,173 +1,211 @@
-import { router } from 'expo-router';
-import { Search, SlidersHorizontal } from '@/components/icons';
-import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, ScrollView, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { FlatList, Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { ClinicCard } from '@/components/clinic/ClinicCard';
-import { DoctorCard } from '@/components/doctor/DoctorCard';
 import {
-  MobileEmpty,
-  MobileHeader,
-  MobileIconButton,
-  MobileSegmented,
-} from '@/components/mobile';
-import { Button } from '@/components/ui/Button';
-import { SearchInput } from '@/components/ui/Input';
-import { ListSkeleton } from '@/components/ui/Skeleton';
+  DEFAULT_SEARCH_FILTERS,
+  SearchBar,
+  SearchClinicCard,
+  SearchDoctorCard,
+  SearchEmpty,
+  SearchError,
+  SearchFilterSheet,
+  SearchResultSummary,
+  SearchSegmented,
+  SearchSkeleton,
+  type SearchFilters,
+  type SearchTab,
+} from '@/components/client/search';
+import {
+  countActiveFilters,
+  filterClinics,
+  filterDoctors,
+  hasNonDefaultFilters,
+} from '@/components/client/search/searchUtils';
+import { tabBarBottomInset } from '@/components/mobile';
 import { Text } from '@/components/ui/Text';
 import { useClinics, useDoctors } from '@/hooks/queries';
+import { useAppointmentsStore } from '@/store/appointmentsStore';
 import { useTheme } from '@/theme';
-
-type SortKey = 'nearest' | 'rating' | 'price';
+import type { Clinic, Doctor } from '@/types';
 
 export default function SearchScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
+  const setDraft = useAppointmentsStore((s) => s.setDraft);
+
+  const params = useLocalSearchParams<{ tab?: string }>();
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [tab, setTab] = useState<SearchTab>(params.tab === 'doctors' ? 'doctors' : 'clinics');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [minRating, setMinRating] = useState(0);
-  const [sort, setSort] = useState<SortKey>('nearest');
-  const [tab, setTab] = useState<'clinics' | 'doctors'>('clinics');
+  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
 
-  const clinics = useClinics({ query, minRating: minRating || undefined });
-  const doctors = useDoctors({ query });
+  useEffect(() => {
+    if (params.tab === 'doctors' || params.tab === 'clinics') setTab(params.tab);
+  }, [params.tab]);
 
-  const sortedClinics = useMemo(() => {
-    const list = [...(clinics.data ?? [])];
-    if (sort === 'rating') list.sort((a, b) => b.rating - a.rating);
-    else if (sort === 'price') list.sort((a, b) => a.priceFrom - b.priceFrom);
-    else list.sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99));
-    return list;
-  }, [clinics.data, sort]);
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query.trim()), 220);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  const clinicsQuery = useClinics();
+  const doctorsQuery = useDoctors();
+
+  const clinicsById = useMemo(() => {
+    const map = new Map<string, Clinic>();
+    for (const clinic of clinicsQuery.data ?? []) map.set(clinic.id, clinic);
+    return map;
+  }, [clinicsQuery.data]);
+
+  const clinics = useMemo(
+    () => filterClinics(clinicsQuery.data ?? [], debouncedQuery, filters),
+    [clinicsQuery.data, debouncedQuery, filters],
+  );
+
+  const doctors = useMemo(
+    () => filterDoctors(doctorsQuery.data ?? [], clinicsById, debouncedQuery, filters),
+    [doctorsQuery.data, clinicsById, debouncedQuery, filters],
+  );
+
+  const activeCount = countActiveFilters(filters, tab);
+  const canClear = hasNonDefaultFilters(filters) || query.length > 0;
+  const listPad = 40 + 64 + tabBarBottomInset(insets.bottom);
+
+  const openClinic = (id: string) => router.push(`/(client)/clinic/${id}`);
+  const openDoctor = (id: string) => router.push(`/(client)/doctor/${id}`);
+  const bookClinic = (clinic: Clinic) => {
+    setDraft({ clinicId: clinic.id });
+    router.push({ pathname: '/(client)/booking', params: { clinicId: clinic.id } });
+  };
+  const bookDoctor = (doctor: Doctor) => {
+    setDraft({ clinicId: doctor.clinicId, doctorId: doctor.id });
+    router.push(`/(client)/doctor/${doctor.id}`);
+  };
+
+  const clearAll = () => {
+    setQuery('');
+    setFilters(DEFAULT_SEARCH_FILTERS);
+  };
+
+  const isLoading = tab === 'clinics' ? clinicsQuery.isLoading : doctorsQuery.isLoading;
+  const isError = tab === 'clinics' ? clinicsQuery.isError : doctorsQuery.isError;
+  const retry = () => {
+    void clinicsQuery.refetch();
+    void doctorsQuery.refetch();
+  };
+
+  const resultCount = tab === 'clinics' ? clinics.length : doctors.length;
+
+  const listHeader = (
+    <View style={{ paddingTop: spacing.md, paddingBottom: spacing.md, gap: 14 }}>
+      <View style={{ gap: 4 }}>
+        <Text variant="h1" style={{ fontSize: 28, lineHeight: 34, letterSpacing: -0.5 }}>
+          {t('search.title')}
+        </Text>
+        <Text variant="bodySmall" color={colors.textSecondary}>
+          {t('search.subtitle')}
+        </Text>
+      </View>
+
+      <SearchBar
+        value={query}
+        onChangeText={setQuery}
+        onClear={() => setQuery('')}
+        onOpenFilters={() => {
+          Keyboard.dismiss();
+          setFiltersOpen(true);
+        }}
+        filterCount={activeCount}
+      />
+
+      <SearchSegmented value={tab} onChange={setTab} />
+
+      {!isLoading && !isError ? (
+        <SearchResultSummary
+          count={resultCount}
+          tab={tab}
+          filters={filters}
+          onChange={setFilters}
+        />
+      ) : null}
+    </View>
+  );
+
+  const listEmpty = isError ? (
+    <SearchError onRetry={retry} />
+  ) : isLoading ? (
+    <SearchSkeleton tab={tab} />
+  ) : (
+    <SearchEmpty onClear={clearAll} canClear={canClear} />
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-      <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.md, gap: spacing.md }}>
-        <MobileHeader title={t('search.title')} />
-        <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <SearchInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={t('map.search_placeholder')}
-              onClear={() => setQuery('')}
-            />
-          </View>
-          <MobileIconButton
-            accessibilityLabel={t('search.filters')}
-            onPress={() => setFiltersOpen(true)}
-          >
-            <SlidersHorizontal size={18} color={colors.primary} strokeWidth={1.8} />
-          </MobileIconButton>
-        </View>
-        <MobileSegmented
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'clinics', label: t('favorites.clinics') },
-            { value: 'doctors', label: t('favorites.doctors') },
-          ]}
-        />
-      </View>
-
       {tab === 'clinics' ? (
-        clinics.isLoading ? (
-          <ListSkeleton rows={5} />
-        ) : sortedClinics.length === 0 ? (
-          <MobileEmpty icon={Search} title={t('search.no_results')} description={t('empty.no_data')} />
-        ) : (
-          <FlatList
-            data={sortedClinics}
-            keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: 120 }}
-            renderItem={({ item }) => (
-              <ClinicCard clinic={item} onPress={() => router.push(`/(client)/clinic/${item.id}`)} />
-            )}
-          />
-        )
-      ) : doctors.isLoading ? (
-        <ListSkeleton rows={5} />
-      ) : !doctors.data?.length ? (
-        <MobileEmpty icon={Search} title={t('search.no_results')} />
+        <FlatList
+          data={isLoading || isError ? [] : clinics}
+          keyExtractor={(item) => item.id}
+          key="search-clinics"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={listEmpty}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.xl,
+            gap: 14,
+            paddingBottom: listPad,
+            flexGrow: 1,
+          }}
+          renderItem={({ item }) => (
+            <SearchClinicCard
+              clinic={item}
+              onPress={() => openClinic(item.id)}
+              onDetails={() => openClinic(item.id)}
+              onBook={() => bookClinic(item)}
+            />
+          )}
+        />
       ) : (
         <FlatList
-          data={doctors.data}
+          data={isLoading || isError ? [] : doctors}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: spacing.xl, gap: spacing.sm, paddingBottom: spacing['5xl'] }}
+          key="search-doctors"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={listEmpty}
+          contentContainerStyle={{
+            paddingHorizontal: spacing.xl,
+            gap: 12,
+            paddingBottom: listPad,
+            flexGrow: 1,
+          }}
           renderItem={({ item }) => (
-            <DoctorCard doctor={item} onPress={() => router.push(`/(client)/doctor/${item.id}`)} />
+            <SearchDoctorCard
+              doctor={item}
+              clinic={clinicsById.get(item.clinicId)}
+              onPress={() => openDoctor(item.id)}
+              onView={() => openDoctor(item.id)}
+              onBook={() => bookDoctor(item)}
+            />
           )}
         />
       )}
 
-      <Modal visible={filtersOpen} animationType="slide" transparent>
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: colors.overlay }}>
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              borderTopLeftRadius: radius['2xl'],
-              borderTopRightRadius: radius['2xl'],
-              padding: spacing['2xl'],
-              paddingBottom: insets.bottom + spacing.xl,
-              gap: spacing.lg,
-            }}
-          >
-            <Text variant="h2">{t('search.filters')}</Text>
-            <Text variant="caption" muted>
-              {t('search.rating')}
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
-              {[0, 4, 4.5, 4.8].map((r) => (
-                <Pressable
-                  key={r}
-                  onPress={() => setMinRating(r)}
-                  style={{
-                    paddingHorizontal: spacing.lg,
-                    paddingVertical: 10,
-                    borderRadius: radius.full,
-                    backgroundColor: minRating === r ? colors.primary : colors.surfaceSoft,
-                  }}
-                >
-                  <Text variant="caption" weight="semibold" color={minRating === r ? colors.textInverse : colors.text}>
-                    {r === 0 ? t('search.clear_filters') : `${r}+`}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-            <Text variant="caption" muted>
-              {t('search.sort')}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-              {(
-                [
-                  ['nearest', 'search.nearest'],
-                  ['rating', 'search.highest_rated'],
-                  ['price', 'search.price_low'],
-                ] as const
-              ).map(([key, label]) => (
-                <Pressable
-                  key={key}
-                  onPress={() => setSort(key)}
-                  style={{
-                    paddingHorizontal: spacing.lg,
-                    paddingVertical: 10,
-                    borderRadius: radius.full,
-                    backgroundColor: sort === key ? colors.primaryMuted : colors.surfaceSoft,
-                  }}
-                >
-                  <Text variant="caption" weight="semibold" color={sort === key ? colors.primary : colors.text}>
-                    {t(label)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-            <Button title={t('search.apply_filters')} onPress={() => setFiltersOpen(false)} fullWidth />
-          </View>
-        </View>
-      </Modal>
+      <SearchFilterSheet
+        visible={filtersOpen}
+        tab={tab}
+        filters={filters}
+        onClose={() => setFiltersOpen(false)}
+        onApply={setFilters}
+      />
     </View>
   );
 }

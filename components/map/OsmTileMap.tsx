@@ -2,13 +2,16 @@ import { useMemo, useRef, useState } from 'react';
 import {
   Image,
   PanResponder,
+  Platform,
   Pressable,
   StyleSheet,
+  Text as RNText,
   View,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
-import { Text } from '@/components/ui/Text';
 import { TASHKENT_REGION } from './mapUtils';
+import { satelliteTileUrl, shortClinicTitle, streetTileUrl } from './mapTiles';
 import { useTheme } from '@/theme';
 import type { Clinic } from '@/types';
 
@@ -36,35 +39,33 @@ function yToLat(y: number, zoom: number) {
   return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 }
 
-function streetTile(z: number, x: number, y: number) {
-  // ArcGIS raster — no API key (Carto Voyager now watermarks without a key).
-  return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`;
-}
-
-function satelliteTile(z: number, x: number, y: number) {
-  return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
-}
-
-function shortTitle(name: string, max = 16) {
-  const cleaned = name.replace(/\s+/g, ' ').trim();
-  if (cleaned.length <= max) return cleaned;
-  return `${cleaned.slice(0, max - 1)}…`;
-}
-
 type Props = {
   clinics: Clinic[];
   satellite?: boolean;
   onSelectClinic?: (id: string) => void;
+  onPressMap?: () => void;
+  /** Hide built-in zoom (parent may render its own). */
+  hideZoom?: boolean;
 };
 
-export function OsmTileMap({ clinics, satellite, onSelectClinic }: Props) {
-  const { colors, shadows } = useTheme();
+/**
+ * Compact tile map for Home — same basemap + marker language as fullscreen DentalMap.
+ */
+export function OsmTileMap({
+  clinics,
+  satellite,
+  onSelectClinic,
+  onPressMap,
+  hideZoom,
+}: Props) {
+  const { colors } = useTheme();
   const [size, setSize] = useState({ width: 0, height: 260 });
   const [center, setCenter] = useState({
     lat: TASHKENT_REGION.latitude,
     lon: TASHKENT_REGION.longitude,
   });
   const [zoom, setZoom] = useState(13);
+  const moved = useRef(false);
 
   const centerRef = useRef(center);
   const zoomRef = useRef(zoom);
@@ -78,12 +79,14 @@ export function OsmTileMap({ clinics, satellite, onSelectClinic }: Props) {
         onMoveShouldSetPanResponder: (_, g) =>
           Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
         onPanResponderGrant: () => {
+          moved.current = false;
           dragStart.current = {
             lat: centerRef.current.lat,
             lon: centerRef.current.lon,
           };
         },
         onPanResponderMove: (_, g) => {
+          if (Math.abs(g.dx) > 3 || Math.abs(g.dy) > 3) moved.current = true;
           const z = zoomRef.current;
           const worldX = lonToX(dragStart.current.lon, z);
           const worldY = latToY(dragStart.current.lat, z);
@@ -92,8 +95,11 @@ export function OsmTileMap({ clinics, satellite, onSelectClinic }: Props) {
             lon: xToLon(worldX - g.dx, z),
           });
         },
+        onPanResponderRelease: () => {
+          if (!moved.current) onPressMap?.();
+        },
       }),
-    [],
+    [onPressMap],
   );
 
   const { tiles, markers } = useMemo(() => {
@@ -116,10 +122,10 @@ export function OsmTileMap({ clinics, satellite, onSelectClinic }: Props) {
     const worldY = latToY(center.lat, z);
     const originX = worldX - width / 2;
     const originY = worldY - height / 2;
-    const minTx = Math.floor(originX / TILE);
-    const maxTx = Math.floor((originX + width) / TILE);
-    const minTy = Math.floor(originY / TILE);
-    const maxTy = Math.floor((originY + height) / TILE);
+    const minTx = Math.floor(originX / TILE) - 1;
+    const maxTx = Math.floor((originX + width) / TILE) + 1;
+    const minTy = Math.floor(originY / TILE) - 1;
+    const maxTy = Math.floor((originY + height) / TILE) + 1;
 
     const nextTiles = [];
     for (let x = minTx; x <= maxTx; x++) {
@@ -129,17 +135,17 @@ export function OsmTileMap({ clinics, satellite, onSelectClinic }: Props) {
           key: `${z}-${x}-${y}`,
           left: x * TILE - originX,
           top: y * TILE - originY,
-          uri: satellite ? satelliteTile(z, x, y) : streetTile(z, x, y),
+          uri: satellite ? satelliteTileUrl(z, x, y) : streetTileUrl(z, x, y),
         });
       }
     }
 
-    const nextMarkers = clinics.slice(0, 20).map((clinic) => ({
+    const nextMarkers = clinics.slice(0, 12).map((clinic) => ({
       id: clinic.id,
       left: lonToX(clinic.coordinates.longitude, z) - originX,
       top: latToY(clinic.coordinates.latitude, z) - originY,
       name: clinic.name,
-      open: clinic.isOpenNow,
+      open: !!clinic.isOpenNow,
     }));
 
     return { tiles: nextTiles, markers: nextMarkers };
@@ -173,50 +179,65 @@ export function OsmTileMap({ clinics, satellite, onSelectClinic }: Props) {
         />
       ))}
 
-      {markers.map((m) => (
-        <Pressable
-          key={m.id}
-          onPress={() => onSelectClinic?.(m.id)}
-          style={[
-            styles.pin,
-            shadows.sm,
-            {
-              left: m.left - 42,
-              top: m.top - 16,
-              backgroundColor: m.open ? colors.success : colors.primary,
-              borderColor: '#FFFFFF',
-            },
-          ]}
-        >
-          <Text
-            variant="caption"
-            color="#FFFFFF"
-            numberOfLines={1}
-            style={styles.pinText}
+      {markers.map((m) => {
+        const fill = m.open ? colors.secondary : colors.primary;
+        const label = shortClinicTitle(m.name, 14);
+        const approxW = Math.min(132, Math.max(56, label.length * 6.2 + 14));
+        return (
+          <Pressable
+            key={m.id}
+            accessibilityRole="button"
+            accessibilityLabel={m.name}
+            onPress={() => {
+              void Haptics.selectionAsync();
+              onSelectClinic?.(m.id);
+            }}
+            hitSlop={6}
+            style={[
+              styles.label,
+              {
+                left: m.left - approxW / 2,
+                top: m.top - 14,
+                minWidth: approxW,
+                backgroundColor: fill,
+              },
+            ]}
           >
-            {shortTitle(m.name)}
-          </Text>
-        </Pressable>
-      ))}
+            <RNText
+              numberOfLines={1}
+              style={{
+                color: '#FFFFFF',
+                fontSize: 10,
+                lineHeight: 12,
+                fontWeight: '700',
+                includeFontPadding: false,
+                fontFamily:
+                  Platform.OS === 'android' ? 'sans-serif-medium' : undefined,
+              }}
+            >
+              {label}
+            </RNText>
+          </Pressable>
+        );
+      })}
 
-      <View style={styles.zoomCol} pointerEvents="box-none">
-        <Pressable
-          onPress={() => setZoom((z) => Math.min(MAX_ZOOM, z + 1))}
-          style={[styles.zoomBtn, { backgroundColor: colors.surface }]}
-        >
-          <Text variant="h3" color={colors.text}>
-            +
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setZoom((z) => Math.max(MIN_ZOOM, z - 1))}
-          style={[styles.zoomBtn, { backgroundColor: colors.surface }]}
-        >
-          <Text variant="h3" color={colors.text}>
-            −
-          </Text>
-        </Pressable>
-      </View>
+      {!hideZoom ? (
+        <View style={styles.zoomCol} pointerEvents="box-none">
+          <Pressable
+            onPress={() => setZoom((z) => Math.min(MAX_ZOOM, z + 1))}
+            style={styles.zoomBtn}
+          >
+            <View style={[styles.zoomBarH, { backgroundColor: colors.text }]} />
+            <View style={[styles.zoomBarV, { backgroundColor: colors.text }]} />
+          </Pressable>
+          <Pressable
+            onPress={() => setZoom((z) => Math.max(MIN_ZOOM, z - 1))}
+            style={styles.zoomBtn}
+          >
+            <View style={[styles.zoomBarH, { backgroundColor: colors.text }]} />
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -227,29 +248,29 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     overflow: 'hidden',
-    backgroundColor: '#D6D3D1',
+    backgroundColor: '#DCE6F0',
   },
-  pin: {
+  label: {
     position: 'absolute',
-    minWidth: 64,
-    maxWidth: 128,
-    height: 28,
+    height: 24,
+    maxWidth: 132,
     paddingHorizontal: 8,
-    borderRadius: 14,
-    borderWidth: 2,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-  },
-  pinText: {
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: '700',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 4,
   },
   zoomCol: {
     position: 'absolute',
     right: 10,
-    bottom: 52,
+    bottom: 56,
     gap: 8,
     zIndex: 3,
   },
@@ -259,6 +280,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(15,23,42,0.08)',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+  },
+  zoomBarH: {
+    position: 'absolute',
+    width: 12,
+    height: 2,
+    borderRadius: 1,
+  },
+  zoomBarV: {
+    position: 'absolute',
+    width: 2,
+    height: 12,
+    borderRadius: 1,
   },
 });

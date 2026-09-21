@@ -1,8 +1,14 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text as RNText,
+  View,
+} from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 
-import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/theme';
 import type { MapFilterId } from './mapUtils';
 import { MAP_FILTER_IDS } from './mapUtils';
@@ -23,16 +29,17 @@ const LABEL_KEYS: Record<MapFilterId, string> = {
 
 export function MapFilters({ active, onToggle }: Props) {
   const { t } = useTranslation();
-  const { colors, spacing, radius, shadows } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{
-        paddingHorizontal: spacing.lg,
-        gap: spacing.sm,
-      }}
+      nestedScrollEnabled
+      bounces
+      alwaysBounceHorizontal
+      decelerationRate="fast"
+      contentContainerStyle={styles.content}
       style={styles.row}
     >
       {MAP_FILTER_IDS.map((id) => {
@@ -47,37 +54,62 @@ export function MapFilters({ active, onToggle }: Props) {
             }}
             style={[
               styles.chip,
-              shadows.sm,
               {
-                backgroundColor: isOn ? colors.primary : colors.surface,
-                borderColor: isOn ? colors.primary : colors.borderSubtle,
-                borderRadius: radius.full,
+                backgroundColor: isOn
+                  ? colors.primary
+                  : isDark
+                    ? 'rgba(15,23,42,0.78)'
+                    : '#FFFFFF',
+                borderColor: isOn
+                  ? colors.primary
+                  : isDark
+                    ? 'rgba(255,255,255,0.12)'
+                    : 'rgba(15,23,42,0.08)',
               },
             ]}
           >
-            <Text
-              variant="caption"
+            <RNText
+              numberOfLines={1}
               style={{
-                color: isOn ? colors.textInverse : colors.text,
+                color: isOn ? '#FFFFFF' : colors.text,
+                fontSize: 13,
+                lineHeight: 16,
                 fontWeight: '600',
+                includeFontPadding: false,
+                fontFamily: Platform.OS === 'android' ? 'sans-serif-medium' : undefined,
               }}
             >
               {t(LABEL_KEYS[id])}
-            </Text>
+            </RNText>
           </Pressable>
         );
       })}
+      <View style={{ width: 8 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexGrow: 0 },
+  row: { flexGrow: 0, marginTop: 0 },
+  content: {
+    paddingLeft: 16,
+    paddingRight: 24,
+    gap: 8,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   chip: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
-    minHeight: 36,
     justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
 });

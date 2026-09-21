@@ -1,76 +1,153 @@
-import { router } from 'expo-router';
-import { CalendarDays } from '@/components/icons';
 import { useMemo, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, RefreshControl, View } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 
-import { AppointmentCard } from '@/components/appointments/AppointmentCard';
-import { MobileEmpty, MobileHeader, MobileSegmented } from '@/components/mobile';
-import { ListSkeleton } from '@/components/ui/Skeleton';
-import { useAppointments } from '@/hooks/queries';
+import {
+  AppointmentCard,
+  AppointmentEmptyState,
+  AppointmentErrorState,
+  AppointmentSkeleton,
+  AppointmentSummary,
+  AppointmentTabs,
+  AppointmentsHeader,
+} from '@/components/client/appointments';
+import { tabBarBottomInset } from '@/components/mobile';
+import { useAppointments, useClinics } from '@/hooks/queries';
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments';
 import { useTheme } from '@/theme';
-import { AppointmentStatus } from '@/types';
-
-const TABS: AppointmentStatus[] = ['upcoming', 'completed', 'cancelled'];
+import type { AppointmentStatus } from '@/types';
 
 export default function AppointmentsScreen() {
-  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { colors, spacing } = useTheme();
   const [tab, setTab] = useState<AppointmentStatus>('upcoming');
+
   const query = useAppointments();
+  const clinicsQuery = useClinics();
   useRealtimeAppointments();
 
-  const filtered = useMemo(
-    () => (query.data ?? []).filter((a) => a.status === tab),
-    [query.data, tab],
+  const allAppointments = query.data ?? [];
+
+  const counts = useMemo(
+    () => ({
+      upcoming: allAppointments.filter((a) => a.status === 'upcoming').length,
+      completed: allAppointments.filter((a) => a.status === 'completed').length,
+      cancelled: allAppointments.filter((a) => a.status === 'cancelled').length,
+    }),
+    [allAppointments],
   );
 
-  const emptyTitle =
-    tab === 'upcoming'
-      ? t('appointments.no_upcoming')
-      : tab === 'completed'
-        ? t('appointments.no_completed')
-        : t('appointments.no_cancelled');
+  const filtered = useMemo(
+    () => allAppointments.filter((a) => a.status === tab),
+    [allAppointments, tab],
+  );
+
+  const clinicCoordsById = useMemo(() => {
+    const map = new Map<string, { latitude: number; longitude: number }>();
+    for (const clinic of clinicsQuery.data ?? []) {
+      if (clinic.latitude != null && clinic.longitude != null) {
+        map.set(clinic.id, {
+          latitude: clinic.latitude,
+          longitude: clinic.longitude,
+        });
+      }
+    }
+    return map;
+  }, [clinicsQuery.data]);
+
+  const listPad = 48 + 64 + tabBarBottomInset(insets.bottom);
+
+  const goFindDentist = () =>
+    router.push({ pathname: '/(client)/(tabs)/search', params: { tab: 'doctors' } });
+
+  const goPopularClinics = () =>
+    router.push({ pathname: '/(client)/(tabs)/search', params: { tab: 'clinics' } });
+
+  const listHeader = (
+    <View style={{ gap: spacing.lg, marginBottom: spacing.lg }}>
+      <AppointmentsHeader />
+      <AppointmentSummary counts={counts} active={tab} onSelect={setTab} />
+      <AppointmentTabs value={tab} onChange={setTab} counts={counts} />
+    </View>
+  );
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-      <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.md, gap: spacing.lg }}>
-        <MobileHeader title={t('tabs.appointments')} />
-        <MobileSegmented
-          value={tab}
-          onChange={setTab}
-          options={TABS.map((key) => ({
-            value: key,
-            label: t(`appointments.${key}`),
-          }))}
-        />
-      </View>
-
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingTop: insets.top,
+      }}
+    >
       {query.isLoading ? (
-        <ListSkeleton rows={4} />
-      ) : filtered.length === 0 ? (
-        <MobileEmpty
-          icon={CalendarDays}
-          title={emptyTitle}
-          actionLabel={t('appointments.empty_cta')}
-          onAction={() => router.push('/(client)/(tabs)')}
-        />
+        <View style={{ flex: 1, paddingTop: spacing.md }}>
+          <View
+            style={{
+              paddingHorizontal: spacing.xl,
+              gap: spacing.lg,
+              marginBottom: spacing.lg,
+            }}
+          >
+            <AppointmentsHeader />
+            <AppointmentSummary counts={counts} active={tab} onSelect={setTab} />
+            <AppointmentTabs value={tab} onChange={setTab} counts={counts} />
+          </View>
+          <AppointmentSkeleton rows={3} />
+        </View>
+      ) : query.isError ? (
+        <View
+          style={{
+            flex: 1,
+            paddingHorizontal: spacing.xl,
+            paddingTop: spacing.md,
+          }}
+        >
+          <View style={{ gap: spacing.lg, marginBottom: spacing.lg }}>
+            <AppointmentsHeader />
+            <AppointmentSummary counts={counts} active={tab} onSelect={setTab} />
+            <AppointmentTabs value={tab} onChange={setTab} counts={counts} />
+          </View>
+          <AppointmentErrorState onRetry={() => void query.refetch()} />
+        </View>
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: spacing.xl, gap: spacing.md, paddingBottom: spacing['5xl'] }}
-          refreshing={query.isFetching}
-          onRefresh={() => void query.refetch()}
-          renderItem={({ item }) => (
-            <AppointmentCard
-              appointment={item}
-              onPress={() => router.push(`/(client)/appointment/${item.id}`)}
+          ListHeaderComponent={
+            <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.md }}>
+              {listHeader}
+            </View>
+          }
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingBottom: listPad,
+            gap: spacing.md,
+          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={query.isFetching && !query.isLoading}
+              onRefresh={() => void query.refetch()}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
+          }
+          ListEmptyComponent={
+            <AppointmentEmptyState
+              tab={tab}
+              onPrimary={goFindDentist}
+              onSecondary={goPopularClinics}
+            />
+          }
+          renderItem={({ item }) => (
+            <View style={{ paddingHorizontal: spacing.xl }}>
+              <AppointmentCard
+                appointment={item}
+                clinicCoords={clinicCoordsById.get(item.clinicId) ?? null}
+              />
+            </View>
           )}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>

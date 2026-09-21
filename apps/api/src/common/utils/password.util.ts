@@ -1,5 +1,5 @@
 /**
- * Password rules matching clinic-web lib/auth/password.ts:
+ * Clinic / staff password rules:
  * ≥8 chars, at least one letter (Latin/Cyrillic), one digit.
  */
 export function isValidPassword(password: string): boolean {
@@ -7,6 +7,13 @@ export function isValidPassword(password: string): boolean {
   const hasLetter = /[A-Za-zА-Яа-яЁё]/.test(password);
   const hasDigit = /\d/.test(password);
   return hasLetter && hasDigit;
+}
+
+/**
+ * Patient marketplace password: ≥6 chars, no complexity rules.
+ */
+export function isValidPatientPassword(password: string): boolean {
+  return Boolean(password && password.length >= 6);
 }
 
 export function slugify(input: string): string {

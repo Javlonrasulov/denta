@@ -23,6 +23,9 @@ const webInputReset =
 type AuthFieldProps = TextInputProps & {
   label: string;
   error?: string;
+  helperText?: string;
+  helperTone?: 'muted' | 'success' | 'error';
+  statusTone?: 'default' | 'success' | 'error';
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
 };
@@ -30,6 +33,9 @@ type AuthFieldProps = TextInputProps & {
 export function AuthField({
   label,
   error,
+  helperText,
+  helperTone = 'muted',
+  statusTone = 'default',
   leftIcon,
   rightIcon,
   onFocus,
@@ -39,12 +45,28 @@ export function AuthField({
   const { colors, field, fieldFocus, hairline } = useLoginTheme();
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
-  const borderColor = error ? colors.error : focused ? colors.primary : hairline;
-  const backgroundColor = focused || error ? fieldFocus : field;
+
+  const toneBorder =
+    statusTone === 'success'
+      ? colors.success
+      : statusTone === 'error' || error
+        ? colors.error
+        : focused
+          ? colors.primary
+          : hairline;
+  const borderColor = error && statusTone === 'default' ? colors.error : toneBorder;
+  const backgroundColor = focused || error || statusTone !== 'default' ? fieldFocus : field;
 
   const focusInput = () => {
     inputRef.current?.focus();
   };
+
+  const helperColor =
+    helperTone === 'success'
+      ? colors.success
+      : helperTone === 'error'
+        ? colors.error
+        : colors.textMuted;
 
   return (
     <View style={{ gap: 8 }}>
@@ -64,13 +86,13 @@ export function AuthField({
           height: 56,
           borderRadius: 14,
           backgroundColor,
-          borderWidth: focused || error ? 1.5 : 1,
+          borderWidth: focused || error || statusTone !== 'default' ? 1.5 : 1,
           borderColor,
           paddingHorizontal: 16,
           flexDirection: 'row',
           alignItems: 'center',
           gap: 12,
-          ...(focused && !error
+          ...(focused && !error && statusTone === 'default'
             ? {
                 shadowColor: colors.primary,
                 shadowOpacity: 0.16,
@@ -119,6 +141,17 @@ export function AuthField({
           }}
         >
           {error}
+        </Text>
+      ) : helperText ? (
+        <Text
+          style={{
+            fontFamily: 'GolosText_400Regular',
+            fontSize: 12,
+            lineHeight: 16,
+            color: helperColor,
+          }}
+        >
+          {helperText}
         </Text>
       ) : null}
     </View>

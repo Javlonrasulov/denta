@@ -5,6 +5,7 @@ import {
   CircleHelp,
   Globe,
   LogOut,
+  Mail,
   Moon,
   Shield,
   UserRound,
@@ -38,8 +39,10 @@ export default function ProfileScreen() {
     setThemeMode,
     notificationsEnabled,
     setNotificationsEnabled,
+    adminLogin,
   } = useSettingsStore();
   const isDark = themeMode === 'dark';
+  const email = (adminLogin.includes('@') ? adminLogin : '').trim().toLowerCase();
 
   const Row = ({
     icon: Icon,
@@ -107,6 +110,18 @@ export default function ProfileScreen() {
       <MobileCard style={{ marginBottom: spacing.lg }} padded={false}>
         <View style={{ paddingHorizontal: spacing.lg }}>
           <Row icon={UserRound} label={t('profile.personal_info')} onPress={() => undefined} />
+          {email ? (
+            <Row
+              icon={Mail}
+              label={t('profile.verify_email')}
+              onPress={() =>
+                router.push({
+                  pathname: '/verify-email',
+                  params: { email, cooldown: '0' },
+                })
+              }
+            />
+          ) : null}
           <Row
             icon={Bell}
             label={t('profile.notifications')}

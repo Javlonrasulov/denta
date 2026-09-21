@@ -47,6 +47,7 @@ export default function RoleGateScreen() {
   const role = useSettingsStore((s) => s.role);
   const setRole = useSettingsStore((s) => s.setRole);
   const isAuthenticated = useSettingsStore((s) => s.isAuthenticated);
+  const patientOnboardingDone = useSettingsStore((s) => s.patientOnboardingDone);
 
   // Client / Doctor APK: lock role automatically (no picker).
   useEffect(() => {
@@ -94,6 +95,14 @@ export default function RoleGateScreen() {
   }
 
   if (!isAuthenticated) return <Redirect href="/login" />;
+
+  if (
+    LOCKED_ROLE === 'client' &&
+    APP_VARIANT === 'client' &&
+    !patientOnboardingDone
+  ) {
+    return <Redirect href="/onboarding" />;
+  }
 
   if (LOCKED_ROLE) {
     return <Redirect href={roleHomeHref(LOCKED_ROLE)} />;

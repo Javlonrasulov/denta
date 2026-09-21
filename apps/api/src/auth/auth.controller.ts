@@ -11,6 +11,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AppError } from '../common/filters/global-exception.filter';
@@ -26,6 +27,8 @@ import {
   ResendEmailDto,
   RegisterPatientDto,
   ResetPasswordDto,
+  CheckEmailDto,
+  UpdatePatientProfileDto,
   VerifyEmailDto,
   VerifyResetCodeDto,
 } from './dto/auth.dto';
@@ -79,9 +82,41 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @Post('check-email')
+  @HttpCode(200)
+  checkEmail(@Body() dto: CheckEmailDto) {
+    return this.auth.checkEmail(dto.email);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
   @Post('patient/register')
-  registerPatient(@Body() dto: RegisterPatientDto) {
-    return this.auth.registerPatient(dto);
+  registerPatient(@Body() dto: RegisterPatientDto, @Req() req: Request) {
+    return this.auth.registerPatient(dto, sessionMetaFromRequest(req));
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('patient/verify-email')
+  verifyPatientEmail(@Body() dto: VerifyEmailDto, @Req() req: Request) {
+    return this.auth.verifyPatientEmail(dto, sessionMetaFromRequest(req));
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('patient/resend-verification')
+  resendPatientVerification(@Body() dto: ResendEmailDto) {
+    return this.auth.resendPatientVerification(dto.email);
+  }
+
+  @ApiBearerAuth()
+  @Patch('patient/profile')
+  updatePatientProfile(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdatePatientProfileDto,
+  ) {
+    return this.auth.updatePatientProfile(user.id, dto);
   }
 
   @Public()

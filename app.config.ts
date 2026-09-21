@@ -92,11 +92,17 @@ export default ({
       : {}),
     infoPlist: {
       UIBackgroundModes: ['remote-notification'],
+      LSApplicationQueriesSchemes: [
+        'yandexnavi',
+        'yandexmaps',
+        'comgooglemaps',
+        'googlechromes',
+      ],
     },
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: '#4F46E5',
+      backgroundColor: '#004FC8',
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -149,14 +155,17 @@ export default ({
       'expo-notifications',
       {
         icon: './assets/images/icon.png',
-        color: '#4F46E5',
+        color: '#004FC8',
         defaultChannel: 'default',
       },
     ],
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#FFFFFF',
+        image: './assets/images/splash-icon.png',
+        imageWidth: 200,
+        resizeMode: 'contain',
+        backgroundColor: '#004FC8',
       },
     ],
   ],

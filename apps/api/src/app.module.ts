@@ -16,6 +16,7 @@ import { ServicesModule } from './services/services.module';
 import { SocialModule } from './social/social.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
+import { GeoModule } from './geo/geo.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import {
   JwtAuthGuard,
@@ -70,6 +71,7 @@ class RedisBootstrap implements OnModuleInit {
     NotificationsModule,
     SearchModule,
     HealthModule,
+    GeoModule,
   ],
   providers: [
     RedisBootstrap,

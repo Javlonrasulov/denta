@@ -7,8 +7,9 @@ import type { ThemeColors } from '@/theme/tokens';
  * tab icons sit behind the 3-button / gesture navigation bar (~48dp).
  */
 export function tabBarBottomInset(inset: number): number {
-  const min = Platform.OS === 'android' ? 48 : 10;
-  return Math.max(inset, min);
+  // Keep labels above gesture / 3-button nav; add a small content gap.
+  const min = Platform.OS === 'android' ? 48 : 12;
+  return Math.max(inset, min) + (Platform.OS === 'android' ? 4 : 2);
 }
 
 /** Shared tab bar — Client uses elevated floating style via clientTabBarStyle. */

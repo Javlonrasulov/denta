@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 
 import { LocateFixed } from '@/components/icons';
 import { useTheme } from '@/theme';
@@ -9,12 +10,13 @@ type Props = {
 };
 
 export function MyLocationButton({ onPress }: Props) {
+  const { t } = useTranslation();
   const { colors, shadows, radius, spacing } = useTheme();
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="My location"
+      accessibilityLabel={t('map.my_location')}
       onPress={() => {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
@@ -26,7 +28,8 @@ export function MyLocationButton({ onPress }: Props) {
           backgroundColor: colors.surface,
           borderRadius: radius.lg,
           marginRight: spacing.lg,
-          marginBottom: spacing.lg,
+          borderWidth: 1,
+          borderColor: colors.borderSubtle,
         },
       ]}
     >

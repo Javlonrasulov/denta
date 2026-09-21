@@ -150,9 +150,25 @@ export function DoctorLoginScreen() {
         if (LOCKED_ROLE) setRole(LOCKED_ROLE);
         router.replace('/');
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : t('auth.invalid_credentials');
-        setFormError(message);
+        const { authErrorMessage } = await import('@/services/authService');
+        const { ApiError } = await import('@/services/apiClient');
+        if (
+          err instanceof ApiError &&
+          err.code === 'EMAIL_NOT_VERIFIED' &&
+          !isDoctor
+        ) {
+          const email =
+            (err.details as { email?: string } | undefined)?.email ||
+            (trimmedLogin.includes('@') ? trimmedLogin : '');
+          if (email) {
+            router.push({
+              pathname: '/verify-email',
+              params: { email, cooldown: '0' },
+            });
+            return;
+          }
+        }
+        setFormError(authErrorMessage(err, t));
       } finally {
         setLoading(false);
       }
@@ -310,7 +326,7 @@ export function DoctorLoginScreen() {
 
           <View style={{ gap: 16 }}>
             <AuthField
-              label={t('auth.login')}
+              label={t(isDoctor ? 'auth.login' : 'auth.identifier')}
               value={loginValue}
               onChangeText={(value) => {
                 setLoginValue(value);
@@ -319,9 +335,9 @@ export function DoctorLoginScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               textContentType="username"
-              keyboardType="email-address"
+              keyboardType={isDoctor ? 'email-address' : 'default'}
               returnKeyType="next"
-              placeholder={t('auth.login_placeholder')}
+              placeholder={t(isDoctor ? 'auth.login_placeholder' : 'auth.identifier_placeholder')}
               error={loginError}
               leftIcon={<UserRound size={18} color={colors.textMuted} strokeWidth={1.8} />}
             />
@@ -378,26 +394,39 @@ export function DoctorLoginScreen() {
             disabled={loading}
           />
 
-          {__DEV__ ? (
+          {!isDoctor ? (
             <Pressable
-              onPress={() => {
-                setLoginValue('admin');
-                setPassword('demo');
-                clearErrors();
+              onPress={() => router.push('/register')}
+              style={{
+                alignSelf: 'stretch',
+                paddingTop: 4,
+                paddingHorizontal: Platform.OS === 'android' ? 8 : 4,
               }}
-              hitSlop={8}
-              style={{ alignSelf: 'center' }}
+              accessibilityRole="button"
             >
               <Text
+                maxFontSizeMultiplier={1.15}
                 style={{
                   fontFamily: 'GolosText_400Regular',
-                  fontSize: 11,
-                  lineHeight: 14,
-                  color: colors.textMuted,
-                  opacity: 0.45,
+                  fontSize: 14,
+                  lineHeight: 22,
+                  color: colors.textSecondary,
+                  textAlign: 'center',
+                  includeFontPadding: false,
+                  paddingHorizontal: Platform.OS === 'android' ? 6 : 0,
                 }}
               >
-                DEV
+                {`${t('auth.no_account')} `}
+                <Text
+                  maxFontSizeMultiplier={1.15}
+                  style={{
+                    fontFamily: 'GolosText_600SemiBold',
+                    color: colors.primary,
+                    includeFontPadding: false,
+                  }}
+                >
+                  {`${t('auth.register_cta')}\u00A0`}
+                </Text>
               </Text>
             </Pressable>
           ) : null}
