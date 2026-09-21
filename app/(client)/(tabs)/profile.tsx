@@ -1,37 +1,46 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
+
+import {
+  ClientLanguageSection,
+  ClientLogoutBlock,
+  ClientProfileHeader,
+  ClientProfileHero,
+  ClientProfileSummary,
+} from '@/components/client/profile';
+import {
+  LogoutConfirmSheet,
+  PremiumToggle,
+  ProfileSettingsRow,
+  ProfileSettingsSection,
+} from '@/components/doctor/profile';
 import {
   Bell,
-  ChevronRight,
   CircleHelp,
-  Globe,
-  LogOut,
   Mail,
   Moon,
   Shield,
   UserRound,
 } from '@/components/icons';
-import { Pressable, Switch, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
-
-import { MobileCard, MobileHeader, MobileScreen } from '@/components/mobile';
-import { Avatar } from '@/components/ui/Avatar';
+import { tabBarBottomInset } from '@/components/mobile';
+import { MobileScreen } from '@/components/mobile';
 import { Text } from '@/components/ui/Text';
+import { useLoginTheme } from '@/components/auth/loginTheme';
+import { useAppointmentsStore } from '@/store/appointmentsStore';
+import { useFavoritesStore, useUserStore } from '@/store/userStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { useUserStore } from '@/store/userStore';
-import { useTheme } from '@/theme';
-import { LocaleCode } from '@/types';
-
-const LOCALES: { code: LocaleCode; label: string; flag: string }[] = [
-  { code: 'uz', label: 'O‘zbekcha', flag: '🇺🇿' },
-  { code: 'uz-Cyrl', label: 'Ўзбекча', flag: '🇺🇿' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-];
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { colors, spacing, radius } = useTheme();
+  const { canvas } = useLoginTheme();
+  const insets = useSafeAreaInsets();
   const user = useUserStore();
+  const appointments = useAppointmentsStore((s) => s.appointments);
+  const clinicIds = useFavoritesStore((s) => s.clinicIds);
+  const doctorIds = useFavoritesStore((s) => s.doctorIds);
   const {
     locale,
     setLocale,
@@ -40,175 +49,161 @@ export default function ProfileScreen() {
     notificationsEnabled,
     setNotificationsEnabled,
     adminLogin,
+    logout: clearSession,
   } = useSettingsStore();
+  const [logoutOpen, setLogoutOpen] = useState(false);
+
   const isDark = themeMode === 'dark';
   const email = (adminLogin.includes('@') ? adminLogin : '').trim().toLowerCase();
+  const emailPending = Boolean(email);
+  const favoritesCount = clinicIds.length + doctorIds.length;
+  const bottomPad = tabBarBottomInset(insets.bottom) + 120;
 
-  const Row = ({
-    icon: Icon,
-    label,
-    onPress,
-    right,
-    last,
-  }: {
-    icon: typeof Globe;
-    label: string;
-    onPress?: () => void;
-    right?: React.ReactNode;
-    last?: boolean;
-  }) => (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress && !right}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        paddingVertical: spacing.md + 2,
-        minHeight: 52,
-        borderBottomWidth: last ? 0 : 1,
-        borderBottomColor: colors.borderSubtle,
-      }}
-    >
-      <View
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: radius.md,
-          backgroundColor: colors.surfaceSoft,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Icon size={16} color={colors.primary} strokeWidth={1.8} />
-      </View>
-      <Text variant="body" style={{ flex: 1 }}>
-        {label}
-      </Text>
-      {right ?? <ChevronRight size={16} color={colors.textMuted} strokeWidth={1.8} />}
-    </Pressable>
-  );
+  const doLogout = () => {
+    setLogoutOpen(false);
+    void (async () => {
+      const { logout: apiLogout } = await import('@/services/authService');
+      await apiLogout();
+      clearSession();
+      router.replace('/login');
+    })();
+  };
 
   return (
-    <MobileScreen>
-      <MobileHeader title={t('profile.title')} />
+    <MobileScreen
+      style={{ backgroundColor: canvas }}
+      contentStyle={{ gap: 12, paddingTop: 4, paddingBottom: bottomPad }}
+    >
+      <ClientProfileHeader />
 
-      <MobileCard style={{ marginBottom: spacing.lg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg }}>
-          <Avatar uri={user.avatarUrl} name={user.fullName} size={64} />
-          <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
-            <Text variant="h3" numberOfLines={1}>
-              {user.fullName}
-            </Text>
-            <Text variant="bodySmall" muted>
-              {user.phone}
-            </Text>
-          </View>
-        </View>
-      </MobileCard>
+      <ClientProfileHero
+        fullName={user.fullName}
+        phone={user.phone}
+        email={email || undefined}
+        avatarUrl={user.avatarUrl || undefined}
+        emailPending={emailPending}
+        onEdit={() => undefined}
+      />
 
-      <MobileCard style={{ marginBottom: spacing.lg }} padded={false}>
-        <View style={{ paddingHorizontal: spacing.lg }}>
-          <Row icon={UserRound} label={t('profile.personal_info')} onPress={() => undefined} />
-          {email ? (
-            <Row
-              icon={Mail}
-              label={t('profile.verify_email')}
-              onPress={() =>
-                router.push({
-                  pathname: '/verify-email',
-                  params: { email, cooldown: '0' },
-                })
-              }
+      <ClientProfileSummary
+        appointmentsCount={appointments.length}
+        favoritesCount={favoritesCount}
+        phone={user.phone}
+        email={email || undefined}
+        onAppointments={() => router.push('/(client)/(tabs)/appointments')}
+        onFavorites={() => router.push('/(client)/(tabs)/favorites')}
+      />
+
+      <ProfileSettingsSection title={t('profile.section_account')}>
+        <ProfileSettingsRow
+          icon={UserRound}
+          label={t('profile.personal_info')}
+          value={
+            user.fullName.trim()
+              ? undefined
+              : t('profile.profile_incomplete')
+          }
+          onPress={() => undefined}
+        />
+        {email ? (
+          <ProfileSettingsRow
+            icon={Mail}
+            label={t('profile.verify_email')}
+            value={t('profile.email_unverified_hint')}
+            onPress={() =>
+              router.push({
+                pathname: '/verify-email',
+                params: { email, cooldown: '0' },
+              })
+            }
+            last
+          />
+        ) : (
+          <ProfileSettingsRow
+            icon={Mail}
+            label={t('profile.verify_email')}
+            value={t('profile.email_missing')}
+            onPress={() => undefined}
+            last
+          />
+        )}
+      </ProfileSettingsSection>
+
+      <ProfileSettingsSection title={t('profile.section_preferences')}>
+        <ProfileSettingsRow
+          icon={Bell}
+          label={t('profile.notifications')}
+          value={
+            notificationsEnabled
+              ? t('profile.notifications_on')
+              : t('profile.notifications_off')
+          }
+          right={
+            <PremiumToggle
+              value={notificationsEnabled}
+              onChange={setNotificationsEnabled}
             />
-          ) : null}
-          <Row
-            icon={Bell}
-            label={t('profile.notifications')}
-            right={
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ true: colors.primary, false: colors.border }}
-              />
-            }
-          />
-          <Row
-            icon={Moon}
-            label={t('profile.dark_mode')}
-            right={
-              <Switch
-                value={isDark}
-                onValueChange={(v) => setThemeMode(v ? 'dark' : 'light')}
-                trackColor={{ true: colors.primary, false: colors.border }}
-              />
-            }
-          />
-          <Row icon={Shield} label={t('profile.privacy')} onPress={() => undefined} />
-          <Row icon={CircleHelp} label={t('profile.help')} onPress={() => undefined} last />
-        </View>
-      </MobileCard>
+          }
+        />
+        <ProfileSettingsRow
+          icon={Moon}
+          label={t('profile.dark_mode')}
+          value={
+            isDark ? t('profile.dark_mode_on') : t('profile.dark_mode_off')
+          }
+          right={
+            <PremiumToggle
+              value={isDark}
+              onChange={(v) => setThemeMode(v ? 'dark' : 'light')}
+            />
+          }
+          last
+        />
+      </ProfileSettingsSection>
 
-      <MobileCard style={{ marginBottom: spacing.lg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
-          <Globe size={16} color={colors.primary} strokeWidth={1.8} />
-          <Text variant="label">{t('profile.language')}</Text>
-        </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-          {LOCALES.map((item) => (
-            <Pressable
-              key={item.code}
-              onPress={() => setLocale(item.code)}
-              style={{
-                paddingHorizontal: spacing.lg,
-                paddingVertical: 10,
-                borderRadius: radius.full,
-                backgroundColor: locale === item.code ? colors.primary : colors.surfaceSoft,
-                borderWidth: 1,
-                borderColor: locale === item.code ? colors.primary : colors.borderSubtle,
-              }}
-            >
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={locale === item.code ? colors.textInverse : colors.textSecondary}
-              >
-                {item.flag} {item.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </MobileCard>
+      <ClientLanguageSection locale={locale} onSelect={setLocale} />
 
-      <Pressable
-        onPress={() => {
-          void (async () => {
-            const { logout: apiLogout } = await import('@/services/authService');
-            await apiLogout();
-            router.replace('/login');
-          })();
-        }}
-        style={({ pressed }) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: spacing.sm,
-          paddingVertical: spacing.lg,
-          borderRadius: radius.xl,
-          backgroundColor: pressed ? colors.errorMuted : colors.surface,
-          borderWidth: 1,
-          borderColor: colors.borderSubtle,
-        })}
-      >
-        <LogOut size={16} color={colors.error} strokeWidth={1.8} />
-        <Text variant="label" color={colors.error}>
-          {t('profile.logout')}
+      <ProfileSettingsSection title={t('profile.section_support')}>
+        <ProfileSettingsRow
+          icon={Shield}
+          label={t('profile.privacy')}
+          value={t('profile.privacy_hint')}
+          onPress={() => undefined}
+        />
+        <ProfileSettingsRow
+          icon={CircleHelp}
+          label={t('profile.help')}
+          value={t('profile.help_hint')}
+          onPress={() => undefined}
+          last
+        />
+      </ProfileSettingsSection>
+
+      <ClientLogoutBlock onPress={() => setLogoutOpen(true)} />
+
+      <View style={{ paddingTop: 4, paddingBottom: 8 }}>
+        <Text
+          center
+          maxFontSizeMultiplier={1}
+          style={{
+            fontFamily: 'GolosText_400Regular',
+            fontSize: 12,
+            lineHeight: 16,
+            color: 'rgba(100,116,139,0.85)',
+          }}
+        >
+          {t('profile.version_brand', { version: '1.0.0' })}
         </Text>
-      </Pressable>
+      </View>
 
-      <Text variant="caption" muted center style={{ marginTop: spacing.xl }}>
-        {t('profile.version', { version: '1.0.0' })}
-      </Text>
+      <LogoutConfirmSheet
+        visible={logoutOpen}
+        title={t('profile.logout_title')}
+        body={t('profile.logout_body')}
+        confirmLabel={t('profile.logout_confirm')}
+        onClose={() => setLogoutOpen(false)}
+        onConfirm={doLogout}
+      />
     </MobileScreen>
   );
 }
