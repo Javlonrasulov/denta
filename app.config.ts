@@ -40,13 +40,41 @@ const VARIANTS: Record<
 
 const selected = VARIANTS[VARIANT] ?? VARIANTS.clinic;
 
-/** Maps SDK requires a non-empty meta-data key on Android or MapView crashes the process. */
+/**
+ * Maps SDK requires a non-empty Android meta-data value or MapView can crash.
+ * Real key from env; placeholder keeps native builds from crashing until configured.
+ */
 const GOOGLE_MAPS_API_KEY =
-  process.env.GOOGLE_MAPS_API_KEY ??
-  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ??
+  process.env.GOOGLE_MAPS_API_KEY?.trim() ||
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim() ||
   'REPLACE_WITH_GOOGLE_MAPS_API_KEY';
 
-export default ({ config }: ConfigContext): ExpoConfig & { newArchEnabled?: boolean } => ({
+/** Optional Firebase client config paths (set in .env when files exist). */
+const GOOGLE_SERVICES_JSON = process.env.GOOGLE_SERVICES_JSON?.trim();
+const GOOGLE_SERVICE_INFO_PLIST =
+  process.env.GOOGLE_SERVICE_INFO_PLIST?.trim();
+
+function fileExists(path: string): boolean {
+  try {
+    // Runtime Node (Expo config) — avoid static `fs` import for Expo tsc.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs') as { existsSync: (p: string) => boolean };
+    return fs.existsSync(path);
+  } catch {
+    return false;
+  }
+}
+
+const hasAndroidGoogleServices = Boolean(
+  GOOGLE_SERVICES_JSON && fileExists(GOOGLE_SERVICES_JSON),
+);
+const hasIosGoogleServices = Boolean(
+  GOOGLE_SERVICE_INFO_PLIST && fileExists(GOOGLE_SERVICE_INFO_PLIST),
+);
+
+export default ({
+  config,
+}: ConfigContext): ExpoConfig & { newArchEnabled?: boolean } => ({
   ...config,
   name: selected.name,
   slug: selected.slug,
@@ -59,6 +87,12 @@ export default ({ config }: ConfigContext): ExpoConfig & { newArchEnabled?: bool
   ios: {
     supportsTablet: true,
     bundleIdentifier: selected.iosBundle,
+    ...(hasIosGoogleServices && GOOGLE_SERVICE_INFO_PLIST
+      ? { googleServicesFile: GOOGLE_SERVICE_INFO_PLIST }
+      : {}),
+    infoPlist: {
+      UIBackgroundModes: ['remote-notification'],
+    },
   },
   android: {
     adaptiveIcon: {
@@ -69,7 +103,14 @@ export default ({ config }: ConfigContext): ExpoConfig & { newArchEnabled?: bool
     },
     package: selected.androidPackage,
     predictiveBackGestureEnabled: false,
-    permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
+    permissions: [
+      'ACCESS_COARSE_LOCATION',
+      'ACCESS_FINE_LOCATION',
+      'POST_NOTIFICATIONS',
+    ],
+    ...(hasAndroidGoogleServices && GOOGLE_SERVICES_JSON
+      ? { googleServicesFile: GOOGLE_SERVICES_JSON }
+      : {}),
   },
   web: {
     bundler: 'metro',
@@ -105,6 +146,14 @@ export default ({ config }: ConfigContext): ExpoConfig & { newArchEnabled?: bool
       },
     ],
     [
+      'expo-notifications',
+      {
+        icon: './assets/images/icon.png',
+        color: '#4F46E5',
+        defaultChannel: 'default',
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         backgroundColor: '#FFFFFF',
@@ -117,8 +166,9 @@ export default ({ config }: ConfigContext): ExpoConfig & { newArchEnabled?: bool
   extra: {
     appVariant: VARIANT,
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    firebaseConfigured: hasAndroidGoogleServices || hasIosGoogleServices,
     eas: {
-      projectId: undefined,
+      projectId: process.env.EAS_PROJECT_ID || undefined,
     },
   },
 });

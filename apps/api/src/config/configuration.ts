@@ -63,5 +63,10 @@ export default registerAs('app', () => {
     uploadMaxBytes: parseInt(process.env.UPLOAD_MAX_BYTES ?? '5242880', 10),
     defaultTimezone: process.env.DEFAULT_TIMEZONE ?? 'Asia/Tashkent',
     logLevel: process.env.LOG_LEVEL ?? 'info',
+    firebase: {
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY,
+    },
   };
 });

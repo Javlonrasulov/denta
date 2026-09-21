@@ -295,6 +295,24 @@ export const clinicApi = {
     }),
   notificationsReadAll: (token: string) =>
     request('/notifications/read-all', { method: 'POST', token }),
+  registerPushDevice: (
+    token: string,
+    body: { platform: string; token: string },
+  ) =>
+    request('/notifications/devices', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  unregisterPushDevice: (
+    token: string,
+    body: { platform: string; token: string },
+  ) =>
+    request('/notifications/devices/unregister', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
   revenueSeries: (token: string, period: string) =>
     request<ClinicRevenueSeries>(
       `/analytics/revenue-series?period=${encodeURIComponent(period)}`,

@@ -62,6 +62,10 @@ export async function loginWithPassword(
 
   const me = await apiGet<AuthMeResponse>('/auth/me');
   applyMeToStores(me, identifier);
+
+  void import('@/services/notificationService')
+    .then((n) => n.registerDevicePushToken())
+    .catch(() => undefined);
 }
 
 export async function restoreSession(): Promise<boolean> {
@@ -73,6 +77,9 @@ export async function restoreSession(): Promise<boolean> {
   try {
     const me = await apiGet<AuthMeResponse>('/auth/me');
     applyMeToStores(me);
+    void import('@/services/notificationService')
+      .then((n) => n.registerDevicePushToken())
+      .catch(() => undefined);
     return true;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
@@ -83,6 +90,9 @@ export async function restoreSession(): Promise<boolean> {
       }
       const me = await apiGet<AuthMeResponse>('/auth/me');
       applyMeToStores(me);
+      void import('@/services/notificationService')
+        .then((n) => n.registerDevicePushToken())
+        .catch(() => undefined);
       return true;
     }
     await logout();
@@ -110,6 +120,9 @@ export async function tryRefresh(): Promise<boolean> {
 export async function logout(): Promise<void> {
   try {
     if (!useMockApi()) {
+      await import('@/services/notificationService')
+        .then((n) => n.unregisterDevicePushToken())
+        .catch(() => undefined);
       const refresh = await (
         await import('expo-secure-store')
       ).getItemAsync('denta.refreshToken');

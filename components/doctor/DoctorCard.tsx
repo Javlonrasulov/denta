@@ -42,7 +42,7 @@ export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardP
         },
       ]}
     >
-      <Avatar uri={doctor.photoUrl} name={doctor.fullName} size={compact ? 48 : 56} />
+      <Avatar uri={doctor.photoUrl} name={doctor.fullName} size={compact ? 52 : 60} />
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
         <Text variant="label" numberOfLines={1} style={{ fontSize: 15, letterSpacing: -0.2 }}>
           {doctor.fullName}
@@ -52,7 +52,7 @@ export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardP
         </Text>
         {clinicName ? (
           <Text variant="caption" muted numberOfLines={1}>
-            {t('doctor.at_clinic', { clinic: clinicName })}
+            {clinicName}
           </Text>
         ) : null}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2, flexWrap: 'wrap' }}>
@@ -61,12 +61,12 @@ export function DoctorCard({ doctor, clinicName, onPress, compact }: DoctorCardP
             {doctor.rating.toFixed(1)}
           </Text>
           <Text variant="caption" muted>
-            · {t('doctor.experience_years', { years: doctor.experienceYears })}
-          </Text>
-          <Text variant="caption" muted>
-            · {t('common.from')} {formatPrice(doctor.priceFrom)}
+            · {t('home.experience_short', { years: doctor.experienceYears })}
           </Text>
         </View>
+        <Text variant="caption" weight="semibold" color={colors.primary} style={{ marginTop: 2 }}>
+          {t('home.consult_from', { price: formatPrice(doctor.priceFrom) })}
+        </Text>
       </View>
       <Pressable
         onPress={() => toggleDoctor(doctor.id)}

@@ -84,6 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    if (!ready || !user) return;
+    void import('@/lib/push')
+      .then((m) => m.registerClinicWebPush())
+      .catch(() => undefined);
+  }, [ready, user]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -105,10 +112,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async login(identifier, password) {
         const result = await service.login(identifier, password);
-        if (result.session) await refresh();
+        if (result.session) {
+          await refresh();
+          void import('@/lib/push')
+            .then((m) => m.registerClinicWebPush())
+            .catch(() => undefined);
+        }
         return result;
       },
       async logout() {
+        await import('@/lib/push')
+          .then((m) => m.unregisterClinicWebPush())
+          .catch(() => undefined);
         await service.logout();
         setUser(null);
         setSubscription(null);

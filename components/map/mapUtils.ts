@@ -1,4 +1,5 @@
 import type { Clinic } from '@/types';
+import Constants from 'expo-constants';
 import type { Region } from 'react-native-maps';
 
 /** Tashkent city center — default map camera. */
@@ -8,6 +9,19 @@ export const TASHKENT_REGION: Region = {
   latitudeDelta: 0.12,
   longitudeDelta: 0.12,
 };
+
+const PLACEHOLDER_KEY = 'REPLACE_WITH_GOOGLE_MAPS_API_KEY';
+
+/**
+ * True when a real Google Maps API key is present (not the placeholder).
+ * Without a key, DentalMap uses OSM/Carto tiles via PROVIDER_DEFAULT.
+ */
+export function isGoogleMapsConfigured(): boolean {
+  const fromExtra = Constants.expoConfig?.extra?.googleMapsApiKey;
+  const fromEnv = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const key = String(fromExtra ?? fromEnv ?? '').trim();
+  return Boolean(key && key !== PLACEHOLDER_KEY && key.length >= 20);
+}
 
 export type MapFilterId =
   | 'nearby'

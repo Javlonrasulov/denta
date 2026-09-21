@@ -228,5 +228,5 @@ export const apiPatch = <T>(path: string, body?: unknown, auth = true) =>
 export const apiPut = <T>(path: string, body?: unknown, auth = true) =>
   apiRequest<T>(path, { method: 'PUT', body, auth });
 
-export const apiDelete = <T>(path: string, auth = true) =>
-  apiRequest<T>(path, { method: 'DELETE', auth });
+export const apiDelete = <T>(path: string, body?: unknown, auth = true) =>
+  apiRequest<T>(path, { method: 'DELETE', body, auth });

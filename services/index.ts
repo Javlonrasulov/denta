@@ -63,6 +63,9 @@ export {
   requestPermissions,
   getNotificationTypes,
   scheduleLocal,
+  registerDevicePushToken,
+  unregisterDevicePushToken,
+  isFirebaseClientConfigured,
 } from './notificationService';
 export type {
   NotificationType,

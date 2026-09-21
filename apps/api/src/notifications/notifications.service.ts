@@ -1,6 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { PushService } from './push.service';
 
 export const NOTIFICATION_TYPES = [
   'APPOINTMENT_CREATED',
@@ -19,6 +20,7 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly realtime?: RealtimeService,
+    @Optional() private readonly push?: PushService,
   ) {}
 
   async list(userId: string, take = 50) {
@@ -84,6 +86,25 @@ export class NotificationsService {
       body: row.body,
       createdAt: row.createdAt.toISOString(),
     });
+
+    const data: Record<string, string> = {
+      notificationId: row.id,
+      type: String(input.type),
+    };
+    if (input.data) {
+      for (const [k, v] of Object.entries(input.data)) {
+        if (v == null) continue;
+        data[k] = typeof v === 'string' ? v : JSON.stringify(v);
+      }
+    }
+    void this.push
+      ?.sendToUser(input.userId, {
+        title: input.title,
+        body: input.body,
+        data,
+      })
+      .catch(() => undefined);
+
     return row;
   }
 

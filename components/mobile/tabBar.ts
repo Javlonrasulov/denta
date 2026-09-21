@@ -26,28 +26,29 @@ export function mobileTabBarStyle(colors: ThemeColors, bottomInset: number) {
   };
 }
 
-/** Premium attached tab bar — matches the client home dashboard. */
-export function clientTabBarStyle(colors: ThemeColors, bottomInset: number) {
-  const bottom = tabBarBottomInset(bottomInset);
+/** Premium elevated tab bar for the client app (inset applied via Tabs.safeAreaInsets). */
+export function clientTabBarStyle(colors: ThemeColors, _bottomInset?: number) {
   return {
     backgroundColor: colors.surface,
     borderTopColor: colors.borderSubtle,
     borderTopWidth: 1,
-    height: 58 + bottom,
-    paddingBottom: bottom,
+    height: 58,
+    paddingBottom: 6,
     paddingTop: 6,
-    elevation: 8,
+    elevation: 10,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
   };
 }
 
 export const mobileTabLabelStyle = {
   fontSize: 10,
   fontWeight: '600' as const,
-  letterSpacing: 0.1,
+  letterSpacing: -0.2,
+  includeFontPadding: false,
+  marginTop: 2,
 };
 
 export function doctorTabBarStyle(

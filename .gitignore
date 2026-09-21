@@ -49,4 +49,13 @@ apps/api/.uploads/
 /android-doctor
 /android-clinic
 
+# Firebase / Google credentials (never commit)
+google-services.json
+GoogleService-Info.plist
+**/google-services.json
+**/GoogleService-Info.plist
+apps/api/.secrets/
+**/firebase-adminsdk*.json
+dentauz-firebase-adminsdk*.json
+
 apps/api/.api-*.log

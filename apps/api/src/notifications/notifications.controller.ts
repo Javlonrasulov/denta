@@ -40,6 +40,11 @@ export class NotificationsController {
     return this.notifications.unreadCount(user.id);
   }
 
+  @Get('push-status')
+  pushStatus() {
+    return { pushConfigured: this.push.isConfigured() };
+  }
+
   @Patch(':id/read')
   markRead(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.notifications.markRead(user.id, id);
@@ -59,8 +64,8 @@ export class NotificationsController {
     });
   }
 
-  @Post('status')
-  status() {
-    return { pushConfigured: this.push.isConfigured() };
+  @Post('devices/unregister')
+  unregister(@CurrentUser() user: AuthUser, @Body() dto: RegisterDeviceDto) {
+    return this.push.unregisterDevice(user.id, dto.token);
   }
 }

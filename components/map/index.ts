@@ -10,5 +10,6 @@ export {
   MAP_FILTER_IDS,
   filterClinicsForMap,
   formatDistance,
+  isGoogleMapsConfigured,
   type MapFilterId,
 } from './mapUtils';

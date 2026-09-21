@@ -5,15 +5,16 @@ import MapView, {
   type MapType,
   type Region,
   PROVIDER_DEFAULT,
+  PROVIDER_GOOGLE,
 } from 'react-native-maps';
 
 import { ClinicMarker } from './ClinicMarker';
-import { TASHKENT_REGION } from './mapUtils';
+import { isGoogleMapsConfigured, TASHKENT_REGION } from './mapUtils';
 import type { Clinic } from '@/types';
 
-/** Vector-style streets — works without a Google Maps API key. */
+/** Street basemap without Google/Carto API keys (Esri World Street Map). */
 const STREET_TILES =
-  'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
 /** Satellite imagery fallback (Esri). */
 const SATELLITE_TILES =
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -49,6 +50,7 @@ export const DentalMap = forwardRef<DentalMapHandle, Props>(
     ref,
   ) {
     const mapRef = useRef<MapView>(null);
+    const useGoogle = isGoogleMapsConfigured();
     const useSatellite = mapType === 'satellite';
 
     useImperativeHandle(ref, () => ({
@@ -74,9 +76,15 @@ export const DentalMap = forwardRef<DentalMapHandle, Props>(
         <MapView
           ref={mapRef}
           style={styles.map}
-          provider={PROVIDER_DEFAULT}
+          provider={useGoogle ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
           initialRegion={initialRegion}
-          mapType={Platform.OS === 'android' ? 'none' : mapType}
+          mapType={
+            useGoogle
+              ? mapType
+              : Platform.OS === 'android'
+                ? 'none'
+                : mapType
+          }
           showsUserLocation={!!userLocation}
           showsMyLocationButton={false}
           showsCompass={false}
@@ -89,14 +97,16 @@ export const DentalMap = forwardRef<DentalMapHandle, Props>(
           loadingEnabled
           moveOnMarkerPress={false}
         >
-          <UrlTile
-            key={useSatellite ? 'sat' : 'street'}
-            urlTemplate={useSatellite ? SATELLITE_TILES : STREET_TILES}
-            maximumZ={19}
-            flipY={false}
-            shouldReplaceMapContent
-            zIndex={-1}
-          />
+          {!useGoogle ? (
+            <UrlTile
+              key={useSatellite ? 'sat' : 'street'}
+              urlTemplate={useSatellite ? SATELLITE_TILES : STREET_TILES}
+              maximumZ={19}
+              flipY={false}
+              shouldReplaceMapContent
+              zIndex={-1}
+            />
+          ) : null}
           {clinics.map((clinic) => (
             <ClinicMarker
               key={clinic.id}

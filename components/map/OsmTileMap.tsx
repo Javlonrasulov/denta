@@ -37,8 +37,8 @@ function yToLat(y: number, zoom: number) {
 }
 
 function streetTile(z: number, x: number, y: number) {
-  // Voyager is reliable on Android emulator (no Google Maps key needed).
-  return `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
+  // ArcGIS raster — no API key (Carto Voyager now watermarks without a key).
+  return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`;
 }
 
 function satelliteTile(z: number, x: number, y: number) {
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   zoomCol: {
     position: 'absolute',
     right: 10,
-    bottom: 10,
+    bottom: 52,
     gap: 8,
     zIndex: 3,
   },
