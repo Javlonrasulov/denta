@@ -1,11 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { FilesController } from './files.controller';
 import { LocalStorageService } from './local-storage.service';
 import { S3StorageService } from './s3-storage.service';
 import { STORAGE_SERVICE, StorageService } from './storage.types';
 
 @Global()
 @Module({
+  controllers: [FilesController],
   providers: [
     LocalStorageService,
     S3StorageService,

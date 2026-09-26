@@ -114,7 +114,7 @@ describe('Booking concurrency (e2e)', () => {
     });
     doctorId = doctor.id;
 
-    await prisma.doctorClinic.create({
+    const doctorClinic = await prisma.doctorClinic.create({
       data: { doctorId, clinicId, isActive: true },
     });
 
@@ -153,23 +153,18 @@ describe('Booking concurrency (e2e)', () => {
     });
     serviceId = service.id;
 
-    await prisma.doctorSchedule.create({
-      data: {
-        doctorId,
-        dayOfWeek: new Date(`${date}T12:00:00Z`).getUTCDay(),
-        startTime: '09:00',
-        endTime: '18:00',
-        breakStart: '13:00',
-        breakEnd: '14:00',
-        slotDuration: 30,
-      },
-    });
     // Also create all weekdays to be safe
     for (let d = 0; d <= 6; d++) {
       await prisma.doctorSchedule.upsert({
-        where: { doctorId_dayOfWeek: { doctorId, dayOfWeek: d } },
+        where: {
+          doctorClinicId_dayOfWeek: {
+            doctorClinicId: doctorClinic.id,
+            dayOfWeek: d,
+          },
+        },
         create: {
           doctorId,
+          doctorClinicId: doctorClinic.id,
           dayOfWeek: d,
           startTime: '09:00',
           endTime: '18:00',

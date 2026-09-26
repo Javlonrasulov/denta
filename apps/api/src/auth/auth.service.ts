@@ -13,6 +13,8 @@ import { promises as dns } from 'dns';
 import { addDays, addMinutes, differenceInCalendarDays } from 'date-fns';
 import { AppError } from '../common/filters/global-exception.filter';
 import { AuthUser, JwtPayload } from '../common/guards/auth.guards';
+import { PermissionsService } from '../common/permissions/permissions.service';
+import { AuditService } from '../common/audit/audit.service';
 import { isValidPassword, isValidPatientPassword, slugify } from '../common/utils/password.util';
 import {
   isValidEmail,
@@ -21,6 +23,7 @@ import {
 } from '../common/utils/phone.util';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { resolveWorkspaceSelection } from './workspace.util';
 import {
   LoginDto,
   OnboardingDto,
@@ -35,11 +38,16 @@ export type SessionMeta = {
   ip?: string;
   deviceName?: string;
   platform?: string;
+  /** Pin active workspace when issuing tokens */
+  membershipId?: string | null;
+  clinicId?: string | null;
 };
 
 type ClinicAuthUserDto = {
   id: string;
   role: 'clinic';
+  clinicId: string | null;
+  membershipId: string | null;
   clinicName: string;
   adminFirstName: string;
   adminLastName: string;
@@ -58,6 +66,7 @@ type ClinicAuthUserDto = {
   onboardingCompleted: boolean;
   onboardingStep: number;
   createdAt: string;
+  mustChangePassword?: boolean;
 };
 
 type DoctorAuthUserDto = {
@@ -65,6 +74,7 @@ type DoctorAuthUserDto = {
   role: 'doctor';
   doctorId: string;
   clinicId: string | null;
+  membershipId: string | null;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -73,6 +83,7 @@ type DoctorAuthUserDto = {
   specialty: string;
   emailVerifiedAt: string | null;
   createdAt: string;
+  mustChangePassword?: boolean;
 };
 
 type PatientAuthUserDto = {
@@ -96,6 +107,22 @@ type AuthSessionDto = {
   refreshToken: string;
   expiresAt: string;
   user: AuthUserDto;
+  requiresWorkspaceSelection: boolean;
+  workspaces: {
+    clinicId: string;
+    clinicName: string;
+    membershipId: string;
+    role: string;
+    isActive: boolean;
+  }[];
+  activeWorkspace: {
+    clinicId: string;
+    clinicName: string;
+    membershipId: string;
+    role: string;
+    isActive: boolean;
+    permissions: string[];
+  } | null;
 };
 
 @Injectable()
@@ -105,6 +132,8 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly mail: MailService,
+    private readonly permissions: PermissionsService,
+    private readonly audit: AuditService,
   ) {}
 
   async registerClinic(dto: RegisterClinicDto) {
@@ -433,12 +462,18 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
-        clinicMemberships: { where: { isActive: true }, take: 1 },
+        clinicMemberships: {
+          where: { isActive: true },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
     if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
 
-    const membership = user.clinicMemberships[0];
+    // Prefer owner membership (registration flow); never silently pick an arbitrary clinic.
+    const membership =
+      user.clinicMemberships.find((m) => m.role === UserRole.CLINIC_OWNER) ??
+      (user.clinicMemberships.length === 1 ? user.clinicMemberships[0] : null);
     if (!membership) {
       throw new AppError('NOT_FOUND', 'Clinic membership not found', 404);
     }
@@ -515,7 +550,6 @@ export class AuthService {
     const user = await this.prisma.user.findFirst({
       where: email ? { email } : phone ? { phone } : { id: 'impossible' },
       include: {
-        clinicMemberships: { where: { isActive: true }, take: 1 },
         roles: true,
       },
     });
@@ -599,7 +633,42 @@ export class AuthService {
       ip: meta.ip ?? stored.ip ?? undefined,
       deviceName: meta.deviceName ?? stored.deviceName ?? undefined,
       platform: meta.platform ?? stored.platform ?? undefined,
+      membershipId: stored.activeMembershipId ?? payload.membershipId,
+      clinicId: stored.activeClinicId ?? payload.clinicId,
     });
+  }
+
+  async switchWorkspace(
+    userId: string,
+    clinicId: string,
+    meta: SessionMeta = {},
+  ): Promise<AuthSessionDto> {
+    const membership = await this.prisma.clinicMember.findFirst({
+      where: { userId, clinicId, isActive: true },
+      include: { clinic: true },
+    });
+    if (!membership) {
+      throw new AppError('FORBIDDEN', 'No active membership for this clinic', 403);
+    }
+    if (membership.clinic.accountStatus === ClinicAccountStatus.BLOCKED) {
+      throw new AppError('FORBIDDEN', 'Clinic is blocked', 403);
+    }
+
+    const session = await this.createSession(userId, {
+      ...meta,
+      membershipId: membership.id,
+      clinicId: membership.clinicId,
+    });
+
+    await this.audit.log({
+      userId,
+      clinicId,
+      action: 'workspace.switched',
+      entity: 'ClinicMember',
+      entityId: membership.id,
+    });
+
+    return session;
   }
 
   async listSessions(userId: string, currentRefreshToken?: string) {
@@ -717,35 +786,65 @@ export class AuthService {
     ]);
   }
 
-  async getCurrentUser(userId: string): Promise<AuthUserDto> {
-    return this.buildAuthUser(userId);
+  async getCurrentUser(userId: string, membershipId?: string | null, clinicId?: string | null) {
+    const resolved = await resolveWorkspaceSelection({
+      prisma: this.prisma,
+      permissions: this.permissions,
+      userId,
+      preferredMembershipId: membershipId,
+      preferredClinicId: clinicId,
+    });
+    const user = await this.buildAuthUser(userId, {
+      clinicId: resolved.active?.clinicId ?? clinicId ?? null,
+      membershipId: resolved.active?.membershipId ?? membershipId ?? null,
+    });
+    return {
+      user,
+      activeWorkspace: resolved.active,
+      workspaces: resolved.workspaces,
+      requiresWorkspaceSelection: resolved.requiresWorkspaceSelection,
+    };
   }
 
-  async getSubscriptionStatus(userId: string) {
-    const user = await this.buildAuthUser(userId);
-    if (user.role !== 'clinic') {
+  async getSubscriptionStatus(userId: string, clinicId?: string | null) {
+    const membership = clinicId
+      ? await this.prisma.clinicMember.findFirst({
+          where: { userId, clinicId, isActive: true },
+          include: { clinic: { include: { subscription: true } } },
+        })
+      : await this.prisma.clinicMember.findFirst({
+          where: { userId, isActive: true },
+          include: { clinic: { include: { subscription: true } } },
+          orderBy: { createdAt: 'asc' },
+        });
+    if (!membership?.clinic.subscription) {
       throw new AppError('NOT_FOUND', 'Clinic subscription not available', 404);
     }
-    const sub = user.subscription;
+    const sub = membership.clinic.subscription;
+    let status = this.mapSubStatus(sub.status);
+    if (
+      sub.status === SubscriptionStatus.TRIAL &&
+      sub.trialEndsAt &&
+      sub.trialEndsAt < new Date()
+    ) {
+      status = 'expired';
+    }
     let daysRemaining: number | null = null;
-    if (sub.status === 'trial' && sub.trialEndsAt) {
+    if (status === 'trial' && sub.trialEndsAt) {
       daysRemaining = Math.max(
         0,
-        differenceInCalendarDays(new Date(sub.trialEndsAt), new Date()),
+        differenceInCalendarDays(sub.trialEndsAt, new Date()),
       );
-    } else if (sub.status === 'active' && sub.subscriptionEndsAt) {
+    } else if (status === 'active' && sub.subscriptionEndsAt) {
       daysRemaining = Math.max(
         0,
-        differenceInCalendarDays(
-          new Date(sub.subscriptionEndsAt),
-          new Date(),
-        ),
+        differenceInCalendarDays(sub.subscriptionEndsAt, new Date()),
       );
     }
     return {
-      status: sub.status,
-      trialStartedAt: sub.trialStartedAt,
-      trialEndsAt: sub.trialEndsAt,
+      status,
+      trialStartedAt: sub.trialStartedAt?.toISOString() ?? null,
+      trialEndsAt: sub.trialEndsAt?.toISOString() ?? null,
       daysRemaining,
       marketplaceBookingEnabled: sub.marketplaceBookingEnabled,
     };
@@ -754,10 +853,16 @@ export class AuthService {
   async updateOnboarding(
     userId: string,
     dto: OnboardingDto,
+    activeClinicId?: string | null,
   ): Promise<ClinicAuthUserDto> {
-    const membership = await this.prisma.clinicMember.findFirst({
-      where: { userId, isActive: true },
-    });
+    const membership = activeClinicId
+      ? await this.prisma.clinicMember.findFirst({
+          where: { userId, clinicId: activeClinicId, isActive: true },
+        })
+      : await this.prisma.clinicMember.findFirst({
+          where: { userId, isActive: true },
+          orderBy: { createdAt: 'asc' },
+        });
     if (!membership) throw new AppError('NOT_FOUND', 'Clinic not found', 404);
 
     await this.prisma.clinic.update({
@@ -769,7 +874,10 @@ export class AuthService {
           : {}),
       },
     });
-    const user = await this.buildAuthUser(userId);
+    const user = await this.buildAuthUser(userId, {
+      clinicId: membership.clinicId,
+      membershipId: membership.id,
+    });
     if (user.role !== 'clinic') {
       throw new AppError('FORBIDDEN', 'Clinic role required', 403);
     }
@@ -797,21 +905,27 @@ export class AuthService {
       where: { id: userId },
       include: {
         roles: true,
-        clinicMemberships: { where: { isActive: true }, take: 1 },
-        doctorProfile: {
-          include: {
-            clinics: { where: { isActive: true }, take: 1 },
-          },
-        },
+        patientProfile: true,
+        doctorProfile: true,
       },
     });
     if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
 
-    let clinicId = user.clinicMemberships[0]?.clinicId ?? null;
-    if (!clinicId && user.doctorProfile?.clinics[0]) {
-      clinicId = user.doctorProfile.clinics[0].clinicId;
-    }
-    const roles = user.roles.map((r) => r.role);
+    const resolved = await resolveWorkspaceSelection({
+      prisma: this.prisma,
+      permissions: this.permissions,
+      userId,
+      preferredMembershipId: meta.membershipId,
+      preferredClinicId: meta.clinicId,
+    });
+
+    const clinicId = resolved.active?.clinicId ?? null;
+    const membershipId = resolved.active?.membershipId ?? null;
+    // Prefer membership role; keep global assignments for patient/super-admin
+    const roles =
+      resolved.roles.length > 0
+        ? resolved.roles
+        : user.roles.map((r) => r.role);
 
     const accessTtl = this.config.get<string>('app.jwt.accessTtl') ?? '15m';
     const refreshTtl = this.config.get<string>('app.jwt.refreshTtl') ?? '30d';
@@ -820,6 +934,7 @@ export class AuthService {
       {
         sub: userId,
         clinicId,
+        membershipId,
         roles,
         type: 'access',
       } satisfies JwtPayload,
@@ -833,6 +948,7 @@ export class AuthService {
       {
         sub: userId,
         clinicId,
+        membershipId,
         roles,
         type: 'refresh',
         jti: randomUUID(),
@@ -849,6 +965,8 @@ export class AuthService {
         userId,
         tokenHash: this.hashToken(refreshToken),
         expiresAt: addDays(new Date(), refreshDays),
+        activeClinicId: clinicId,
+        activeMembershipId: membershipId,
         userAgent: meta.userAgent?.slice(0, 512),
         ip: meta.ip?.slice(0, 64),
         deviceName: meta.deviceName?.slice(0, 128),
@@ -862,54 +980,90 @@ export class AuthService {
       ? new Date(decoded.exp * 1000).toISOString()
       : addMinutes(new Date(), 15).toISOString();
 
+    const authUser = await this.buildAuthUser(userId, {
+      clinicId,
+      membershipId,
+    });
+
     return {
       accessToken,
       refreshToken,
       expiresAt,
-      user: await this.buildAuthUser(userId),
+      user: authUser,
+      requiresWorkspaceSelection: resolved.requiresWorkspaceSelection,
+      workspaces: resolved.workspaces,
+      activeWorkspace: resolved.active,
     };
   }
 
-  private async buildAuthUser(userId: string): Promise<AuthUserDto> {
+  private async buildAuthUser(
+    userId: string,
+    active?: { clinicId: string | null; membershipId: string | null },
+  ): Promise<AuthUserDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         roles: true,
         patientProfile: true,
-        doctorProfile: {
-          include: {
-            clinics: {
-              where: { isActive: true },
-              include: { clinic: true },
-              take: 1,
-            },
-          },
-        },
+        doctorProfile: true,
         clinicMemberships: {
-          where: { isActive: true },
+          where: active?.membershipId
+            ? { id: active.membershipId }
+            : active?.clinicId
+              ? { clinicId: active.clinicId, isActive: true }
+              : { isActive: true },
           include: { clinic: { include: { subscription: true } } },
-          take: 1,
+          take: active?.membershipId || active?.clinicId ? 1 : undefined,
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
     if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
 
+    const membership = user.clinicMemberships[0] ?? null;
     const roleNames = user.roles.map((r) => r.role);
+    const membershipRole = membership?.role;
+
     if (
-      roleNames.includes(UserRole.CLINIC_OWNER) ||
-      roleNames.includes(UserRole.CLINIC_ADMIN) ||
-      roleNames.includes(UserRole.RECEPTIONIST) ||
-      roleNames.includes(UserRole.ACCOUNTANT)
+      membership &&
+      (membershipRole === UserRole.CLINIC_OWNER ||
+        membershipRole === UserRole.CLINIC_ADMIN ||
+        membershipRole === UserRole.RECEPTIONIST ||
+        membershipRole === UserRole.ACCOUNTANT ||
+        membershipRole === UserRole.DOCTOR ||
+        roleNames.includes(UserRole.CLINIC_OWNER) ||
+        roleNames.includes(UserRole.CLINIC_ADMIN) ||
+        roleNames.includes(UserRole.RECEPTIONIST) ||
+        roleNames.includes(UserRole.ACCOUNTANT))
     ) {
-      return this.buildClinicAuthUserFromLoaded(user);
+      if (membershipRole === UserRole.DOCTOR && user.doctorProfile) {
+        return {
+          id: user.id,
+          role: 'doctor',
+          doctorId: user.doctorProfile.id,
+          clinicId: membership.clinicId,
+          membershipId: membership.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          fullName: `${user.firstName} ${user.lastName}`.trim(),
+          email: user.email ?? '',
+          phone: user.phone ?? '',
+          specialty: user.doctorProfile.specialty ?? '',
+          emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
+          createdAt: user.createdAt.toISOString(),
+          mustChangePassword: membership.mustChangePassword,
+        };
+      }
+      return this.buildClinicAuthUserFromLoaded(user, membership);
     }
+
     if (roleNames.includes(UserRole.DOCTOR) && user.doctorProfile) {
-      const link = user.doctorProfile.clinics[0];
       return {
         id: user.id,
         role: 'doctor',
         doctorId: user.doctorProfile.id,
-        clinicId: link?.clinicId ?? null,
+        clinicId: membership?.clinicId ?? null,
+        membershipId: membership?.id ?? null,
         firstName: user.firstName,
         lastName: user.lastName,
         fullName: `${user.firstName} ${user.lastName}`.trim(),
@@ -918,8 +1072,10 @@ export class AuthService {
         specialty: user.doctorProfile.specialty ?? '',
         emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
         createdAt: user.createdAt.toISOString(),
+        mustChangePassword: membership?.mustChangePassword,
       };
     }
+
     if (roleNames.includes(UserRole.PATIENT) && user.patientProfile) {
       return {
         id: user.id,
@@ -936,7 +1092,11 @@ export class AuthService {
       };
     }
 
-    return this.buildClinicAuthUserFromLoaded(user);
+    if (membership) {
+      return this.buildClinicAuthUserFromLoaded(user, membership);
+    }
+
+    throw new AppError('NOT_FOUND', 'No active profile for user', 404);
   }
 
   private async buildClinicAuthUser(userId: string): Promise<ClinicAuthUserDto> {
@@ -946,12 +1106,16 @@ export class AuthService {
         clinicMemberships: {
           where: { isActive: true },
           include: { clinic: { include: { subscription: true } } },
-          take: 1,
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
     if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
-    return this.buildClinicAuthUserFromLoaded(user);
+    const membership = user.clinicMemberships[0];
+    if (!membership) {
+      throw new AppError('NOT_FOUND', 'Clinic membership not found', 404);
+    }
+    return this.buildClinicAuthUserFromLoaded(user, membership);
   }
 
   private buildClinicAuthUserFromLoaded(
@@ -963,29 +1127,28 @@ export class AuthService {
       phone: string | null;
       emailVerifiedAt: Date | null;
       createdAt: Date;
-      clinicMemberships: {
-        clinic: {
-          name: string;
-          accountStatus: ClinicAccountStatus;
-          onboardingCompleted: boolean;
-          onboardingStep: number;
-          subscription: {
-            id: string;
-            status: SubscriptionStatus;
-            trialStartedAt: Date | null;
-            trialEndsAt: Date | null;
-            subscriptionStartedAt: Date | null;
-            subscriptionEndsAt: Date | null;
-            marketplaceBookingEnabled: boolean;
-          } | null;
-        };
-      }[];
+    },
+    membership: {
+      id: string;
+      clinicId: string;
+      mustChangePassword: boolean;
+      clinic: {
+        name: string;
+        accountStatus: ClinicAccountStatus;
+        onboardingCompleted: boolean;
+        onboardingStep: number;
+        subscription: {
+          id: string;
+          status: SubscriptionStatus;
+          trialStartedAt: Date | null;
+          trialEndsAt: Date | null;
+          subscriptionStartedAt: Date | null;
+          subscriptionEndsAt: Date | null;
+          marketplaceBookingEnabled: boolean;
+        } | null;
+      };
     },
   ): ClinicAuthUserDto {
-    const membership = user.clinicMemberships[0];
-    if (!membership) {
-      throw new AppError('NOT_FOUND', 'Clinic membership not found', 404);
-    }
     const clinic = membership.clinic;
     const sub = clinic.subscription;
 
@@ -1012,6 +1175,8 @@ export class AuthService {
     return {
       id: user.id,
       role: 'clinic',
+      clinicId: membership.clinicId,
+      membershipId: membership.id,
       clinicName: clinic.name,
       adminFirstName: user.firstName,
       adminLastName: user.lastName,
@@ -1031,6 +1196,7 @@ export class AuthService {
       onboardingCompleted: clinic.onboardingCompleted,
       onboardingStep: clinic.onboardingStep,
       createdAt: user.createdAt.toISOString(),
+      mustChangePassword: membership.mustChangePassword,
     };
   }
 

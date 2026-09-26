@@ -10,6 +10,8 @@ const APPOINTMENT_EVENTS = [
 
 export type AppointmentRealtimeEvent = (typeof APPOINTMENT_EVENTS)[number];
 
+let activeSocket: Socket | null = null;
+
 function realtimeOrigin(): string {
   const base = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
   if (!base) return '';
@@ -23,10 +25,17 @@ export function connectClinicRealtime(
   const token = readPersistedSession()?.accessToken;
   if (!origin || !token) return () => {};
 
+  if (activeSocket) {
+    activeSocket.removeAllListeners();
+    activeSocket.disconnect();
+    activeSocket = null;
+  }
+
   const socket: Socket = io(`${origin}/realtime`, {
     auth: { token },
     transports: ['websocket', 'polling'],
   });
+  activeSocket = socket;
 
   for (const event of APPOINTMENT_EVENTS) {
     socket.on(event, (payload: unknown) => onEvent(event, payload));
@@ -35,5 +44,13 @@ export function connectClinicRealtime(
   return () => {
     socket.removeAllListeners();
     socket.disconnect();
+    if (activeSocket === socket) activeSocket = null;
   };
+}
+
+/** After workspace switch: leave old clinic room and join new via server ack. */
+export function notifyRealtimeWorkspaceSwitch(clinicId: string): void {
+  const token = readPersistedSession()?.accessToken;
+  if (!activeSocket?.connected || !token) return;
+  activeSocket.emit('workspace.switch', { clinicId, token });
 }

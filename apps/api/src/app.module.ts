@@ -6,7 +6,10 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { AuthModule } from './auth/auth.module';
 import { ClinicsModule } from './clinics/clinics.module';
+import { CommonAuthModule } from './common/common-auth.module';
 import { DoctorsModule } from './doctors/doctors.module';
+import { MembersModule } from './members/members.module';
+import { AdminModule } from './admin/admin.module';
 import { FinanceModule } from './finance/finance.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { PatientsModule } from './patients/patients.module';
@@ -56,8 +59,11 @@ class RedisBootstrap implements OnModuleInit {
     PrismaModule,
     RedisModule,
     StorageModule,
+    CommonAuthModule,
     AuthModule,
     ClinicsModule,
+    MembersModule,
+    AdminModule,
     AppointmentsModule,
     DoctorsModule,
     PatientsModule,

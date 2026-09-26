@@ -229,8 +229,8 @@ export class DoctorsService {
     return this.toDoctorDto(doctor);
   }
 
-  async getMyProfile(userId: string): Promise<DoctorProfileDto> {
-    const doctor = await this.requireDoctorProfile(userId);
+  async getMyProfile(userId: string, clinicId?: string | null): Promise<DoctorProfileDto> {
+    const doctor = await this.requireDoctorProfile(userId, clinicId);
     return this.toDoctorProfileDto(doctor);
   }
 
@@ -286,7 +286,7 @@ export class DoctorsService {
       }),
     ]);
 
-    return this.getMyProfile(userId);
+    return this.getMyProfile(userId, doctor.clinics[0]?.clinicId);
   }
 
   async uploadAvatar(
@@ -346,9 +346,13 @@ export class DoctorsService {
     };
   }
 
-  async getMyDashboard(userId: string) {
-    const doctor = await this.requireDoctorProfile(userId);
+  async getMyDashboard(userId: string, clinicId?: string | null) {
+    const doctor = await this.requireDoctorProfile(userId, clinicId);
     const link = doctor.clinics[0];
+    if (!link && clinicId) {
+      throw new AppError('FORBIDDEN', 'Doctor is not active in this clinic', 403);
+    }
+    const activeClinicId = link?.clinicId ?? clinicId ?? undefined;
     const tz = link?.clinic?.timezone ?? 'Asia/Tashkent';
     const now = new Date();
     const todayKey = format(toZonedTime(now, tz), 'yyyy-MM-dd');
@@ -362,6 +366,7 @@ export class DoctorsService {
       where: {
         doctorId: doctor.id,
         startsAt: { gte: dayStart, lte: dayEnd },
+        ...(activeClinicId ? { clinicId: activeClinicId } : {}),
       },
       orderBy: { startsAt: 'asc' },
     });
@@ -501,8 +506,8 @@ export class DoctorsService {
   }
 
   async createClinicDoctor(clinicId: string, dto: CreateClinicDoctorDto) {
-    const email = normalizeEmail(dto.email);
-    if (!isValidEmail(email)) {
+    const email = dto.email ? normalizeEmail(dto.email) : null;
+    if (dto.email && (!email || !isValidEmail(email))) {
       throw new AppError('INVALID_EMAIL', 'Invalid email', 400);
     }
     const phone = normalizePhone(dto.phone);
@@ -517,8 +522,10 @@ export class DoctorsService {
       );
     }
 
-    const existingEmail = await this.prisma.user.findUnique({ where: { email } });
-    if (existingEmail) throw new AppError('EMAIL_TAKEN', 'Email already registered', 409);
+    if (email) {
+      const existingEmail = await this.prisma.user.findUnique({ where: { email } });
+      if (existingEmail) throw new AppError('EMAIL_TAKEN', 'Email already registered', 409);
+    }
     const existingPhone = await this.prisma.user.findUnique({ where: { phone } });
     if (existingPhone) throw new AppError('PHONE_TAKEN', 'Phone already registered', 409);
 
@@ -531,12 +538,13 @@ export class DoctorsService {
     const doctor = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          email,
+          email: email ?? undefined,
           phone,
           passwordHash,
           firstName: dto.firstName.trim(),
           lastName: dto.lastName.trim(),
-          emailVerifiedAt: new Date(),
+          emailVerifiedAt: email ? new Date() : undefined,
+          phoneVerifiedAt: new Date(),
         },
       });
 
@@ -602,8 +610,8 @@ export class DoctorsService {
     return this.getById(doctor.id);
   }
 
-  async getMySchedule(userId: string) {
-    const doctor = await this.requireDoctorProfile(userId);
+  async getMySchedule(userId: string, clinicId?: string | null) {
+    const doctor = await this.requireDoctorProfile(userId, clinicId);
     return doctor.schedules
       .filter((s) => s.isActive)
       .map((s) => ({
@@ -616,13 +624,24 @@ export class DoctorsService {
       }));
   }
 
-  async replaceMySchedule(userId: string, schedule: DoctorScheduleEntryDto[]) {
-    const doctor = await this.requireDoctorProfile(userId);
+  async replaceMySchedule(
+    userId: string,
+    schedule: DoctorScheduleEntryDto[],
+    clinicId?: string | null,
+  ) {
+    const doctor = await this.requireDoctorProfile(userId, clinicId);
+    const link = doctor.clinics[0];
+    if (!link) {
+      throw new AppError('FORBIDDEN', 'Doctor is not active in this clinic', 403);
+    }
     await this.prisma.$transaction([
-      this.prisma.doctorSchedule.deleteMany({ where: { doctorId: doctor.id } }),
+      this.prisma.doctorSchedule.deleteMany({
+        where: { doctorClinicId: link.id },
+      }),
       this.prisma.doctorSchedule.createMany({
         data: schedule.map((s) => ({
           doctorId: doctor.id,
+          doctorClinicId: link.id,
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
           endTime: s.endTime,
@@ -632,7 +651,7 @@ export class DoctorsService {
         })),
       }),
     ]);
-    return this.getMySchedule(userId);
+    return this.getMySchedule(userId, clinicId ?? link.clinicId);
   }
 
   assertDoctorRole(user: AuthUser) {
@@ -641,14 +660,25 @@ export class DoctorsService {
     }
   }
 
-  async requireDoctorProfile(userId: string) {
+  async requireDoctorProfile(userId: string, clinicId?: string | null) {
     const doctor = await this.prisma.doctorProfile.findUnique({
       where: { userId },
       include: {
         user: true,
-        schedules: { where: { isActive: true }, orderBy: { dayOfWeek: 'asc' } },
+        schedules: {
+          where: {
+            isActive: true,
+            ...(clinicId
+              ? { doctorClinic: { clinicId, isActive: true } }
+              : {}),
+          },
+          orderBy: { dayOfWeek: 'asc' },
+        },
         clinics: {
-          where: { isActive: true },
+          where: {
+            isActive: true,
+            ...(clinicId ? { clinicId } : {}),
+          },
           include: {
             clinic: {
               include: {
@@ -660,7 +690,8 @@ export class DoctorsService {
               },
             },
           },
-          take: 1,
+          orderBy: { createdAt: 'asc' },
+          take: clinicId ? 1 : undefined,
         },
         services: {
           where: { isActive: true },
@@ -669,6 +700,9 @@ export class DoctorsService {
       },
     });
     if (!doctor) throw new AppError('NOT_FOUND', 'Doctor profile not found', 404);
+    if (clinicId && doctor.clinics.length === 0) {
+      throw new AppError('FORBIDDEN', 'Doctor is not active in this clinic', 403);
+    }
     return doctor;
   }
 

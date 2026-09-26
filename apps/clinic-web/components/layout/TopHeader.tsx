@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
 import { TrialBanner } from '@/components/auth/TrialBanner';
+import { WorkspaceSwitcher } from '@/components/auth/WorkspaceSwitcher';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
 import { NotificationsMenu } from '@/components/layout/NotificationsMenu';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -56,6 +57,7 @@ export function TopHeader({
         </div>
 
         <div className="hidden items-center gap-2 tablet:flex laptop:gap-3">
+          <WorkspaceSwitcher />
           <TrialBanner />
 
           <label className="relative">

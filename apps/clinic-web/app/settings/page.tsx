@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { CrmQueryState } from '@/components/crm/CrmQueryState';
 import { AppShell } from '@/components/layout/AppShell';
 import { Panel } from '@/components/ui/crm';
@@ -46,6 +47,14 @@ export default function SettingsPage() {
                 <dd className="mt-1 font-medium text-slate-900">
                   {t('crm.settings.currency_value')}
                 </dd>
+              </div>
+              <div className="pt-2">
+                <Link
+                  href="/settings/employees"
+                  className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white"
+                >
+                  Xodimlar / Employees
+                </Link>
               </div>
             </dl>
           </Panel>

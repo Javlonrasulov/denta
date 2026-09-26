@@ -96,7 +96,8 @@ ok(
   setup.status === 200 || setup.status === 201,
   'count=' + (Array.isArray(setup.body) ? setup.body.length : setup.body?.code),
 );
-const serviceId = setup.body?.[0]?.id || catalog.body?.[0]?.id;
+const serviceId =
+  setup.body?.[0]?.serviceId || setup.body?.[0]?.id || catalog.body?.[0]?.id;
 ok('services.selected', !!serviceId, serviceId);
 
 await j('/clinics/me', {
@@ -121,26 +122,25 @@ await j('/clinics/me/branches', {
   }),
 });
 
+const docPhone = '+99891' + String(suffix).slice(-7);
 const doc = await j('/clinics/me/doctors', {
   method: 'POST',
   headers: h,
   body: JSON.stringify({
     firstName: 'E2E',
     lastName: 'Doc',
-    email: `e2e-doc-${suffix}@example.com`,
-    phone: '+99891' + String(suffix).slice(-7),
+    phone: docPhone,
     specialty: 'Therapist',
-    password: pass,
-    experienceYears: 5,
     serviceIds: [serviceId],
   }),
 });
 ok(
   'doctor.create',
-  doc.status === 200 || doc.status === 201,
-  doc.body?.id || JSON.stringify(doc.body).slice(0, 100),
+  (doc.status === 200 || doc.status === 201) &&
+    (doc.body?.temporaryPassword || doc.body?.member),
+  doc.body?.member?.id || JSON.stringify(doc.body).slice(0, 100),
 );
-const doctorId = doc.body?.id;
+const docTempPass = doc.body?.temporaryPassword || pass;
 
 const patchVis = await j('/clinics/me/publish', {
   method: 'POST',
@@ -163,12 +163,18 @@ ok(
 const docLogin = await j('/auth/login', {
   method: 'POST',
   body: JSON.stringify({
-    identifier: `e2e-doc-${suffix}@example.com`,
-    password: pass,
+    identifier: docPhone,
+    password: docTempPass,
   }),
 });
 const docToken = docLogin.body?.session?.accessToken;
 ok('doctor.login', !!docToken, String(docLogin.status));
+
+const docMe = await j('/doctors/me', {
+  headers: { Authorization: 'Bearer ' + docToken },
+});
+const doctorId = docMe.body?.id;
+ok('doctor.me', !!doctorId, doctorId);
 
 const pEmail = `e2e-pat-${suffix}@example.com`;
 const pReg = await j('/auth/patient/register', {
@@ -225,7 +231,7 @@ const book = await j('/appointments', {
 ok(
   'booking.create',
   book.status === 201 || book.status === 200,
-  book.body?.id || book.body?.code,
+  book.body?.id || book.body?.code || JSON.stringify(book.body).slice(0, 120),
 );
 
 const p2Email = `e2e-pat2-${suffix}@example.com`;

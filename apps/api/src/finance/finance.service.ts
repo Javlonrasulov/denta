@@ -366,16 +366,27 @@ export class FinanceService {
   async listForDoctor(
     userId: string,
     period: FinancePeriod = 'month',
+    clinicId?: string | null,
   ): Promise<FinanceRecordDto[]> {
     const doctor = await this.prisma.doctorProfile.findUnique({
       where: { userId },
     });
     if (!doctor) throw new AppError('NOT_FOUND', 'Doctor profile not found', 404);
 
+    if (clinicId) {
+      const link = await this.prisma.doctorClinic.findFirst({
+        where: { doctorId: doctor.id, clinicId, isActive: true },
+      });
+      if (!link) {
+        throw new AppError('FORBIDDEN', 'Doctor is not active in this clinic', 403);
+      }
+    }
+
     const { from, to } = this.periodRange(period);
     const payments = await this.prisma.payment.findMany({
       where: {
         doctorId: doctor.id,
+        ...(clinicId ? { clinicId } : {}),
         OR: [
           { paidAt: { gte: from, lte: to } },
           { paidAt: null, createdAt: { gte: from, lte: to } },

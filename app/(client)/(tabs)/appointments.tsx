@@ -46,11 +46,10 @@ export default function AppointmentsScreen() {
   const clinicCoordsById = useMemo(() => {
     const map = new Map<string, { latitude: number; longitude: number }>();
     for (const clinic of clinicsQuery.data ?? []) {
-      if (clinic.latitude != null && clinic.longitude != null) {
-        map.set(clinic.id, {
-          latitude: clinic.latitude,
-          longitude: clinic.longitude,
-        });
+      const latitude = clinic.coordinates?.latitude;
+      const longitude = clinic.coordinates?.longitude;
+      if (latitude != null && longitude != null) {
+        map.set(clinic.id, { latitude, longitude });
       }
     }
     return map;

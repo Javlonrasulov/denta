@@ -132,6 +132,18 @@ enum ScheduleExceptionType {
   BLOCKED
 }
 
+enum PermissionEffect {
+  ALLOW
+  DENY
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
 // ─── Auth / Users ────────────────────────────────────────────────────────────
 
 model User {
@@ -152,6 +164,8 @@ model User {
   patientProfile     PatientProfile?
   doctorProfile      DoctorProfile?
   clinicMemberships  ClinicMember[]
+  invitedMembers     ClinicMember[]      @relation("ClinicMemberInviter")
+  clinicInvitations  ClinicInvitation[]  @relation("ClinicInviter")
   refreshTokens      RefreshToken[]
   otpCodes           OtpCode[]
   notifications      Notification[]
@@ -182,22 +196,25 @@ model UserRoleAssignment {
 }
 
 model RefreshToken {
-  id         String    @id @default(cuid())
-  userId     String
-  tokenHash  String    @unique
-  expiresAt  DateTime
-  revokedAt  DateTime?
-  userAgent  String?
-  ip         String?
-  deviceName String?
-  platform   String?
-  lastUsedAt DateTime  @default(now())
-  createdAt  DateTime  @default(now())
+  id                  String    @id @default(cuid())
+  userId              String
+  tokenHash           String    @unique
+  expiresAt           DateTime
+  revokedAt           DateTime?
+  activeClinicId      String?
+  activeMembershipId  String?
+  userAgent           String?
+  ip                  String?
+  deviceName          String?
+  platform            String?
+  lastUsedAt          DateTime  @default(now())
+  createdAt           DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([activeMembershipId])
 }
 
 model OtpCode {
@@ -301,6 +318,7 @@ model Clinic {
 
   branches            ClinicBranch[]
   members             ClinicMember[]
+  invitations         ClinicInvitation[]
   roleAssignments     UserRoleAssignment[]
   doctorLinks         DoctorClinic[]
   rooms               Room[]
@@ -358,63 +376,116 @@ model ClinicBranch {
 }
 
 model ClinicMember {
-  id        String   @id @default(cuid())
-  clinicId  String
-  userId    String
-  role      UserRole
-  isActive  Boolean  @default(true)
-  invitedAt DateTime @default(now())
-  joinedAt  DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  clinicId           String
+  userId             String
+  role               UserRole
+  isActive           Boolean   @default(true)
+  invitedAt          DateTime  @default(now())
+  joinedAt           DateTime?
+  startedAt          DateTime  @default(now())
+  endedAt            DateTime?
+  invitedByUserId    String?
+  mustChangePassword Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinic      Clinic                   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy   User?                    @relation("ClinicMemberInviter", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  permissions ClinicMemberPermission[]
 
   @@unique([clinicId, userId])
   @@index([clinicId])
   @@index([userId])
+  @@index([isActive])
+}
+
+model ClinicMemberPermission {
+  id             String           @id @default(cuid())
+  clinicMemberId String
+  permission     String
+  effect         PermissionEffect
+  createdAt      DateTime         @default(now())
+
+  member ClinicMember @relation(fields: [clinicMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicMemberId, permission])
+  @@index([clinicMemberId])
+}
+
+model ClinicInvitation {
+  id            String           @id @default(cuid())
+  clinicId      String
+  invitedById   String
+  email         String?
+  phone         String?
+  firstName     String
+  lastName      String
+  role          UserRole
+  specialty     String?
+  tokenHash     String           @unique
+  status        InvitationStatus @default(PENDING)
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  permissions   Json?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  clinic    Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  invitedBy User   @relation("ClinicInviter", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([clinicId, status])
+  @@index([email])
+  @@index([phone])
 }
 
 model DoctorClinic {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   doctorId           String
   clinicId           String
   branchId           String?
   roomId             String?
-  commissionPercent  Decimal? @db.Decimal(5, 2)
-  isActive           Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  commissionPercent  Decimal?  @db.Decimal(5, 2)
+  isActive           Boolean   @default(true)
+  startedAt          DateTime  @default(now())
+  endedAt            DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  clinic Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  branch ClinicBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  room   Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  doctor    DoctorProfile    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinic    Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  branch    ClinicBranch?    @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  room      Room?            @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  schedules DoctorSchedule[]
 
   @@unique([doctorId, clinicId, branchId])
   @@index([clinicId])
   @@index([doctorId])
   @@index([branchId])
+  @@index([isActive])
 }
 
 // ─── Schedule ────────────────────────────────────────────────────────────────
 
 model DoctorSchedule {
-  id           String @id @default(cuid())
-  doctorId     String
-  dayOfWeek    Int // 0=Sun … 6=Sat
-  startTime    String // HH:mm
-  endTime      String
-  breakStart   String?
-  breakEnd     String?
-  slotDuration Int    @default(30)
-  isActive     Boolean @default(true)
+  id             String  @id @default(cuid())
+  doctorId       String
+  doctorClinicId String?
+  dayOfWeek      Int // 0=Sun … 6=Sat
+  startTime      String // HH:mm
+  endTime        String
+  breakStart     String?
+  breakEnd       String?
+  slotDuration   Int     @default(30)
+  isActive       Boolean @default(true)
 
-  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  doctor       DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  doctorClinic DoctorClinic? @relation(fields: [doctorClinicId], references: [id], onDelete: Cascade)
 
-  @@unique([doctorId, dayOfWeek])
+  @@unique([doctorClinicId, dayOfWeek])
   @@index([doctorId])
+  @@index([doctorClinicId])
 }
 
 model DoctorScheduleException {
@@ -882,16 +953,19 @@ model Notification {
 }
 
 model DeviceToken {
-  id        String   @id @default(cuid())
-  userId    String
-  platform  String // ios | android | web
-  token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String
+  platform   String // ios | android | web
+  token      String   @unique
+  enabled    Boolean  @default(true)
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([enabled])
 }
 
 // ─── Subscription ────────────────────────────────────────────────────────────

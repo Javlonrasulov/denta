@@ -6,7 +6,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -146,9 +146,13 @@ export function DoctorLoginScreen() {
     void (async () => {
       try {
         const { loginWithPassword } = await import('@/services/authService');
-        await loginWithPassword(trimmedLogin, password);
+        const result = await loginWithPassword(trimmedLogin, password);
         if (LOCKED_ROLE) setRole(LOCKED_ROLE);
-        router.replace('/');
+        if (result.requiresWorkspaceSelection) {
+          router.replace('/(doctor)/workspace' as Href);
+        } else {
+          router.replace('/');
+        }
       } catch (err) {
         const { authErrorMessage } = await import('@/services/authService');
         const { ApiError } = await import('@/services/apiClient');

@@ -13,6 +13,8 @@ export interface ClinicSubscription {
 
 export interface ClinicAuthUser {
   id: string;
+  clinicId?: string | null;
+  membershipId?: string | null;
   clinicName: string;
   adminFirstName: string;
   adminLastName: string;
@@ -24,6 +26,16 @@ export interface ClinicAuthUser {
   onboardingCompleted: boolean;
   onboardingStep: number;
   createdAt: string;
+  mustChangePassword?: boolean;
+}
+
+export interface WorkspaceDto {
+  clinicId: string;
+  clinicName: string;
+  membershipId: string;
+  role: string;
+  isActive: boolean;
+  permissions?: string[];
 }
 
 export interface RegisterClinicInput {
@@ -42,12 +54,16 @@ export interface AuthSession {
   refreshToken: string;
   expiresAt: string;
   user: ClinicAuthUser;
+  requiresWorkspaceSelection?: boolean;
+  workspaces?: WorkspaceDto[];
+  activeWorkspace?: WorkspaceDto | null;
 }
 
 export interface LoginResult {
   session: AuthSession | null;
   requiresEmailVerification: boolean;
   email?: string;
+  requiresWorkspaceSelection?: boolean;
 }
 
 export interface VerifyEmailInput {
@@ -112,6 +128,9 @@ export interface AuthService {
   getCurrentUser(): Promise<ClinicAuthUser | null>;
   getSubscriptionStatus(): Promise<SubscriptionStatusDto | null>;
   updateOnboarding(step: number, completed?: boolean): Promise<ClinicAuthUser>;
+  switchWorkspace?(clinicId: string): Promise<AuthSession>;
+  getWorkspaces?(): Promise<WorkspaceDto[]>;
+  getActivePermissions?(): string[];
   /** DEV-only helper; no-ops on real API */
   getDevLastOtp?(email: string): string | null;
 }

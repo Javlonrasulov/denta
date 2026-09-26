@@ -13,6 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
+import { UserRole } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AppError } from '../common/filters/global-exception.filter';
 import type { AuthUser } from '../common/guards/auth.guards';
@@ -22,6 +23,7 @@ import {
 } from '../common/guards/auth.guards';
 import { FinanceService } from '../finance/finance.service';
 import { FinancePeriodQueryDto } from '../finance/dto/finance.dto';
+import { MembersService } from '../members/members.service';
 import { DoctorsService } from './doctors.service';
 import {
   CreateClinicDoctorDto,
@@ -61,7 +63,7 @@ export class DoctorsController {
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
     this.doctors.assertDoctorRole(user);
-    return this.doctors.getMyProfile(user.id);
+    return this.doctors.getMyProfile(user.id, user.clinicId);
   }
 
   @ApiBearerAuth()
@@ -102,14 +104,14 @@ export class DoctorsController {
   @Get('me/dashboard')
   dashboard(@CurrentUser() user: AuthUser) {
     this.doctors.assertDoctorRole(user);
-    return this.doctors.getMyDashboard(user.id);
+    return this.doctors.getMyDashboard(user.id, user.clinicId);
   }
 
   @ApiBearerAuth()
   @Get('me/schedule')
   mySchedule(@CurrentUser() user: AuthUser) {
     this.doctors.assertDoctorRole(user);
-    return this.doctors.getMySchedule(user.id);
+    return this.doctors.getMySchedule(user.id, user.clinicId);
   }
 
   @ApiBearerAuth()
@@ -119,7 +121,7 @@ export class DoctorsController {
     @Body() dto: ReplaceDoctorScheduleDto,
   ) {
     this.doctors.assertDoctorRole(user);
-    return this.doctors.replaceMySchedule(user.id, dto.schedule);
+    return this.doctors.replaceMySchedule(user.id, dto.schedule, user.clinicId);
   }
 
   @ApiBearerAuth()
@@ -129,7 +131,7 @@ export class DoctorsController {
     @Query() query: FinancePeriodQueryDto,
   ) {
     this.doctors.assertDoctorRole(user);
-    return this.finance.listForDoctor(user.id, query.period ?? 'month');
+    return this.finance.listForDoctor(user.id, query.period ?? 'month', user.clinicId);
   }
 
   @Public()
@@ -142,7 +144,7 @@ export class DoctorsController {
 @ApiTags('clinics')
 @Controller('clinics/me')
 export class ClinicDoctorsController {
-  constructor(private readonly doctors: DoctorsService) {}
+  constructor(private readonly members: MembersService) {}
 
   @ApiBearerAuth()
   @RequirePermissions('doctor:manage')
@@ -154,6 +156,14 @@ export class ClinicDoctorsController {
     if (!user.clinicId) {
       throw new AppError('UNAUTHORIZED', 'No clinic context', 401);
     }
-    return this.doctors.createClinicDoctor(user.clinicId, dto);
+    return this.members.createOrInvite(user.clinicId, user.id, {
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      phone: dto.phone,
+      email: dto.email,
+      role: UserRole.DOCTOR,
+      specialty: dto.specialty,
+      serviceIds: dto.serviceIds,
+    });
   }
 }

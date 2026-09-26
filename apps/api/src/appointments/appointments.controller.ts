@@ -58,7 +58,7 @@ export class AppointmentsController {
     @CurrentUser() user: AuthUser,
     @Body() dto: CreateAppointmentDto,
   ) {
-    return this.appointments.create(dto, user.id);
+    return this.appointments.create(dto, user);
   }
 
   @ApiBearerAuth()

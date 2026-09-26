@@ -125,7 +125,29 @@ export class AppointmentsService {
     });
   }
 
-  async create(dto: CreateAppointmentDto, actorUserId: string) {
+  async create(dto: CreateAppointmentDto, actor: AuthUser | string) {
+    const actorUserId = typeof actor === 'string' ? actor : actor.id;
+    const actorClinicId = typeof actor === 'string' ? null : actor.clinicId;
+    const actorRoles = typeof actor === 'string' ? [] : actor.roles ?? [];
+
+    const isStaff = actorRoles.some((r) =>
+      ['CLINIC_OWNER', 'CLINIC_ADMIN', 'RECEPTIONIST', 'ACCOUNTANT', 'DOCTOR'].includes(
+        r,
+      ),
+    );
+    if (isStaff) {
+      if (!actorClinicId) {
+        throw new AppError('UNAUTHORIZED', 'No clinic context', 401);
+      }
+      if (dto.clinicId !== actorClinicId) {
+        throw new AppError(
+          'FORBIDDEN',
+          'Cannot create appointment for another clinic',
+          403,
+        );
+      }
+    }
+
     const lockKey = `lock:slot:${dto.doctorId}:${dto.date}:${dto.time}`;
     const lockToken = randomUUID();
     const acquired = await this.redis.acquireLock(lockKey, 10_000, lockToken);
@@ -165,6 +187,22 @@ export class AppointmentsService {
       },
     });
     if (!clinic) throw new AppError('NOT_FOUND', 'Clinic not found', 404);
+
+    // Nested ID must belong to the target clinic (never trust doctorId alone).
+    const doctorAtClinic = await this.prisma.doctorClinic.findFirst({
+      where: {
+        doctorId: doctor.id,
+        clinicId: clinic.id,
+        isActive: true,
+      },
+    });
+    if (!doctorAtClinic) {
+      throw new AppError(
+        'FORBIDDEN',
+        'Doctor is not active at this clinic',
+        403,
+      );
+    }
 
     const branch =
       (dto.branchId
@@ -244,6 +282,24 @@ export class AppointmentsService {
       include: { user: true },
     });
     if (!patient) throw new AppError('NOT_FOUND', 'Patient not found', 404);
+
+    // Staff must pass a patient already linked to this clinic (no silent cross-clinic attach).
+    // Marketplace/client self-book can create the PatientClinic link below.
+    const actorIsSelfPatient = patient.userId === actorUserId;
+    const existingPatientLink = await this.prisma.patientClinic.findFirst({
+      where: {
+        clinicId: clinic.id,
+        patientId: patient.id,
+        isActive: true,
+      },
+    });
+    if (!actorIsSelfPatient && !existingPatientLink) {
+      throw new AppError(
+        'FORBIDDEN',
+        'Patient does not belong to this clinic',
+        403,
+      );
+    }
 
     const patientName =
       `${patient.user.firstName} ${patient.user.lastName}`.trim();
@@ -368,6 +424,8 @@ export class AppointmentsService {
       });
       if (!doctor) return [];
       where.doctorId = doctor.id;
+      // Multi-clinic doctors must only see the active workspace clinic.
+      if (user.clinicId) where.clinicId = user.clinicId;
     } else if (user.clinicId) {
       where.clinicId = user.clinicId;
       if (query.doctorId) where.doctorId = query.doctorId;

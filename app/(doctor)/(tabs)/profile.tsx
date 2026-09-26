@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageBottomSheet } from '@/components/auth/LanguageBottomSheet';
@@ -86,6 +86,7 @@ export default function DoctorProfileScreen() {
   const themeMode = useSettingsStore((s) => s.themeMode);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
   const logout = useSettingsStore((s) => s.logout);
+  const activeWorkspace = useSettingsStore((s) => s.activeWorkspace);
   const showToast = useToastStore((s) => s.showToast);
 
   const [editOpen, setEditOpen] = useState(false);
@@ -282,6 +283,12 @@ export default function DoctorProfileScreen() {
           label={t('doctor_profile.clinic_work_profile')}
           value={profile.clinicName}
           onPress={() => setClinicOpen(true)}
+        />
+        <ProfileSettingsRow
+          icon={Building2}
+          label={t('auth.switch_clinic', { defaultValue: 'Klinikani almashtirish' })}
+          value={activeWorkspace?.clinicName}
+          onPress={() => router.push('/(doctor)/workspace' as Href)}
           last
         />
       </ProfileSettingsSection>

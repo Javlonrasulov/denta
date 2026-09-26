@@ -1,9 +1,11 @@
 import { Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
@@ -40,7 +42,7 @@ export class RealtimeGateway
         | string
         | undefined);
 
-    let auth = await this.realtime.authenticateToken(token);
+    const auth = await this.realtime.authenticateToken(token);
     if (!auth) {
       client.disconnect(true);
       return;
@@ -48,17 +50,49 @@ export class RealtimeGateway
 
     const doctor = await this.prisma.doctorProfile.findUnique({
       where: { userId: auth.userId },
-      select: { id: true, clinics: { where: { isActive: true }, take: 1 } },
+      select: { id: true },
     });
 
-    const clinicId =
-      auth.clinicId ?? doctor?.clinics[0]?.clinicId ?? null;
+    // Prefer JWT/session clinic context — never arbitrary first clinic.
+    const clinicId = auth.clinicId ?? null;
+    client.data.userId = auth.userId;
 
     this.realtime.joinClientRooms(client, {
       userId: auth.userId,
       clinicId,
       doctorId: doctor?.id,
     });
+  }
+
+  @SubscribeMessage('workspace.switch')
+  async onWorkspaceSwitch(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { clinicId?: string; token?: string },
+  ) {
+    const token =
+      body?.token ??
+      (client.handshake.auth?.token as string | undefined) ??
+      undefined;
+    const auth = await this.realtime.authenticateToken(token);
+    if (!auth || auth.userId !== client.data.userId) {
+      return { ok: false, code: 'UNAUTHORIZED' };
+    }
+    const clinicId = body?.clinicId;
+    if (!clinicId) {
+      return { ok: false, code: 'VALIDATION_ERROR' };
+    }
+    const membership = await this.prisma.clinicMember.findFirst({
+      where: {
+        userId: auth.userId,
+        clinicId,
+        isActive: true,
+      },
+    });
+    if (!membership) {
+      return { ok: false, code: 'FORBIDDEN' };
+    }
+    this.realtime.switchClinicRoom(client, clinicId);
+    return { ok: true, clinicId };
   }
 
   handleDisconnect(@ConnectedSocket() client: Socket) {

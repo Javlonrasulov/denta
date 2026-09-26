@@ -1,12 +1,19 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mkdir, writeFile, unlink } from 'fs/promises';
+import { access, mkdir, unlink, writeFile } from 'fs/promises';
+import { constants } from 'fs';
 import { dirname, join } from 'path';
-import { StorageService } from './storage.types';
+import {
+  isPrivateStorageKey,
+  sanitizeStorageKey,
+  StorageService,
+  type StorageVisibility,
+} from './storage.types';
 
 /**
- * Local filesystem storage for development.
- * Files land under STORAGE_LOCAL_DIR (default: apps/api/.uploads).
+ * Local filesystem storage.
+ * Public avatar/logo keys are served under /uploads/.
+ * Private medical keys use private/ prefix — serve via authenticated API proxy only.
  */
 @Injectable()
 export class LocalStorageService extends StorageService implements OnModuleInit {
@@ -27,6 +34,7 @@ export class LocalStorageService extends StorageService implements OnModuleInit 
 
   async onModuleInit() {
     await mkdir(this.root, { recursive: true });
+    await mkdir(join(this.root, 'private'), { recursive: true });
     this.logger.log(`Local storage root: ${this.root}`);
   }
 
@@ -35,28 +43,63 @@ export class LocalStorageService extends StorageService implements OnModuleInit 
     buffer: Buffer;
     mimeType: string;
     sizeBytes: number;
+    visibility?: StorageVisibility;
   }) {
-    const fullPath = join(this.root, input.key);
+    const visibility =
+      input.visibility ??
+      (isPrivateStorageKey(input.key) ? 'private' : 'public');
+    const key = sanitizeStorageKey(
+      visibility === 'private' && !isPrivateStorageKey(input.key)
+        ? `private/${input.key}`
+        : input.key,
+    );
+    const fullPath = join(this.root, key);
     await mkdir(dirname(fullPath), { recursive: true });
     await writeFile(fullPath, input.buffer);
-    const bucket =
-      this.config.get<string>('app.s3.bucket') ?? 'denta-local';
+    const bucket = this.config.get<string>('app.s3.bucket') ?? 'denta-local';
     return {
-      key: input.key,
-      url: this.getPublicUrl(input.key),
+      key,
+      url: this.getPublicUrl(key),
       bucket,
     };
   }
 
   async delete(key: string): Promise<void> {
     try {
-      await unlink(join(this.root, key));
+      await unlink(join(this.root, sanitizeStorageKey(key)));
     } catch {
       /* ignore missing */
     }
   }
 
+  async exists(key: string): Promise<boolean> {
+    try {
+      await access(join(this.root, sanitizeStorageKey(key)), constants.F_OK);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   getPublicUrl(key: string): string {
-    return `${this.publicBase.replace(/\/$/, '')}/${key.replace(/^\//, '')}`;
+    const safe = sanitizeStorageKey(key);
+    if (isPrivateStorageKey(safe)) {
+      // Not a public CDN URL — clients must use authenticated /api/v1/files proxy.
+      const apiBase =
+        this.config.get<string>('app.appWebUrl')?.replace(/\/$/, '') ??
+        'https://denta.taomim.uz';
+      return `${apiBase}/api/v1/files/${encodeURIComponent(safe)}`;
+    }
+    return `${this.publicBase.replace(/\/$/, '')}/${safe}`;
+  }
+
+  async getSignedUrl(key: string, _expiresInSeconds = 300): Promise<string> {
+    // Local: signed URLs are authenticated API routes (token required by guard).
+    void _expiresInSeconds;
+    return this.getPublicUrl(sanitizeStorageKey(key));
+  }
+
+  resolvePath(key: string): string {
+    return join(this.root, sanitizeStorageKey(key));
   }
 }

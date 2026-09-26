@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { APP_VARIANT } from '@/constants/appVariant';
+import type { WorkspaceInfo } from '@/services/authService';
 import { LocaleCode, UserRole } from '@/types';
 import { zustandStorage } from '@/utils/storage';
 
@@ -20,6 +21,8 @@ interface SettingsState {
   adminName: string;
   adminLogin: string;
   adminPassword: string;
+  workspaces: WorkspaceInfo[];
+  activeWorkspace: WorkspaceInfo | null;
   setLocale: (locale: LocaleCode) => void;
   setThemeMode: (mode: ThemeMode) => void;
   setFontSize: (size: UiFontSize) => void;
@@ -28,6 +31,8 @@ interface SettingsState {
   toggleSidebarCollapsed: () => void;
   setRole: (role: UserRole | null) => void;
   setPatientOnboardingDone: (done: boolean) => void;
+  setWorkspaces: (workspaces: WorkspaceInfo[]) => void;
+  setActiveWorkspace: (workspace: WorkspaceInfo | null) => void;
   login: (payload: { name?: string; login: string; password: string }) => void;
   updateCredentials: (payload: {
     login?: string;
@@ -51,6 +56,8 @@ export const useSettingsStore = create<SettingsState>()(
       adminName: 'Admin',
       adminLogin: 'admin@denta.uz',
       adminPassword: '',
+      workspaces: [],
+      activeWorkspace: null,
       setLocale: (locale) => set({ locale }),
       setThemeMode: (themeMode) => set({ themeMode }),
       setFontSize: (fontSize) => set({ fontSize }),
@@ -59,6 +66,8 @@ export const useSettingsStore = create<SettingsState>()(
       toggleSidebarCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setRole: (role) => set({ role }),
       setPatientOnboardingDone: (patientOnboardingDone) => set({ patientOnboardingDone }),
+      setWorkspaces: (workspaces) => set({ workspaces }),
+      setActiveWorkspace: (activeWorkspace) => set({ activeWorkspace }),
       login: ({ name = 'Admin', login, password }) =>
         set({
           isAuthenticated: true,
@@ -91,11 +100,27 @@ export const useSettingsStore = create<SettingsState>()(
           role: null,
           adminName: 'Admin',
           patientOnboardingDone: true,
+          workspaces: [],
+          activeWorkspace: null,
         }),
     }),
     {
       name: `denta-settings-${APP_VARIANT}`,
       storage: createJSONStorage(() => zustandStorage),
+      partialize: (state) => ({
+        locale: state.locale,
+        themeMode: state.themeMode,
+        fontSize: state.fontSize,
+        notificationsEnabled: state.notificationsEnabled,
+        sidebarCollapsed: state.sidebarCollapsed,
+        role: state.role,
+        isAuthenticated: state.isAuthenticated,
+        patientOnboardingDone: state.patientOnboardingDone,
+        adminName: state.adminName,
+        adminLogin: state.adminLogin,
+        workspaces: state.workspaces,
+        activeWorkspace: state.activeWorkspace,
+      }),
     },
   ),
 );

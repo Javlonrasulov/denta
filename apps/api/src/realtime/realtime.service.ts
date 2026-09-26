@@ -45,6 +45,23 @@ export class RealtimeService {
     client.join(`user:${ctx.userId}`);
     if (ctx.clinicId) client.join(`clinic:${ctx.clinicId}`);
     if (ctx.doctorId) client.join(`doctor:${ctx.doctorId}`);
+    if (ctx.clinicId) {
+      client.data.activeClinicId = ctx.clinicId;
+    }
+  }
+
+  switchClinicRoom(
+    client: import('socket.io').Socket,
+    nextClinicId: string | null,
+  ) {
+    const prev = client.data.activeClinicId as string | undefined;
+    if (prev) client.leave(`clinic:${prev}`);
+    if (nextClinicId) {
+      client.join(`clinic:${nextClinicId}`);
+      client.data.activeClinicId = nextClinicId;
+    } else {
+      client.data.activeClinicId = null;
+    }
   }
 
   emitAppointmentCreated(payload: unknown) {
@@ -83,13 +100,13 @@ export class RealtimeService {
       doctorId?: string;
       patientId?: string;
     };
+    // Tenant-scoped only — never broadcast globally.
     if (data.clinicId) {
       this.server.to(`clinic:${data.clinicId}`).emit(event, payload);
     }
     if (data.doctorId) {
       this.server.to(`doctor:${data.doctorId}`).emit(event, payload);
     }
-    this.server.emit(event, payload);
     this.logger.debug(`${event} emitted`);
   }
 }

@@ -167,13 +167,30 @@ export class AuthController {
   @ApiBearerAuth()
   @Get('me')
   me(@CurrentUser() user: AuthUser) {
-    return this.auth.getCurrentUser(user.id);
+    return this.auth.getCurrentUser(user.id, user.membershipId, user.clinicId);
+  }
+
+  @ApiBearerAuth()
+  @Post('workspace/switch')
+  switchWorkspace(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { clinicId: string },
+    @Req() req: Request,
+  ) {
+    if (!body?.clinicId) {
+      throw new AppError('VALIDATION_ERROR', 'clinicId required', 400);
+    }
+    return this.auth.switchWorkspace(
+      user.id,
+      body.clinicId,
+      sessionMetaFromRequest(req),
+    );
   }
 
   @ApiBearerAuth()
   @Patch('onboarding')
   onboarding(@CurrentUser() user: AuthUser, @Body() dto: OnboardingDto) {
-    return this.auth.updateOnboarding(user.id, dto);
+    return this.auth.updateOnboarding(user.id, dto, user.clinicId);
   }
 
   @ApiBearerAuth()

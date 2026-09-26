@@ -153,8 +153,9 @@ export class CreateClinicDoctorDto {
   @MaxLength(80)
   lastName!: string;
 
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
 
   @IsString()
   phone!: string;

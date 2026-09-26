@@ -19,23 +19,28 @@ const ICONS = {
   profile: UserRound,
 } as const;
 
-type TabBarProps = {
+type ClientTabBarProps = {
   state: {
     index: number;
     routes: { key: string; name: string; params?: object }[];
   };
-  descriptors: Record<string, { options: { title?: string } }>;
+  descriptors: Record<
+    string,
+    {
+      options: { title?: string };
+    }
+  >;
   navigation: {
     emit: (event: {
-      type: string;
+      type: 'tabPress';
       target: string;
-      canPreventDefault: boolean;
+      canPreventDefault: true;
     }) => { defaultPrevented: boolean };
     navigate: (name: string, params?: object) => void;
   };
 };
 
-export function ClientTabBar({ state, descriptors, navigation }: TabBarProps) {
+export function ClientTabBar({ state, descriptors, navigation }: ClientTabBarProps) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const bottomPad = tabBarBottomInset(insets.bottom);

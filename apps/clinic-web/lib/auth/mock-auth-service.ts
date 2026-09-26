@@ -132,7 +132,23 @@ async function createSession(user: ClinicAuthUser): Promise<AuthSession> {
   const accessToken = generateToken();
   const refreshToken = generateToken();
   const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-  const session: AuthSession = { accessToken, refreshToken, expiresAt, user };
+  const workspace = {
+    clinicId: user.clinicId ?? 'mock-clinic',
+    clinicName: user.clinicName,
+    membershipId: user.membershipId ?? 'mock-membership',
+    role: 'CLINIC_OWNER',
+    isActive: true,
+    permissions: ['*'],
+  };
+  const session: AuthSession = {
+    accessToken,
+    refreshToken,
+    expiresAt,
+    user,
+    requiresWorkspaceSelection: false,
+    workspaces: [workspace],
+    activeWorkspace: workspace,
+  };
   persistSession(session);
   return session;
 }
@@ -374,6 +390,28 @@ export function createMockAuthService(): AuthService {
         daysRemaining: daysRemaining(s.trialEndsAt ?? s.subscriptionEndsAt),
         marketplaceBookingEnabled: s.marketplaceBookingEnabled,
       };
+    },
+
+    async switchWorkspace(clinicId: string) {
+      const session = readPersistedSession();
+      if (!session) throw new AuthError('UNAUTHORIZED');
+      const ws = session.workspaces?.find((w) => w.clinicId === clinicId);
+      if (!ws) throw new AuthError('UNAUTHORIZED');
+      const next = {
+        ...session,
+        activeWorkspace: ws,
+        user: { ...session.user, clinicId: ws.clinicId, membershipId: ws.membershipId, clinicName: ws.clinicName },
+      };
+      persistSession(next);
+      return next;
+    },
+
+    getActivePermissions() {
+      return readPersistedSession()?.activeWorkspace?.permissions ?? ['*'];
+    },
+
+    getWorkspaces() {
+      return Promise.resolve(readPersistedSession()?.workspaces ?? []);
     },
 
     async updateOnboarding(step: number, completed = false) {

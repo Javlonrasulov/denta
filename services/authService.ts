@@ -17,9 +17,18 @@ import {
 import { useSettingsStore } from '@/store/settingsStore';
 import { useUserStore } from '@/store/userStore';
 
+export type WorkspaceInfo = {
+  clinicId: string;
+  clinicName: string;
+  membershipId: string;
+  role: string;
+  isActive: boolean;
+  permissions?: string[];
+};
+
 export type AuthMeResponse = {
-  role: 'clinic' | 'doctor' | 'patient';
-  user?: Record<string, unknown>;
+  role?: 'clinic' | 'doctor' | 'patient';
+  user?: AuthMeResponse & Record<string, unknown>;
   id?: string;
   firstName?: string;
   lastName?: string;
@@ -28,6 +37,13 @@ export type AuthMeResponse = {
   phone?: string;
   avatarUrl?: string;
   patientId?: string;
+  doctorId?: string;
+  clinicId?: string | null;
+  membershipId?: string | null;
+  specialty?: string;
+  activeWorkspace?: WorkspaceInfo | null;
+  workspaces?: WorkspaceInfo[];
+  requiresWorkspaceSelection?: boolean;
 };
 
 type SessionPayload = {
@@ -35,6 +51,9 @@ type SessionPayload = {
   refreshToken: string;
   expiresAt?: string;
   user?: Record<string, unknown>;
+  requiresWorkspaceSelection?: boolean;
+  workspaces?: WorkspaceInfo[];
+  activeWorkspace?: WorkspaceInfo | null;
 };
 
 function mapAuthErrorCode(code?: string): string | undefined {
@@ -104,17 +123,45 @@ export function authErrorMessage(
 
 async function applySession(session: SessionPayload, fallbackLogin?: string) {
   await setTokens(session.accessToken, session.refreshToken);
-  const me = await apiGet<AuthMeResponse>('/auth/me');
+  const meRaw = await apiGet<AuthMeResponse | { user: AuthMeResponse; workspaces?: WorkspaceInfo[]; activeWorkspace?: WorkspaceInfo | null; requiresWorkspaceSelection?: boolean }>('/auth/me');
+  const me =
+    meRaw && typeof meRaw === 'object' && 'user' in meRaw && meRaw.user
+      ? {
+          ...meRaw.user,
+          workspaces: meRaw.workspaces,
+          activeWorkspace: meRaw.activeWorkspace,
+          requiresWorkspaceSelection: meRaw.requiresWorkspaceSelection,
+        }
+      : (meRaw as AuthMeResponse);
   applyMeToStores(me, fallbackLogin);
+  useSettingsStore.getState().setWorkspaces(me.workspaces ?? session.workspaces ?? []);
+  useSettingsStore.getState().setActiveWorkspace(me.activeWorkspace ?? session.activeWorkspace ?? null);
   void import('@/services/notificationService')
     .then((n) => n.registerDevicePushToken())
     .catch(() => undefined);
+  return {
+    requiresWorkspaceSelection:
+      session.requiresWorkspaceSelection ||
+      me.requiresWorkspaceSelection ||
+      (me.workspaces?.length ?? 0) > 1 && !me.activeWorkspace,
+    workspaces: me.workspaces ?? session.workspaces ?? [],
+  };
+}
+
+export async function switchWorkspace(clinicId: string): Promise<void> {
+  if (useMockApi()) return;
+  const session = await apiPost<SessionPayload>('/auth/workspace/switch', {
+    clinicId,
+  });
+  await applySession(session);
+  const { clearWorkspaceCaches } = await import('@/utils/workspaceCache');
+  clearWorkspaceCaches();
 }
 
 export async function loginWithPassword(
   identifier: string,
   password: string,
-): Promise<void> {
+): Promise<{ requiresWorkspaceSelection: boolean }> {
   if (useMockApi()) {
     useSettingsStore.getState().login({
       name: identifier.includes('@') ? identifier.split('@')[0] : identifier,
@@ -123,7 +170,7 @@ export async function loginWithPassword(
     });
     if (LOCKED_ROLE) useSettingsStore.getState().setRole(LOCKED_ROLE);
     useSettingsStore.getState().setPatientOnboardingDone(true);
-    return;
+    return { requiresWorkspaceSelection: false };
   }
 
   const result = await apiPost<{
@@ -147,8 +194,7 @@ export async function loginWithPassword(
   if (!result.session?.accessToken) {
     throw new ApiError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
   }
-
-  await applySession(result.session, identifier);
+  return applySession(result.session, identifier);
 }
 
 export async function registerPatient(input: {

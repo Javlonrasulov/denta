@@ -8,7 +8,13 @@ export default function ClientTabsLayout() {
 
   return (
     <Tabs
-      tabBar={(props) => <ClientTabBar {...props} />}
+      tabBar={(props) => (
+        <ClientTabBar
+          state={props.state}
+          descriptors={props.descriptors}
+          navigation={props.navigation}
+        />
+      )}
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="index" options={{ title: t('tabs.home') }} />

@@ -12,6 +12,6 @@ export class SubscriptionController {
 
   @Get('status')
   status(@CurrentUser() user: AuthUser) {
-    return this.auth.getSubscriptionStatus(user.id);
+    return this.auth.getSubscriptionStatus(user.id, user.clinicId);
   }
 }

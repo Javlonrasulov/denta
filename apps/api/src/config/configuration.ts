@@ -33,18 +33,17 @@ export default registerAs('app', () => {
       secure: process.env.SMTP_SECURE === 'true',
       user: process.env.SMTP_USER,
       password: process.env.SMTP_PASSWORD,
-      from: process.env.SMTP_FROM ?? 'DENTA.UZ <noreply@denta.uz>',
+      from: process.env.SMTP_FROM ?? 'DENTA <noreply@denta.uz>',
     },
     storage: {
-      /** local | s3 — default local for Windows/dev without MinIO */
-      driver:
-        process.env.STORAGE_DRIVER ||
-        (nodeEnv === 'production' ? 's3' : 'local'),
+      /** local | s3 — stay on local until S3 credentials are wired */
+      driver: process.env.STORAGE_DRIVER || 'local',
       localDir:
         process.env.STORAGE_LOCAL_DIR ||
         join(process.cwd(), '.uploads'),
       publicBaseUrl:
         process.env.STORAGE_PUBLIC_BASE_URL ||
+        process.env.S3_PUBLIC_BASE_URL ||
         `http://localhost:${port}/uploads`,
     },
     s3: {

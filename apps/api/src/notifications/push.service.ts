@@ -74,8 +74,15 @@ export class PushService implements OnModuleInit {
         userId: input.userId,
         platform,
         token,
+        enabled: true,
+        lastSeenAt: new Date(),
       },
-      update: { userId: input.userId, platform },
+      update: {
+        userId: input.userId,
+        platform,
+        enabled: true,
+        lastSeenAt: new Date(),
+      },
     });
     return { ok: true };
   }
@@ -100,7 +107,7 @@ export class PushService implements OnModuleInit {
     }
 
     const tokens = await this.prisma.deviceToken.findMany({
-      where: { userId },
+      where: { userId, enabled: true },
     });
     if (!tokens.length) return { sent: 0, configured: true };
 

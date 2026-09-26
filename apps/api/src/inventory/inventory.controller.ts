@@ -23,7 +23,7 @@ export class InventoryController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('inventory:manage')
+  @RequirePermissions('inventory:read')
   @Get()
   list(@CurrentUser() user: AuthUser) {
     return this.inventory.list(this.clinicId(user));

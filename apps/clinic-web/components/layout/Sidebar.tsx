@@ -8,7 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { clinicApi } from '@/lib/api/clinic-api';
 import { useClinicQuery } from '@/lib/api/useClinicData';
-import { NAV_BOTTOM, NAV_CLINIC, NAV_MAIN, NAV_OPS, type NavItem } from '@/lib/nav';
+import { NAV_BOTTOM, NAV_CLINIC, NAV_MAIN, NAV_OPS, filterNavByPermissions, type NavItem } from '@/lib/nav';
+import { readPersistedSession } from '@/lib/auth/session';
 import { cn } from '@/lib/cn';
 
 export const SIDEBAR_EXPANDED_W = 260;
@@ -238,9 +239,17 @@ export function Sidebar({
   /** Desktop permanent sidebar shows collapse row in footer */
   showToggle?: boolean;
 }) {
-  const { user } = useAuth();
+  const { user, isMock } = useAuth();
   const clinicQuery = useClinicQuery('sidebar-clinic', clinicApi.clinicMe);
   const clinicName = clinicQuery.data?.name ?? user?.clinicName ?? '—';
+  const permissions =
+    readPersistedSession()?.activeWorkspace?.permissions ??
+    (isMock ? ['*'] : []);
+
+  const main = filterNavByPermissions(NAV_MAIN, permissions);
+  const clinic = filterNavByPermissions(NAV_CLINIC, permissions);
+  const ops = filterNavByPermissions(NAV_OPS, permissions);
+  const bottom = filterNavByPermissions(NAV_BOTTOM, permissions);
 
   return (
     <aside
@@ -286,19 +295,19 @@ export function Sidebar({
       >
         <NavSection
           titleKey="crm.nav.section_main"
-          items={NAV_MAIN}
+          items={main}
           collapsed={collapsed}
           onNavigate={onNavigate}
         />
         <NavSection
           titleKey="crm.nav.section_clinic"
-          items={NAV_CLINIC}
+          items={clinic}
           collapsed={collapsed}
           onNavigate={onNavigate}
         />
         <NavSection
           titleKey="crm.nav.section_ops"
-          items={NAV_OPS}
+          items={ops}
           collapsed={collapsed}
           onNavigate={onNavigate}
         />
@@ -310,7 +319,7 @@ export function Sidebar({
           collapsed ? 'px-2' : 'px-3',
         )}
       >
-        {NAV_BOTTOM.map((item) => (
+        {bottom.map((item) => (
           <NavLink key={item.key} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
 

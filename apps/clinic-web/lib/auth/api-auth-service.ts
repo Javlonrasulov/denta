@@ -110,7 +110,13 @@ export function createApiAuthService(): AuthService {
         body: JSON.stringify({ identifier, password }),
       });
       if (result.session) persistSession(result.session);
-      return result;
+      return {
+        ...result,
+        requiresWorkspaceSelection:
+          result.session?.requiresWorkspaceSelection ||
+          ((result.session?.workspaces?.length ?? 0) > 1 &&
+            !result.session?.activeWorkspace),
+      };
     },
 
     async logout() {
@@ -150,12 +156,26 @@ export function createApiAuthService(): AuthService {
       const token = currentToken();
       if (!token) return null;
       try {
-        const user = await request<ClinicAuthUser>('/auth/me', {
+        const me = await request<{
+          user: ClinicAuthUser;
+          activeWorkspace?: AuthSession['activeWorkspace'];
+          workspaces?: AuthSession['workspaces'];
+        }>('/auth/me', {
           method: 'GET',
           token,
         });
-        updatePersistedUser(user);
-        return user;
+        const session = readPersistedSession();
+        if (session) {
+          persistSession({
+            ...session,
+            user: me.user,
+            activeWorkspace: me.activeWorkspace ?? session.activeWorkspace,
+            workspaces: me.workspaces ?? session.workspaces,
+          });
+        } else {
+          updatePersistedUser(me.user);
+        }
+        return me.user;
       } catch (e) {
         if (e instanceof AuthError && (e.code === 'UNAUTHORIZED' || e.code === 'NETWORK')) {
           clearPersistedSession();
@@ -163,6 +183,24 @@ export function createApiAuthService(): AuthService {
         }
         throw e;
       }
+    },
+
+    async switchWorkspace(clinicId: string) {
+      const session = await request<AuthSession>('/auth/workspace/switch', {
+        method: 'POST',
+        token: currentToken(),
+        body: JSON.stringify({ clinicId }),
+      });
+      persistSession(session);
+      return session;
+    },
+
+    getActivePermissions() {
+      return readPersistedSession()?.activeWorkspace?.permissions ?? [];
+    },
+
+    getWorkspaces() {
+      return Promise.resolve(readPersistedSession()?.workspaces ?? []);
     },
 
     async getSubscriptionStatus() {

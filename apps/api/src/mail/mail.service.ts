@@ -33,7 +33,7 @@ export class MailService {
   }): Promise<void> {
     const from =
       this.config.get<string>('app.smtp.from') ??
-      'DENTA.UZ <noreply@denta.uz>';
+      'DENTA <noreply@denta.uz>';
 
     if (!this.transporter) {
       this.logger.warn(
@@ -55,7 +55,7 @@ export class MailService {
   async sendVerificationOtp(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
-      subject: 'DENTA.UZ — Email manzilingizni tasdiqlang',
+      subject: 'DENTA — Email manzilingizni tasdiqlang',
       text: `Tasdiqlash kodi: ${code}\nAmal qilish muddati: 10 daqiqa.`,
       html: `<p>Tasdiqlash kodi: <strong>${code}</strong></p><p>Amal qilish muddati: 10 daqiqa.</p>`,
     });
@@ -64,9 +64,48 @@ export class MailService {
   async sendPasswordResetOtp(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
-      subject: 'DENTA.UZ — Parolni tiklash',
+      subject: 'DENTA — Parolni tiklash',
       text: `Parolni tiklash kodi: ${code}\nAmal qilish muddati: 10 daqiqa.`,
       html: `<p>Parolni tiklash kodi: <strong>${code}</strong></p><p>Amal qilish muddati: 10 daqiqa.</p>`,
     });
+  }
+
+  async sendClinicInvitation(opts: {
+    to: string;
+    clinicName: string;
+    inviteeName: string;
+    role: string;
+    acceptUrl: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    const expires = opts.expiresAt.toISOString().slice(0, 16).replace('T', ' ');
+    await this.sendMail({
+      to: opts.to,
+      subject: `DENTA — ${opts.clinicName} klinikaga taklif`,
+      text: [
+        `Salom ${opts.inviteeName},`,
+        ``,
+        `Sizni ${opts.clinicName} klinikaga (${opts.role}) sifatida taklif qilishdi.`,
+        `Taklifni qabul qilish: ${opts.acceptUrl}`,
+        `Amal qilish muddati: ${expires}`,
+      ].join('\n'),
+      html: `
+        <p>Salom <strong>${opts.inviteeName}</strong>,</p>
+        <p>Sizni <strong>${opts.clinicName}</strong> klinikaga (<em>${opts.role}</em>) sifatida taklif qilishdi.</p>
+        <p><a href="${opts.acceptUrl}">Taklifni qabul qilish</a></p>
+        <p>Amal qilish muddati: ${expires}</p>
+      `,
+    });
+  }
+
+  async sendExistingUserClinicInvite(opts: {
+    to: string;
+    clinicName: string;
+    inviteeName: string;
+    role: string;
+    acceptUrl: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    await this.sendClinicInvitation(opts);
   }
 }

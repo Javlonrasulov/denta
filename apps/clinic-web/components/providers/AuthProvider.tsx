@@ -31,6 +31,7 @@ interface AuthContextValue {
   isMock: boolean;
   service: AuthService;
   refresh: () => Promise<void>;
+  getPermissions: () => string[];
   registerClinic: (input: RegisterClinicInput) => Promise<{ email: string; resendAvailableIn: number }>;
   verifyEmail: (input: VerifyEmailInput) => Promise<void>;
   resendVerificationCode: (email: string) => Promise<{ resendAvailableIn: number }>;
@@ -100,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMock: isAuthMockMode(),
       service,
       refresh,
+      getPermissions: () => service.getActivePermissions?.() ?? [],
       async registerClinic(input) {
         return service.registerClinic(input);
       },

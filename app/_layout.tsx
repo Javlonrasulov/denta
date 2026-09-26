@@ -31,6 +31,7 @@ import { apiBaseUrl } from '@/services/apiClient';
 import { useSettingsStore } from '@/store/settingsStore';
 import { ThemeProvider, useTheme } from '@/theme';
 import { GlassToastHost } from '@/components/ui/GlassToastHost';
+import { registerWorkspaceCacheClearer } from '@/utils/workspaceCache';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -94,6 +95,12 @@ export default function RootLayout() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    return registerWorkspaceCacheClearer(() => {
+      queryClient.clear();
+    });
+  }, [queryClient]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

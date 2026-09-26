@@ -36,6 +36,14 @@ function LoginForm() {
         setUnverifiedEmail(result.email ?? null);
         return;
       }
+      if (
+        result.requiresWorkspaceSelection ||
+        result.session?.requiresWorkspaceSelection ||
+        ((result.session?.workspaces?.length ?? 0) > 1 && !result.session?.activeWorkspace)
+      ) {
+        router.replace('/select-workspace');
+        return;
+      }
       const user = result.session?.user;
       if (user && !user.onboardingCompleted) {
         router.replace('/onboarding');

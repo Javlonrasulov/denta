@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "DeviceToken" ADD COLUMN IF NOT EXISTS "enabled" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "DeviceToken" ADD COLUMN IF NOT EXISTS "lastSeenAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- CreateIndex
+CREATE INDEX IF NOT EXISTS "DeviceToken_enabled_idx" ON "DeviceToken"("enabled");
