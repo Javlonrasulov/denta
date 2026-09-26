@@ -47,9 +47,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         id: payload.sub,
         clinicId: membership.clinicId,
         membershipId: membership.id,
-        roles: [membership.role, ...(payload.roles ?? [])].filter(
-          (r, i, arr) => arr.indexOf(r) === i,
-        ),
+        roles: [membership.role],
       };
     }
 

@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { ExpiredPaywall } from '@/components/auth/ExpiredPaywall';
 import { ALL_NAV_ITEMS } from '@/lib/nav';
+import { readPersistedSession } from '@/lib/auth/session';
 
 const PUBLIC_PREFIXES = [
   '/login',
@@ -76,6 +77,18 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     ) {
       router.replace('/onboarding');
       return;
+    }
+
+    // Multi-clinic: force workspace selection before any CRM route.
+    if (user && !publicRoute && !isOnboarding && !isWorkspaceSelect) {
+      const session = readPersistedSession();
+      const needsWorkspace =
+        session?.requiresWorkspaceSelection ||
+        ((session?.workspaces?.length ?? 0) > 1 && !session?.activeWorkspace);
+      if (needsWorkspace) {
+        router.replace('/select-workspace');
+        return;
+      }
     }
 
     if (user && !publicRoute && !isOnboarding && !isWorkspaceSelect) {

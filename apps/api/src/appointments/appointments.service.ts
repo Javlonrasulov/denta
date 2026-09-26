@@ -477,32 +477,7 @@ export class AppointmentsService {
     if (!row) throw new AppError('NOT_FOUND', 'Appointment not found', 404);
 
     if (user) {
-      const isPatient = user.roles.includes('PATIENT');
-      const isDoctor = user.roles.includes('DOCTOR');
-      const isClinicStaff = user.roles.some((r) =>
-        ['CLINIC_OWNER', 'CLINIC_ADMIN', 'RECEPTIONIST', 'ACCOUNTANT'].includes(
-          r,
-        ),
-      );
-      if (isPatient) {
-        const profile = await this.prisma.patientProfile.findUnique({
-          where: { userId: user.id },
-        });
-        if (!profile || profile.id !== row.patientId) {
-          throw new AppError('FORBIDDEN', 'Access denied', 403);
-        }
-      } else if (isDoctor && !isClinicStaff) {
-        const doctor = await this.prisma.doctorProfile.findUnique({
-          where: { userId: user.id },
-        });
-        if (!doctor || doctor.id !== row.doctorId) {
-          throw new AppError('FORBIDDEN', 'Access denied', 403);
-        }
-      } else if (isClinicStaff) {
-        if (!user.clinicId || user.clinicId !== row.clinicId) {
-          throw new AppError('FORBIDDEN', 'Access denied', 403);
-        }
-      }
+      await this.assertCanAccessAppointment(row, user);
     }
 
     const base = this.toFrontend(row);
@@ -539,9 +514,83 @@ export class AppointmentsService {
     }
   }
 
-  async cancel(id: string, actorUserId: string, dto: CancelAppointmentDto) {
+  /**
+   * Tenant ACL for appointment rows.
+   * Staff must have active workspace clinic matching the row.
+   * Doctors may act only on their own appointments in the active clinic (when set).
+   */
+  private async assertCanAccessAppointment(
+    row: { clinicId: string; doctorId: string; patientId: string },
+    user: AuthUser,
+  ): Promise<void> {
+    if (user.roles.includes('DENTA_SUPER_ADMIN')) return;
+
+    const staffRoles = [
+      'CLINIC_OWNER',
+      'CLINIC_ADMIN',
+      'RECEPTIONIST',
+      'ACCOUNTANT',
+    ];
+    const isClinicStaff = user.roles.some((r) => staffRoles.includes(r));
+    const isDoctor = user.roles.includes('DOCTOR');
+    const isPatient = user.roles.includes('PATIENT');
+
+    if (isClinicStaff) {
+      if (!user.clinicId) {
+        throw new AppError(
+          'WORKSPACE_REQUIRED',
+          'Select an active clinic workspace first',
+          401,
+        );
+      }
+      if (user.clinicId !== row.clinicId) {
+        throw new AppError('FORBIDDEN', 'Access denied', 403);
+      }
+      return;
+    }
+
+    if (isDoctor) {
+      const doctor = await this.prisma.doctorProfile.findUnique({
+        where: { userId: user.id },
+      });
+      if (!doctor || doctor.id !== row.doctorId) {
+        throw new AppError('FORBIDDEN', 'Access denied', 403);
+      }
+      if (user.clinicId && user.clinicId !== row.clinicId) {
+        throw new AppError('FORBIDDEN', 'Access denied', 403);
+      }
+      if (!user.clinicId) {
+        const link = await this.prisma.doctorClinic.findFirst({
+          where: {
+            doctorId: doctor.id,
+            clinicId: row.clinicId,
+            isActive: true,
+          },
+        });
+        if (!link) {
+          throw new AppError('FORBIDDEN', 'Access denied', 403);
+        }
+      }
+      return;
+    }
+
+    if (isPatient) {
+      const profile = await this.prisma.patientProfile.findUnique({
+        where: { userId: user.id },
+      });
+      if (!profile || profile.id !== row.patientId) {
+        throw new AppError('FORBIDDEN', 'Access denied', 403);
+      }
+      return;
+    }
+
+    throw new AppError('FORBIDDEN', 'Access denied', 403);
+  }
+
+  async cancel(id: string, user: AuthUser, dto: CancelAppointmentDto) {
     const row = await this.prisma.appointment.findUnique({ where: { id } });
     if (!row) throw new AppError('NOT_FOUND', 'Appointment not found', 404);
+    await this.assertCanAccessAppointment(row, user);
     if (
       row.status === AppointmentStatus.CANCELLED ||
       row.status === AppointmentStatus.COMPLETED
@@ -567,28 +616,30 @@ export class AppointmentsService {
           appointmentId: id,
           fromStatus: row.status,
           toStatus: AppointmentStatus.CANCELLED,
-          changedById: actorUserId,
+          changedById: user.id,
           note: dto.reason,
         },
       });
     });
 
-    const frontend = await this.getById(id);
+    const frontend = await this.getById(id, user);
     this.realtime?.emitAppointmentCancelled(frontend);
     this.realtime?.emitSlotUpdated(frontend.doctorId, {
       doctorId: frontend.doctorId,
       date: frontend.date,
+      clinicId: frontend.clinicId,
     });
     return frontend;
   }
 
   async reschedule(
     id: string,
-    actorUserId: string,
+    user: AuthUser,
     dto: RescheduleAppointmentDto,
   ) {
     const row = await this.prisma.appointment.findUnique({ where: { id } });
     if (!row) throw new AppError('NOT_FOUND', 'Appointment not found', 404);
+    await this.assertCanAccessAppointment(row, user);
     if (
       row.status === AppointmentStatus.CANCELLED ||
       row.status === AppointmentStatus.COMPLETED
@@ -651,7 +702,7 @@ export class AppointmentsService {
               appointmentId: id,
               fromStatus: row.status,
               toStatus: row.status,
-              changedById: actorUserId,
+              changedById: user.id,
               note: `Rescheduled to ${dto.date} ${dto.time}`,
             },
           });
@@ -670,11 +721,12 @@ export class AppointmentsService {
         throw err;
       }
 
-      const frontend = await this.getById(id);
+      const frontend = await this.getById(id, user);
       this.realtime?.emitAppointmentUpdated(frontend);
       this.realtime?.emitSlotUpdated(row.doctorId, {
         doctorId: row.doctorId,
         date: dto.date,
+        clinicId: row.clinicId,
       });
       return frontend;
     } finally {
@@ -689,19 +741,7 @@ export class AppointmentsService {
   ) {
     const row = await this.prisma.appointment.findUnique({ where: { id } });
     if (!row) throw new AppError('NOT_FOUND', 'Appointment not found', 404);
-
-    if (user.roles.includes('DOCTOR') && !user.roles.some((r) =>
-      ['CLINIC_OWNER', 'CLINIC_ADMIN', 'RECEPTIONIST'].includes(r),
-    )) {
-      const doctor = await this.prisma.doctorProfile.findUnique({
-        where: { userId: user.id },
-      });
-      if (!doctor || doctor.id !== row.doctorId) {
-        throw new AppError('FORBIDDEN', 'Access denied', 403);
-      }
-    } else if (user.clinicId && user.clinicId !== row.clinicId) {
-      throw new AppError('FORBIDDEN', 'Access denied', 403);
-    }
+    await this.assertCanAccessAppointment(row, user);
 
     const next = AppointmentStatus[status];
     if (!next) throw new AppError('UNKNOWN', 'Invalid status', 400);

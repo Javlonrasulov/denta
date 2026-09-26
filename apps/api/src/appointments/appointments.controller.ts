@@ -69,7 +69,7 @@ export class AppointmentsController {
     @Param('id') id: string,
     @Body() dto: CancelAppointmentDto,
   ) {
-    return this.appointments.cancel(id, user.id, dto);
+    return this.appointments.cancel(id, user, dto);
   }
 
   @ApiBearerAuth()
@@ -80,7 +80,7 @@ export class AppointmentsController {
     @Param('id') id: string,
     @Body() dto: CancelAppointmentDto,
   ) {
-    return this.appointments.cancel(id, user.id, dto);
+    return this.appointments.cancel(id, user, dto);
   }
 
   @ApiBearerAuth()
@@ -91,7 +91,7 @@ export class AppointmentsController {
     @Param('id') id: string,
     @Body() dto: RescheduleAppointmentDto,
   ) {
-    return this.appointments.reschedule(id, user.id, dto);
+    return this.appointments.reschedule(id, user, dto);
   }
 
   @ApiBearerAuth()

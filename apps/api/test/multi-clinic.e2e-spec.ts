@@ -298,4 +298,63 @@ describe('Multi-clinic tenant isolation (e2e)', () => {
       });
     expect([403, 404]).toContain(foreignPatient.status);
   });
+
+  it('rejects cross-clinic appointment cancel (IDOR)', async () => {
+    const loginB = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ identifier: ownerBEmail, password: 'Owner9pass' });
+    const tokenB = loginB.body.session.accessToken as string;
+
+    // Seed an appointment in Clinic B via prisma (bypass booking constraints).
+    const patientB = await prisma.patientProfile.create({
+      data: {
+        user: {
+          create: {
+            phone: `+99894${suffix.slice(-7)}`,
+            passwordHash: await argon2.hash('Patient9pass'),
+            firstName: 'Pat',
+            lastName: 'B',
+          },
+        },
+      },
+    });
+    await prisma.patientClinic.create({
+      data: { clinicId: clinicBId, patientId: patientB.id },
+    });
+    const doctorB = await prisma.doctorProfile.findFirst({
+      where: { clinics: { some: { clinicId: clinicBId, isActive: true } } },
+    });
+    if (!doctorB) {
+      // No doctor in B yet — skip soft
+      return;
+    }
+    const appt = await prisma.appointment.create({
+      data: {
+        clinicId: clinicBId,
+        doctorId: doctorB.id,
+        patientId: patientB.id,
+        startsAt: new Date('2099-07-01T10:00:00.000Z'),
+        endsAt: new Date('2099-07-01T10:30:00.000Z'),
+        status: 'PENDING',
+        priceUzs: 100000,
+        patientName: 'Pat B',
+        doctorName: 'Doc',
+        clinicName: 'Clinic B',
+        clinicAddress: '',
+        serviceName: 'Checkup',
+      },
+    });
+
+    const cancelByA = await request(app.getHttpServer())
+      .post(`/appointments/${appt.id}/cancel`)
+      .set('Authorization', `Bearer ${ownerAToken}`)
+      .send({ reason: 'cross-clinic' });
+    expect([401, 403, 404]).toContain(cancelByA.status);
+
+    const cancelByB = await request(app.getHttpServer())
+      .post(`/appointments/${appt.id}/cancel`)
+      .set('Authorization', `Bearer ${tokenB}`)
+      .send({ reason: 'owner-b' });
+    expect([200, 201]).toContain(cancelByB.status);
+  });
 });
