@@ -1,0 +1,101 @@
+# DENTA production stack — isolated from TAOMIM
+# Usage on server: docker compose -p denta -f docker-compose.prod.yml --env-file .env up -d --build
+name: denta
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-denta_prod}
+      POSTGRES_USER: ${POSTGRES_USER:-denta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - denta_pg_data:/var/lib/postgresql/data
+    networks:
+      - denta_net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    mem_limit: 768m
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory', '128mb', '--maxmemory-policy', 'allkeys-lru']
+    volumes:
+      - denta_redis_data:/data
+    networks:
+      - denta_net
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 192m
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-denta}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-denta_prod}?schema=public
+      REDIS_URL: redis://redis:6379
+      REDIS_ENABLED: 'true'
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /app/.uploads
+      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-https://denta.taomim.uz/uploads}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://denta.taomim.uz}
+      APP_WEB_URL: ${APP_WEB_URL:-https://denta.taomim.uz}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - denta_uploads:/app/.uploads
+    ports:
+      - '127.0.0.1:8091:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - denta_net
+    mem_limit: 768m
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/clinic-web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://denta.taomim.uz/api/v1}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - '127.0.0.1:8090:3000'
+    depends_on:
+      - api
+    networks:
+      - denta_net
+    mem_limit: 512m
+
+networks:
+  denta_net:
+    name: denta_net
+    driver: bridge
+
+volumes:
+  denta_pg_data:
+    name: denta_pg_data
+  denta_redis_data:
+    name: denta_redis_data
+  denta_uploads:
+    name: denta_uploads
