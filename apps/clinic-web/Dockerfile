@@ -24,7 +24,7 @@ COPY locales ./locales
 COPY apps/api/package.json apps/api/
 COPY apps/client-app/package.json apps/client-app/
 COPY apps/doctor-app/package.json apps/doctor-app/
-ARG NEXT_PUBLIC_API_URL=https://denta.taomim.uz/api/v1
+ARG NEXT_PUBLIC_API_URL=https://oradent.uz/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production

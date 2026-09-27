@@ -51,9 +51,9 @@ services:
       REDIS_ENABLED: 'true'
       STORAGE_DRIVER: local
       STORAGE_LOCAL_DIR: /app/.uploads
-      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-https://denta.taomim.uz/uploads}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://denta.taomim.uz}
-      APP_WEB_URL: ${APP_WEB_URL:-https://denta.taomim.uz}
+      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-https://oradent.uz/uploads}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://oradent.uz,https://www.oradent.uz}
+      APP_WEB_URL: ${APP_WEB_URL:-https://oradent.uz}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - denta_uploads:/app/.uploads
@@ -73,7 +73,7 @@ services:
       context: .
       dockerfile: apps/clinic-web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://denta.taomim.uz/api/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://oradent.uz/api/v1}
     restart: unless-stopped
     environment:
       NODE_ENV: production

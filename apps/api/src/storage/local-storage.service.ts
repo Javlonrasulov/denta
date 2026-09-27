@@ -87,7 +87,7 @@ export class LocalStorageService extends StorageService implements OnModuleInit 
       // Not a public CDN URL — clients must use authenticated /api/v1/files proxy.
       const apiBase =
         this.config.get<string>('app.appWebUrl')?.replace(/\/$/, '') ??
-        'https://denta.taomim.uz';
+        'https://oradent.uz';
       return `${apiBase}/api/v1/files/${encodeURIComponent(safe)}`;
     }
     return `${this.publicBase.replace(/\/$/, '')}/${safe}`;

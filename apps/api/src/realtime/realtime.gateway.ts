@@ -14,7 +14,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeService } from './realtime.service';
 
 @WebSocketGateway({
-  cors: { origin: true, credentials: true },
   namespace: '/realtime',
 })
 export class RealtimeGateway
