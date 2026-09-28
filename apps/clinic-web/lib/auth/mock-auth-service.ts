@@ -174,7 +174,7 @@ export function createMockAuthService(): AuthService {
   return {
     async registerClinic(input: RegisterClinicInput) {
       await delay();
-      if (!input.acceptTerms) throw new AuthError('TERMS_REQUIRED');
+      if (input.acceptTerms !== true) throw new AuthError('LEGAL_CONSENT_REQUIRED');
       const email = normalizeEmail(input.email);
       const phone = normalizeUzPhone(input.phone);
       if (!isValidEmail(email)) throw new AuthError('INVALID_EMAIL');

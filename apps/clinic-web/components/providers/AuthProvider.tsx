@@ -172,6 +172,10 @@ export function mapAuthError(
         return t('clinicAuth.errors.password_mismatch');
       case 'TERMS_REQUIRED':
         return t('clinicAuth.errors.terms_required');
+      case 'LEGAL_CONSENT_REQUIRED':
+        return err.meta?.outdated === true
+          ? t('clinicAuth.errors.legal_version_outdated')
+          : t('clinicAuth.errors.legal_consent_required');
       case 'EMAIL_TAKEN':
         return t('clinicAuth.errors.email_taken');
       case 'PHONE_TAKEN':

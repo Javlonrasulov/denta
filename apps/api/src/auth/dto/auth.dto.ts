@@ -10,6 +10,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterClinicDto {
   @IsString()
@@ -37,8 +38,21 @@ export class RegisterClinicDto {
   @MinLength(8)
   password!: string;
 
+  /** Only a literal JSON `true` counts as consent; anything else → LEGAL_CONSENT_REQUIRED. */
+  @IsOptional()
+  @Transform(({ obj }) => (obj as { acceptTerms?: unknown }).acceptTerms === true)
   @IsBoolean()
-  acceptTerms!: boolean;
+  acceptTerms?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  termsVersion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  privacyVersion?: string;
 
   @IsOptional()
   @IsString()

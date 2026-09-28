@@ -46,6 +46,8 @@ export interface RegisterClinicInput {
   email: string;
   password: string;
   acceptTerms: boolean;
+  termsVersion?: string;
+  privacyVersion?: string;
   locale?: string;
 }
 
@@ -91,6 +93,7 @@ export type AuthErrorCode =
   | 'INVALID_PASSWORD'
   | 'PASSWORD_MISMATCH'
   | 'TERMS_REQUIRED'
+  | 'LEGAL_CONSENT_REQUIRED'
   | 'EMAIL_TAKEN'
   | 'PHONE_TAKEN'
   | 'INVALID_CREDENTIALS'

@@ -58,9 +58,17 @@ async function request<T>(
     let code: AuthErrorCode = 'UNKNOWN';
     let meta: Record<string, unknown> | undefined;
     try {
-      const body = (await res.json()) as { code?: AuthErrorCode; meta?: Record<string, unknown> };
+      const body = (await res.json()) as {
+        code?: AuthErrorCode;
+        meta?: Record<string, unknown>;
+        details?: unknown;
+      };
       if (body.code) code = body.code;
-      meta = body.meta;
+      meta =
+        body.meta ??
+        (body.details && typeof body.details === 'object'
+          ? (body.details as Record<string, unknown>)
+          : undefined);
     } catch {
       /* ignore */
     }

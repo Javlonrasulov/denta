@@ -17,8 +17,15 @@ const PUBLIC_PREFIXES = [
   '/invite',
 ];
 
+/** Readable by everyone, signed in or not — never redirected, no paywall. */
+const LEGAL_PREFIXES = ['/terms', '/privacy'];
+
+function matchesPrefix(path: string, prefixes: string[]): boolean {
+  return prefixes.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
 function isPublic(path: string): boolean {
-  return PUBLIC_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+  return matchesPrefix(path, PUBLIC_PREFIXES);
 }
 
 function pathAllowed(pathname: string, permissions: string[]): boolean {
@@ -35,12 +42,13 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname() ?? '/';
   const publicRoute = isPublic(pathname);
+  const legalRoute = matchesPrefix(pathname, LEGAL_PREFIXES);
   const isOnboarding = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
   const isWorkspaceSelect =
     pathname === '/select-workspace' || pathname.startsWith('/select-workspace/');
 
   useEffect(() => {
-    if (!ready || loading) return;
+    if (legalRoute || !ready || loading) return;
 
     if (!user && !publicRoute) {
       router.replace('/login');
@@ -102,12 +110,15 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     ready,
     loading,
     publicRoute,
+    legalRoute,
     pathname,
     isOnboarding,
     isWorkspaceSelect,
     router,
     getPermissions,
   ]);
+
+  if (legalRoute) return <>{children}</>;
 
   if (!ready || loading) {
     return (

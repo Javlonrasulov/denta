@@ -1286,10 +1286,7 @@
       "email": "Email",
       "password": "Password",
       "confirm_password": "Confirm password",
-      "terms_prefix": "I agree to the",
-      "terms": "Terms of Use",
-      "and": "and",
-      "privacy": "Privacy Policy",
+      "consent": "By registering, I agree to the DENTA.UZ <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",
       "cta": "Start 30-day free trial",
       "have_account": "Already have an account?",
       "sign_in": "Sign in"
@@ -1394,7 +1391,9 @@
       "invalid_phone": "Phone format: +998 XX XXX XX XX",
       "invalid_password": "Password: min 8 chars, 1 letter and 1 digit",
       "password_mismatch": "Passwords do not match",
-      "terms_required": "Please accept the terms",
+      "terms_required": "To continue, please accept the Terms of Use and Privacy Policy.",
+      "legal_consent_required": "You must accept the Terms of Use and Privacy Policy to register.",
+      "legal_version_outdated": "Our documents have been updated. Please refresh the page and review the terms again.",
       "email_taken": "This email is already in use.",
       "phone_taken": "This phone number is already registered.",
       "invalid_credentials": "Incorrect email/phone or password.",
@@ -1407,6 +1406,17 @@
       "network": "Network error. Please try again.",
       "unknown": "Something went wrong. Please try again."
     }
+  },
+  "legal": {
+    "terms_title": "Terms of Use",
+    "privacy_title": "Privacy Policy",
+    "toc": "Contents",
+    "effective_date": "Effective date",
+    "updated_date": "Last updated",
+    "version": "Version",
+    "print": "Print",
+    "back": "Back",
+    "fallback_notice": "The official text of this document is currently available in Uzbek (Latin script)."
   },
   "service": {
     "consultation": "Consultation",

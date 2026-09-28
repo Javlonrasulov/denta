@@ -61,8 +61,8 @@ export class AuthController {
 
   @Public()
   @Post('clinic/register')
-  register(@Body() dto: RegisterClinicDto) {
-    return this.auth.registerClinic(dto);
+  register(@Body() dto: RegisterClinicDto, @Req() req: Request) {
+    return this.auth.registerClinic(dto, sessionMetaFromRequest(req));
   }
 
   @Public()

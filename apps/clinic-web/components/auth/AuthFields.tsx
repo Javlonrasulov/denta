@@ -107,6 +107,7 @@ export function AuthButton({
   return (
     <button
       type="button"
+      {...rest}
       disabled={rest.disabled || loading}
       className={cn(
         'inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60',
@@ -117,7 +118,6 @@ export function AuthButton({
         variant === 'ghost' && 'text-primary hover:bg-primary/5',
         className,
       )}
-      {...rest}
     >
       {loading ? (
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />

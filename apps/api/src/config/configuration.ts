@@ -19,6 +19,11 @@ export default registerAs('app', () => {
       refreshTtl: process.env.JWT_REFRESH_TTL ?? '30d',
     },
     trialDays: parseInt(process.env.TRIAL_DAYS ?? '30', 10),
+    /** Must match NEXT_PUBLIC_LEGAL_TERMS_VERSION / NEXT_PUBLIC_LEGAL_PRIVACY_VERSION in clinic-web. */
+    legal: {
+      termsVersion: process.env.LEGAL_TERMS_VERSION ?? '2026-09-27',
+      privacyVersion: process.env.LEGAL_PRIVACY_VERSION ?? '2026-09-27',
+    },
     otp: {
       ttlMinutes: parseInt(process.env.OTP_TTL_MINUTES ?? '10', 10),
       resendCooldownSeconds: parseInt(

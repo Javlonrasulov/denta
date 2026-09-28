@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, type FormEvent } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { AuthCard, AuthShell } from '@/components/auth/AuthShell';
 import {
@@ -23,6 +23,41 @@ import {
   normalizeEmail,
   normalizeUzPhone,
 } from '@/lib/auth/phone';
+import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal/constants';
+
+/** Survives same-tab navigation to /terms or /privacy. Passwords are never stored. */
+const DRAFT_KEY = 'denta.register.draft';
+
+type RegisterDraft = {
+  clinicName: string;
+  adminFirstName: string;
+  adminLastName: string;
+  phone: string;
+  email: string;
+  acceptTerms: boolean;
+};
+
+function readDraft(): Partial<RegisterDraft> | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Partial<RegisterDraft>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function LegalLink({ href, children }: { href: string; children?: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition hover:decoration-primary"
+    >
+      {children}
+    </a>
+  );
+}
 
 export default function RegisterPage() {
   const { t } = useTranslation();
@@ -42,6 +77,37 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const score = useMemo(() => passwordStrengthScore(password), [password]);
+
+  const [draftReady, setDraftReady] = useState(false);
+  useEffect(() => {
+    const draft = readDraft();
+    if (draft) {
+      if (typeof draft.clinicName === 'string') setClinicName(draft.clinicName);
+      if (typeof draft.adminFirstName === 'string') setAdminFirstName(draft.adminFirstName);
+      if (typeof draft.adminLastName === 'string') setAdminLastName(draft.adminLastName);
+      if (typeof draft.phone === 'string') setPhone(draft.phone);
+      if (typeof draft.email === 'string') setEmail(draft.email);
+      if (typeof draft.acceptTerms === 'boolean') setAcceptTerms(draft.acceptTerms);
+    }
+    setDraftReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    const draft: RegisterDraft = {
+      clinicName,
+      adminFirstName,
+      adminLastName,
+      phone,
+      email,
+      acceptTerms,
+    };
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [draftReady, clinicName, adminFirstName, adminLastName, phone, email, acceptTerms]);
 
   function validate(): boolean {
     const next: Record<string, string> = {};
@@ -71,7 +137,10 @@ export default function RegisterPage() {
         email: normalizeEmail(email),
         password,
         acceptTerms,
+        termsVersion: TERMS_VERSION,
+        privacyVersion: PRIVACY_VERSION,
       });
+      sessionStorage.removeItem(DRAFT_KEY);
       sessionStorage.setItem(
         'denta.verify.email',
         JSON.stringify({ email: result.email, cooldown: result.resendAvailableIn }),
@@ -172,22 +241,44 @@ export default function RegisterPage() {
             hideLabel={t('clinicAuth.hide_password')}
           />
 
-          <label className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-sm text-slate-600">
+          <label
+            className={
+              fieldErrors.terms
+                ? 'flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/60 p-3 text-sm leading-relaxed text-slate-600'
+                : 'flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-sm leading-relaxed text-slate-600'
+            }
+          >
             <input
               type="checkbox"
               checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+              onChange={(e) => {
+                setAcceptTerms(e.target.checked);
+                if (e.target.checked && fieldErrors.terms) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.terms;
+                    return next;
+                  });
+                }
+              }}
+              aria-invalid={Boolean(fieldErrors.terms)}
+              aria-describedby={fieldErrors.terms ? 'register-terms-error' : undefined}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-primary focus:ring-primary"
             />
             <span>
-              {t('clinicAuth.register.terms_prefix')}{' '}
-              <span className="font-medium text-primary">{t('clinicAuth.register.terms')}</span>
-              {' '}{t('clinicAuth.register.and')}{' '}
-              <span className="font-medium text-primary">{t('clinicAuth.register.privacy')}</span>
+              <Trans
+                i18nKey="clinicAuth.register.consent"
+                components={{
+                  terms: <LegalLink href="/terms" />,
+                  privacy: <LegalLink href="/privacy" />,
+                }}
+              />
             </span>
           </label>
           {fieldErrors.terms ? (
-            <p className="text-xs font-medium text-red-600">{fieldErrors.terms}</p>
+            <p id="register-terms-error" className="text-xs font-medium text-red-600">
+              {fieldErrors.terms}
+            </p>
           ) : null}
 
           {formError ? (
@@ -196,7 +287,7 @@ export default function RegisterPage() {
             </div>
           ) : null}
 
-          <AuthButton type="submit" loading={loading}>
+          <AuthButton type="submit" loading={loading} disabled={!acceptTerms}>
             {t('clinicAuth.register.cta')}
           </AuthButton>
         </form>

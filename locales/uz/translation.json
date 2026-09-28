@@ -1286,10 +1286,7 @@
       "email": "Email",
       "password": "Parol",
       "confirm_password": "Parolni takrorlash",
-      "terms_prefix": "Men",
-      "terms": "foydalanish shartlari",
-      "and": "va",
-      "privacy": "maxfiylik siyosati",
+      "consent": "Ro‘yxatdan o‘tish orqali DENTA.UZ <terms>Foydalanish shartlari</terms> va <privacy>Maxfiylik siyosati</privacy>ga rozilik bildiraman.",
       "cta": "30 kun bepul boshlash",
       "have_account": "Akkauntingiz bormi?",
       "sign_in": "Kirish"
@@ -1394,7 +1391,9 @@
       "invalid_phone": "Telefon formati: +998 XX XXX XX XX",
       "invalid_password": "Parol: kamida 8 belgi, 1 harf va 1 raqam",
       "password_mismatch": "Parollar mos kelmadi",
-      "terms_required": "Foydalanish shartlariga rozilik bildiring",
+      "terms_required": "Davom etish uchun Foydalanish shartlari va Maxfiylik siyosatiga rozilik bildiring.",
+      "legal_consent_required": "Ro‘yxatdan o‘tish uchun Foydalanish shartlari va Maxfiylik siyosatiga rozilik bildirish shart.",
+      "legal_version_outdated": "Hujjatlar yangilangan. Sahifani yangilab, shartlar bilan qayta tanishib chiqing.",
       "email_taken": "Bu email allaqachon ishlatilmoqda.",
       "phone_taken": "Bu telefon raqami allaqachon ro‘yxatdan o‘tgan.",
       "invalid_credentials": "Email/telefon yoki parol noto‘g‘ri.",
@@ -1407,6 +1406,17 @@
       "network": "Tarmoq xatosi. Qayta urinib ko‘ring.",
       "unknown": "Xatolik yuz berdi. Qayta urinib ko‘ring."
     }
+  },
+  "legal": {
+    "terms_title": "Foydalanish shartlari",
+    "privacy_title": "Maxfiylik siyosati",
+    "toc": "Mundarija",
+    "effective_date": "Kuchga kirish sanasi",
+    "updated_date": "Oxirgi yangilanish",
+    "version": "Versiya",
+    "print": "Chop etish",
+    "back": "Orqaga",
+    "fallback_notice": "Ushbu hujjatning rasmiy matni hozircha o‘zbek tilida (lotin yozuvida) taqdim etilgan."
   },
   "service": {
     "consultation": "Konsultatsiya",

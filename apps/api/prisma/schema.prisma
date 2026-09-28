@@ -175,9 +175,31 @@ model User {
   reviews            Review[]
   auditLogs          AuditLog[]
   fileAssets         FileAsset[]
+  legalConsents      LegalConsent[]
 
   @@index([email])
   @@index([phone])
+}
+
+/// Versioned acceptance of Terms of Use + Privacy Policy (immutable, append-only).
+model LegalConsent {
+  id             String   @id @default(cuid())
+  userId         String
+  clinicId       String?
+  context        String   @default("CLINIC_REGISTRATION")
+  termsVersion   String
+  privacyVersion String
+  locale         String?
+  ip             String?
+  userAgent      String?
+  acceptedAt     DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinic Clinic? @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([clinicId])
+  @@index([termsVersion, privacyVersion])
 }
 
 model UserRoleAssignment {
@@ -338,6 +360,7 @@ model Clinic {
   auditLogs           AuditLog[]
   dentalRecords       DentalRecord[]
   treatmentPlans      TreatmentPlan[]
+  legalConsents       LegalConsent[]
 
   @@index([slug])
   @@index([accountStatus])

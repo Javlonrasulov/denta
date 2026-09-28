@@ -136,9 +136,26 @@ export class AuthService {
     private readonly audit: AuditService,
   ) {}
 
-  async registerClinic(dto: RegisterClinicDto) {
-    if (!dto.acceptTerms) {
-      throw new AppError('TERMS_REQUIRED', 'Terms must be accepted', 400);
+  async registerClinic(dto: RegisterClinicDto, meta: SessionMeta = {}) {
+    const legal = this.currentLegalVersions();
+    if (dto.acceptTerms !== true) {
+      throw new AppError(
+        'LEGAL_CONSENT_REQUIRED',
+        'Terms of Use and Privacy Policy must be accepted',
+        400,
+        legal,
+      );
+    }
+    if (
+      (dto.termsVersion && dto.termsVersion !== legal.termsVersion) ||
+      (dto.privacyVersion && dto.privacyVersion !== legal.privacyVersion)
+    ) {
+      throw new AppError(
+        'LEGAL_CONSENT_REQUIRED',
+        'Accepted legal document version is outdated',
+        400,
+        { ...legal, outdated: true },
+      );
     }
     if (!isValidPassword(dto.password)) {
       throw new AppError(
@@ -205,6 +222,36 @@ export class AuthService {
           userId: createdUser.id,
           role: UserRole.CLINIC_OWNER,
           clinicId: clinic.id,
+        },
+      });
+
+      const consent = await tx.legalConsent.create({
+        data: {
+          userId: createdUser.id,
+          clinicId: clinic.id,
+          context: 'CLINIC_REGISTRATION',
+          termsVersion: legal.termsVersion,
+          privacyVersion: legal.privacyVersion,
+          locale: dto.locale ?? null,
+          ip: meta.ip?.slice(0, 64) ?? null,
+          userAgent: meta.userAgent?.slice(0, 512) ?? null,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: createdUser.id,
+          clinicId: clinic.id,
+          action: 'legal.consent.accepted',
+          entity: 'LegalConsent',
+          entityId: consent.id,
+          ip: consent.ip,
+          userAgent: consent.userAgent,
+          after: {
+            termsVersion: consent.termsVersion,
+            privacyVersion: consent.privacyVersion,
+            acceptedAt: consent.acceptedAt.toISOString(),
+          },
         },
       });
 
@@ -1348,6 +1395,15 @@ export class AuthService {
       default:
         return 30;
     }
+  }
+
+  private currentLegalVersions(): { termsVersion: string; privacyVersion: string } {
+    return {
+      termsVersion:
+        this.config.get<string>('app.legal.termsVersion') ?? '2026-09-27',
+      privacyVersion:
+        this.config.get<string>('app.legal.privacyVersion') ?? '2026-09-27',
+    };
   }
 
   private async uniqueClinicSlug(base: string): Promise<string> {
