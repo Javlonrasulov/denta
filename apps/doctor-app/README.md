@@ -1,4 +1,4 @@
-# Denta Doctor App
+# ORADENT Doctor App
 
 React Native + Expo mobile app for doctors.
 

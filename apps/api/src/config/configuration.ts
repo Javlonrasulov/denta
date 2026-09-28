@@ -38,8 +38,9 @@ export default registerAs('app', () => {
       secure: process.env.SMTP_SECURE === 'true',
       user: process.env.SMTP_USER,
       password: process.env.SMTP_PASSWORD,
-      from: process.env.SMTP_FROM ?? 'DENTA <noreply@denta.uz>',
+      from: process.env.SMTP_FROM ?? 'ORADENT <no-reply@oradent.uz>',
     },
+    supportEmail: process.env.SUPPORT_EMAIL ?? 'support@oradent.uz',
     storage: {
       /** local | s3 — stay on local until S3 credentials are wired */
       driver: process.env.STORAGE_DRIVER || 'local',

@@ -39,5 +39,5 @@ Manual Super Admin activation (30/90/365 days) can come later — keep status mo
 
 ## Email templates
 
-Subject: `DENTA.UZ — Email manzilingizni tasdiqlang`  
+Subject: `ORADENT — Email manzilingizni tasdiqlang`  
 Also prepare: password reset, trial reminders (7 / 3 / 1 / expired).

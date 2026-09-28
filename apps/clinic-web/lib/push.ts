@@ -59,7 +59,7 @@ export async function registerClinicWebPush(): Promise<string | null> {
 
   // Foreground messages → browser Notification
   onMessage(messaging, (payload) => {
-    const title = payload.notification?.title ?? 'DENTA.UZ';
+    const title = payload.notification?.title ?? 'ORADENT';
     const body = payload.notification?.body ?? '';
     if (Notification.permission === 'granted') {
       new Notification(title, { body, icon: '/favicon.ico' });

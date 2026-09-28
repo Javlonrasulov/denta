@@ -1,6 +1,6 @@
 {
   "common": {
-    "app_name": "DENTA.UZ",
+    "app_name": "ORADENT",
     "tagline": "Modern Dental Care Platform",
     "add": "Add",
     "export": "Export",
@@ -80,7 +80,7 @@
     "good_evening": "Good evening",
     "quick_actions": "Quick actions",
     "book": "Book",
-    "hero_kicker": "DENTA.UZ",
+    "hero_kicker": "ORADENT",
     "hero_title": "Find a dentist nearby",
     "hero_subtitle": "Choose a clinic or doctor and book a convenient time.",
     "cta_find_clinic": "Search",
@@ -99,7 +99,7 @@
     "legend_clinics": "Clinics",
     "legend_open": "Open",
     "legend_closed": "Closed",
-    "trust_title": "Why DENTA.UZ?",
+    "trust_title": "Why ORADENT?",
     "trust_subtitle": "Booking dental care made simple and reliable",
     "trust_verified": "Verified clinics",
     "trust_doctors": "Qualified doctors",
@@ -313,7 +313,7 @@
     "title": "Profile",
     "cabinet_subtitle": "Your personal account",
     "cabinet_badge": "My account",
-    "guest_name": "DENTA.UZ patient",
+    "guest_name": "ORADENT patient",
     "personal_info": "Personal info",
     "verify_email": "Verify email",
     "phone": "Phone",
@@ -351,7 +351,7 @@
     "logout_confirm": "Log out",
     "edit_profile": "Edit profile",
     "version": "Version {{version}}",
-    "version_brand": "DENTA.UZ Client · v{{version}}"
+    "version_brand": "ORADENT Client · v{{version}}"
   },
   "map": {
     "title": "Map",
@@ -825,7 +825,7 @@
     "logout_all": "Log out all devices",
     "logout": "Log out",
     "logout_title": "Log out of your account?",
-    "logout_body": "You will leave DENTA.UZ Doctor. Appointments and patients stay saved.",
+    "logout_body": "You will leave ORADENT Doctor. Appointments and patients stay saved.",
     "logout_confirm": "Log out",
     "logout_all_title": "Log out on all devices?",
     "logout_all_body": "Other sessions will end, and this device will sign out too.",
@@ -870,13 +870,13 @@
     "required": "Please fill in this field",
     "email_invalid": "Invalid email",
     "phone_invalid": "Invalid phone",
-    "version": "DENTA.UZ Doctor · {{version}}"
+    "version": "ORADENT Doctor · {{version}}"
   },
   "auth": {
     "title": "Sign in",
     "subtitle": "Enter your login and password to continue",
     "welcome": "Welcome",
-    "welcome_subtitle": "Sign in to your DENTA.UZ Doctor account",
+    "welcome_subtitle": "Sign in to your ORADENT Doctor account",
     "welcome_subtitle_generic": "Sign in to your account",
     "tagline": "Your practice.\nYour patients.\nOne place.",
     "tagline_generic": "A modern dental care platform",
@@ -911,7 +911,7 @@
     "credentials_saved": "Saved",
     "register": {
       "title": "Create account",
-      "subtitle": "Open your DENTA.UZ account in a few minutes",
+      "subtitle": "Open your ORADENT account in a few minutes",
       "first_name": "First name",
       "last_name": "Last name",
       "phone": "Phone number",
@@ -1286,13 +1286,13 @@
       "email": "Email",
       "password": "Password",
       "confirm_password": "Confirm password",
-      "consent": "By registering, I agree to the DENTA.UZ <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",
+      "consent": "By registering, I agree to the ORADENT <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",
       "cta": "Start 30-day free trial",
       "have_account": "Already have an account?",
       "sign_in": "Sign in"
     },
     "login": {
-      "title": "Sign in to DENTA.UZ",
+      "title": "Sign in to ORADENT",
       "subtitle": "Use your phone or email and password.",
       "identifier": "Phone or email",
       "identifier_placeholder": "+998 90 123 45 67 or email",
@@ -1315,7 +1315,7 @@
       "dev_hint": "DEV code: {{code}}"
     },
     "success": {
-      "title": "Welcome to DENTA.UZ!",
+      "title": "Welcome to ORADENT!",
       "subtitle": "Your account has been verified.",
       "trial_started": "Your 30-day free trial has started.",
       "ends_on": "Trial ends on {{date}}",
@@ -1371,11 +1371,11 @@
       "ends": "Ends",
       "status": "Status",
       "status_trial": "Trial",
-      "payment_note": "Payment is manual for now. Contact DENTA.UZ when the trial ends."
+      "payment_note": "Payment is manual for now. Contact ORADENT when the trial ends."
     },
     "expired": {
       "title": "Trial ended",
-      "body": "Contact DENTA.UZ to continue. Your data is kept.",
+      "body": "Contact ORADENT to continue. Your data is kept.",
       "phone": "Phone",
       "data_kept": "Doctors, patients, appointments and finance are not deleted.",
       "logout": "Sign out"

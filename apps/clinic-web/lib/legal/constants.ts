@@ -16,7 +16,8 @@ function envInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export const LEGAL_BRAND = 'DENTA.UZ';
+export const LEGAL_BRAND = 'ORADENT';
+export const LEGAL_DOMAIN = 'oradent.uz';
 
 /** Bump together with API `LEGAL_TERMS_VERSION` / `LEGAL_PRIVACY_VERSION`. */
 export const TERMS_VERSION =

@@ -93,7 +93,7 @@ function logDevOtp(email: string, code: string, purpose: string): void {
   if (process.env.NODE_ENV === 'production') return;
   // eslint-disable-next-line no-console
   console.info(
-    `[DENTA.UZ DEV] Email OTP (${purpose}) → ${email}: ${code} (valid 10 min)`,
+    `[ORADENT DEV] Email OTP (${purpose}) → ${email}: ${code} (valid 10 min)`,
   );
 }
 

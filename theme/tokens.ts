@@ -1,5 +1,5 @@
 /**
- * DENTA.UZ design tokens — premium medical SaaS.
+ * ORADENT design tokens — premium medical SaaS.
  * Typography: Geologica (display/headings) + Golos Text (body/UI).
  * Golos is Cyrillic-first (Paratype); Geologica has strong Cyrillic for brand type.
  * Dark mode: clear elevation layers, not muddy navy-on-navy.

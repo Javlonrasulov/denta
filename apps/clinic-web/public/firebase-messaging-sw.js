@@ -21,7 +21,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'DENTA.UZ';
+  const title = payload.notification?.title || 'ORADENT';
   const body = payload.notification?.body || '';
   self.registration.showNotification(title, {
     body,

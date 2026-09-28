@@ -1,4 +1,4 @@
-/** Shared design tokens for DENTA.UZ products (Clinic Web primary consumer). */
+/** Shared design tokens for ORADENT products (Clinic Web primary consumer). */
 
 export const colors = {
   primary: '#4338CA',

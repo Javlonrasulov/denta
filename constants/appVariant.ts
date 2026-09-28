@@ -36,7 +36,7 @@ export const LOCKED_ROLE: UserRole | null =
 
 export const APP_DISPLAY_NAME =
   Constants.expoConfig?.name ??
-  (APP_VARIANT === 'doctor' ? 'Denta Doctor' : APP_VARIANT === 'client' ? 'Denta' : 'DENTA.UZ');
+  (APP_VARIANT === 'doctor' ? 'ORADENT Doctor' : 'ORADENT');
 
 export const APP_VARIANT_LABEL =
   APP_VARIANT === 'doctor' ? 'Doctor' : APP_VARIANT === 'client' ? 'Client' : 'Clinic';

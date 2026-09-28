@@ -1,4 +1,4 @@
-# DENTA.UZ
+# ORADENT
 
 Uchta alohida product:
 

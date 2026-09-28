@@ -14,9 +14,28 @@ const onest = Onest({
   preload: true,
 });
 
+const SITE_TITLE = 'ORADENT — Klinika boshqaruv tizimi';
+const SITE_DESCRIPTION =
+  'ORADENT — stomatologiya klinikalari uchun zamonaviy boshqaruv tizimi: qabullar, bemorlar, shifokorlar, moliya va ombor.';
+
 export const metadata: Metadata = {
-  title: 'DENTA.UZ',
-  description: 'Professional clinic management for dental practices',
+  metadataBase: new URL('https://oradent.uz'),
+  applicationName: 'ORADENT',
+  title: { default: SITE_TITLE, template: '%s — ORADENT' },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    siteName: 'ORADENT',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: 'https://oradent.uz',
+    locale: 'uz_UZ',
+  },
+  twitter: {
+    card: 'summary',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

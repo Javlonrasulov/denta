@@ -16,21 +16,21 @@ const VARIANTS: Record<
   }
 > = {
   client: {
-    name: 'Denta',
+    name: 'ORADENT',
     slug: 'denta-client',
     scheme: 'denta-client',
     androidPackage: 'uz.denta.client',
     iosBundle: 'uz.denta.client',
   },
   doctor: {
-    name: 'Denta Doctor',
+    name: 'ORADENT Doctor',
     slug: 'denta-doctor',
     scheme: 'denta-doctor',
     androidPackage: 'uz.denta.doctor',
     iosBundle: 'uz.denta.doctor',
   },
   clinic: {
-    name: 'DENTA.UZ',
+    name: 'ORADENT',
     slug: 'denta-clinic',
     scheme: 'denta-clinic',
     androidPackage: 'uz.denta.clinic',
@@ -131,9 +131,9 @@ export default ({
       'expo-image-picker',
       {
         photosPermission:
-          'Allow DENTA Doctor to access your photos so you can update your profile picture.',
+          `Allow ${selected.name} to access your photos so you can update your profile picture.`,
         cameraPermission:
-          'Allow DENTA Doctor to use the camera to take a profile picture.',
+          `Allow ${selected.name} to use the camera to take a profile picture.`,
         microphonePermission: false,
       },
     ],
@@ -141,7 +141,7 @@ export default ({
       'expo-location',
       {
         locationWhenInUsePermission:
-          'Allow DENTA to use your location to show nearby dental clinics on the map.',
+          `Allow ${selected.name} to use your location to show nearby dental clinics on the map.`,
       },
     ],
     [

@@ -1,4 +1,4 @@
-# Denta Client App
+# ORADENT Client App
 
 React Native + Expo mobile app for patients.
 

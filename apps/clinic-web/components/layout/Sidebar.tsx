@@ -279,7 +279,7 @@ export function Sidebar({
           aria-hidden={collapsed}
         >
           <p className="whitespace-nowrap text-[17px] font-semibold leading-tight tracking-[-0.01em]">
-            DENTA.UZ
+            ORADENT
           </p>
           <p className="mt-0.5 truncate whitespace-nowrap text-caption text-sidebar-muted">
             {clinicName}

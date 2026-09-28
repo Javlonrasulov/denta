@@ -33,7 +33,9 @@ export class MailService {
   }): Promise<void> {
     const from =
       this.config.get<string>('app.smtp.from') ??
-      'DENTA <noreply@denta.uz>';
+      'ORADENT <no-reply@oradent.uz>';
+    const support =
+      this.config.get<string>('app.supportEmail') ?? 'support@oradent.uz';
 
     if (!this.transporter) {
       this.logger.warn(
@@ -42,20 +44,24 @@ export class MailService {
       return;
     }
 
+    const footerText = `\n\n—\nORADENT · https://oradent.uz\nYordam: ${support}`;
+    const footerHtml = `<hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 12px" /><p style="color:#6B7280;font-size:12px">ORADENT · <a href="https://oradent.uz">oradent.uz</a><br />Yordam: <a href="mailto:${support}">${support}</a></p>`;
+
     // BullMQ queue integration will wrap this; sync send for MVP.
     await this.transporter.sendMail({
       from,
+      replyTo: support,
       to: opts.to,
       subject: opts.subject,
-      text: opts.text,
-      html: opts.html ?? `<p>${opts.text}</p>`,
+      text: opts.text + footerText,
+      html: (opts.html ?? `<p>${opts.text}</p>`) + footerHtml,
     });
   }
 
   async sendVerificationOtp(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
-      subject: 'DENTA — Email manzilingizni tasdiqlang',
+      subject: 'ORADENT — Email manzilingizni tasdiqlang',
       text: `Tasdiqlash kodi: ${code}\nAmal qilish muddati: 10 daqiqa.`,
       html: `<p>Tasdiqlash kodi: <strong>${code}</strong></p><p>Amal qilish muddati: 10 daqiqa.</p>`,
     });
@@ -64,7 +70,7 @@ export class MailService {
   async sendPasswordResetOtp(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
-      subject: 'DENTA — Parolni tiklash',
+      subject: 'ORADENT — Parolni tiklash',
       text: `Parolni tiklash kodi: ${code}\nAmal qilish muddati: 10 daqiqa.`,
       html: `<p>Parolni tiklash kodi: <strong>${code}</strong></p><p>Amal qilish muddati: 10 daqiqa.</p>`,
     });
@@ -81,7 +87,7 @@ export class MailService {
     const expires = opts.expiresAt.toISOString().slice(0, 16).replace('T', ' ');
     await this.sendMail({
       to: opts.to,
-      subject: `DENTA — ${opts.clinicName} klinikaga taklif`,
+      subject: `ORADENT — ${opts.clinicName} klinikaga taklif`,
       text: [
         `Salom ${opts.inviteeName},`,
         ``,

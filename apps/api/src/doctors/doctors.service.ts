@@ -513,7 +513,7 @@ export class DoctorsService {
     const phone = normalizePhone(dto.phone);
     if (!phone) throw new AppError('INVALID_PHONE', 'Invalid phone', 400);
 
-    const password = dto.password ?? `Denta${Math.random().toString(36).slice(2, 10)}`;
+    const password = dto.password ?? `Oradent${Math.random().toString(36).slice(2, 10)}`;
     if (!isValidPassword(password)) {
       throw new AppError(
         'INVALID_PASSWORD',

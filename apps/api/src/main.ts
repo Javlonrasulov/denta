@@ -43,7 +43,7 @@ async function bootstrap() {
   }
 
   const swagger = new DocumentBuilder()
-    .setTitle('DENTA.UZ API')
+    .setTitle('ORADENT API')
     .setDescription('Central API for Client App, Doctor App, and Clinic CRM')
     .setVersion('1.0')
     .addBearerAuth()
@@ -53,7 +53,7 @@ async function bootstrap() {
 
   await app.listen(port);
   // eslint-disable-next-line no-console
-  console.log(`DENTA.UZ API listening on http://localhost:${port}/api/v1`);
+  console.log(`ORADENT API listening on http://localhost:${port}/api/v1`);
   // eslint-disable-next-line no-console
   console.log(`Swagger: http://localhost:${port}/api/docs`);
 }

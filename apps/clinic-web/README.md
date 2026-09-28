@@ -1,4 +1,4 @@
-# DENTA.UZ Clinic CRM (Web)
+# ORADENT Clinic CRM (Web)
 
 Next.js + TypeScript desktop/tablet Clinic CRM.
 

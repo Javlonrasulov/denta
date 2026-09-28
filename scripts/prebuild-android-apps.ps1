@@ -1,6 +1,6 @@
 # Generates two separate Android Studio projects:
-#   android-client  → uz.denta.client  (Denta)
-#   android-doctor  → uz.denta.doctor  (Denta Doctor)
+#   android-client  → uz.denta.client  (ORADENT)
+#   android-doctor  → uz.denta.doctor  (ORADENT Doctor)
 #
 # Usage (from repo root, PowerShell):
 #   .\scripts\prebuild-android-apps.ps1

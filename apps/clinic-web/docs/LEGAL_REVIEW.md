@@ -1,8 +1,8 @@
-# DENTA.UZ legal documents — review checklist
+# ORADENT legal documents — review checklist
 
 Public pages: `/terms` (Foydalanish shartlari) and `/privacy` (Maxfiylik siyosati).
 
-The texts are written for DENTA.UZ, but a lawyer must confirm the items below
+The texts are written for ORADENT, but a lawyer must confirm the items below
 before production launch. Nothing in this list is shown to users as "TODO":
 unset operator fields fall back to neutral wording, and the rest are phrased
 so they defer to the contract / commercial offer / law.
@@ -59,7 +59,7 @@ keep the same section `id`s (they are public anchors), and register it in
 - No approximate article numbers of laws.
 - No penalty percentage unless it is in a signed contract / commercial offer.
 - No absolute security guarantees; no promise of immediate full deletion.
-- DENTA.UZ is a software platform, not a medical provider; clinics and doctors
+- ORADENT is a software platform, not a medical provider; clinics and doctors
   are responsible for medical decisions.
 - Third parties: describe only services actually used (SMTP, Firebase Cloud
   Messaging, Google Maps, S3-compatible storage, hosting, monitoring). Payment

@@ -165,9 +165,9 @@ export default function OnboardingPage() {
       <header className="flex items-center justify-between border-b border-slate-200/80 bg-white px-4 py-4 tablet:px-8">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">
-            D
+            O
           </span>
-          <span className="font-bold text-primary">DENTA.UZ</span>
+          <span className="font-bold text-primary">ORADENT</span>
         </div>
         <LanguageSelector />
       </header>

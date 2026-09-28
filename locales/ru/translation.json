@@ -1,6 +1,6 @@
 {
   "common": {
-    "app_name": "DENTA.UZ",
+    "app_name": "ORADENT",
     "tagline": "Современная платформа стоматологии",
     "add": "Добавить",
     "export": "Экспорт",
@@ -80,7 +80,7 @@
     "good_evening": "Добрый вечер",
     "quick_actions": "Быстрые действия",
     "book": "Запись",
-    "hero_kicker": "DENTA.UZ",
+    "hero_kicker": "ORADENT",
     "hero_title": "Найдите стоматологию рядом",
     "hero_subtitle": "Выберите клинику или врача и запишитесь на удобное время.",
     "cta_find_clinic": "Найти",
@@ -99,7 +99,7 @@
     "legend_clinics": "Клиники",
     "legend_open": "Открыто",
     "legend_closed": "Закрыто",
-    "trust_title": "Почему DENTA.UZ?",
+    "trust_title": "Почему ORADENT?",
     "trust_subtitle": "Запись к врачу — просто, быстро и надёжно",
     "trust_verified": "Проверенные клиники",
     "trust_doctors": "Опытные врачи",
@@ -313,7 +313,7 @@
     "title": "Профиль",
     "cabinet_subtitle": "Ваш личный кабинет",
     "cabinet_badge": "Мой аккаунт",
-    "guest_name": "Пациент DENTA.UZ",
+    "guest_name": "Пациент ORADENT",
     "personal_info": "Личные данные",
     "verify_email": "Подтвердить email",
     "phone": "Телефон",
@@ -351,7 +351,7 @@
     "logout_confirm": "Выйти",
     "edit_profile": "Редактировать профиль",
     "version": "Версия {{version}}",
-    "version_brand": "DENTA.UZ Client · v{{version}}"
+    "version_brand": "ORADENT Client · v{{version}}"
   },
   "map": {
     "title": "Карта",
@@ -825,7 +825,7 @@
     "logout_all": "Выйти на всех устройствах",
     "logout": "Выйти",
     "logout_title": "Выйти из аккаунта?",
-    "logout_body": "Вы выйдете из DENTA.UZ Doctor. Приёмы и пациенты сохранятся.",
+    "logout_body": "Вы выйдете из ORADENT Doctor. Приёмы и пациенты сохранятся.",
     "logout_confirm": "Выйти",
     "logout_all_title": "Выйти на всех устройствах?",
     "logout_all_body": "Другие сессии завершатся, и этот вход тоже будет закрыт.",
@@ -870,13 +870,13 @@
     "required": "Заполните поле",
     "email_invalid": "Некорректный email",
     "phone_invalid": "Некорректный телефон",
-    "version": "DENTA.UZ Doctor · {{version}}"
+    "version": "ORADENT Doctor · {{version}}"
   },
   "auth": {
     "title": "Вход",
     "subtitle": "Введите логин и пароль, чтобы продолжить",
     "welcome": "Добро пожаловать",
-    "welcome_subtitle": "Войдите в аккаунт DENTA.UZ Doctor",
+    "welcome_subtitle": "Войдите в аккаунт ORADENT Doctor",
     "welcome_subtitle_generic": "Войдите в свой аккаунт",
     "tagline": "Ваша практика.\nВаши пациенты.\nВ одном месте.",
     "tagline_generic": "Современная стоматологическая платформа",
@@ -911,7 +911,7 @@
     "credentials_saved": "Сохранено",
     "register": {
       "title": "Регистрация",
-      "subtitle": "Создайте аккаунт DENTA.UZ за пару минут",
+      "subtitle": "Создайте аккаунт ORADENT за пару минут",
       "first_name": "Имя",
       "last_name": "Фамилия",
       "phone": "Номер телефона",
@@ -1286,13 +1286,13 @@
       "email": "Email",
       "password": "Пароль",
       "confirm_password": "Повторите пароль",
-      "consent": "Регистрируясь, я принимаю <terms>Условия использования</terms> и <privacy>Политику конфиденциальности</privacy> DENTA.UZ.",
+      "consent": "Регистрируясь, я принимаю <terms>Условия использования</terms> и <privacy>Политику конфиденциальности</privacy> ORADENT.",
       "cta": "Начать 30 дней бесплатно",
       "have_account": "Уже есть аккаунт?",
       "sign_in": "Войти"
     },
     "login": {
-      "title": "Вход в DENTA.UZ",
+      "title": "Войти в ORADENT",
       "subtitle": "Войдите по телефону или email и паролю.",
       "identifier": "Телефон или email",
       "identifier_placeholder": "+998 90 123 45 67 или email",
@@ -1315,7 +1315,7 @@
       "dev_hint": "DEV код: {{code}}"
     },
     "success": {
-      "title": "Добро пожаловать в DENTA.UZ!",
+      "title": "Добро пожаловать в ORADENT!",
       "subtitle": "Аккаунт успешно подтверждён.",
       "trial_started": "Ваш 30-дневный пробный период начался.",
       "ends_on": "Пробный период до {{date}}",
@@ -1371,11 +1371,11 @@
       "ends": "Окончание",
       "status": "Статус",
       "status_trial": "Trial",
-      "payment_note": "Оплата пока ручная. Свяжитесь с DENTA.UZ после окончания."
+      "payment_note": "Оплата пока ручная. Свяжитесь с ORADENT после окончания."
     },
     "expired": {
       "title": "Пробный период закончился",
-      "body": "Свяжитесь с DENTA.UZ, чтобы продолжить. Данные сохранены.",
+      "body": "Свяжитесь с ORADENT, чтобы продолжить. Данные сохранены.",
       "phone": "Телефон",
       "data_kept": "Врачи, пациенты, записи и финансы не удаляются.",
       "logout": "Выйти"

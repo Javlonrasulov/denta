@@ -68,7 +68,7 @@ export default function RoleGateScreen() {
         }}
       >
         <Text variant="display" color={colors.primary}>
-          DENTA.UZ Clinic CRM
+          ORADENT Clinic CRM
         </Text>
         <Text variant="body" color={colors.textSecondary}>
           Clinic CRM is a separate Next.js web app. Expo Web is not the clinic product.

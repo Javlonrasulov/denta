@@ -80,9 +80,9 @@ export function LegalDocumentView({ kind }: { kind: LegalDocumentKind }) {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 tablet:px-8">
           <Link href={fallbackHref} className="group flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-lg shadow-primary/25 print:shadow-none">
-              D
+              O
             </span>
-            <span className="text-lg font-bold tracking-tight text-primary">DENTA.UZ</span>
+            <span className="text-lg font-bold tracking-tight text-primary">ORADENT</span>
           </Link>
           <div className="flex items-center gap-2 print:hidden">
             <button
@@ -158,7 +158,7 @@ export function LegalDocumentView({ kind }: { kind: LegalDocumentKind }) {
 
           <article className="min-w-0 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm tablet:p-10 print:border-0 print:p-0 print:shadow-none">
             <header className="border-b border-slate-100 pb-6">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">DENTA.UZ</p>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">ORADENT</p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 tablet:text-4xl">
                 {doc.title}
               </h1>
@@ -222,7 +222,7 @@ export function LegalDocumentView({ kind }: { kind: LegalDocumentKind }) {
 
             <footer className="mt-12 flex flex-col gap-3 border-t border-slate-100 pt-6 text-sm text-slate-500 tablet:flex-row tablet:items-center tablet:justify-between print:hidden">
               <span>
-                © {doc.effectiveDate.slice(0, 4)} DENTA.UZ · {t('legal.version')} {doc.version}
+                © {doc.effectiveDate.slice(0, 4)} ORADENT · oradent.uz · {t('legal.version')} {doc.version}
               </span>
               <Link href={`/${otherKind}`} className="font-medium text-primary hover:underline">
                 {t(`legal.${otherKind}_title`)} →

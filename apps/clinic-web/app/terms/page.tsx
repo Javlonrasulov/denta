@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { LegalDocumentView } from '@/components/legal/LegalDocumentView';
 
 export const metadata: Metadata = {
-  title: 'Foydalanish shartlari — DENTA.UZ',
-  description: 'DENTA.UZ platformasidan foydalanish shartlari: sinov davri, obuna, to‘lovlar, rollar va javobgarlik.',
+  title: { absolute: 'ORADENT Foydalanish shartlari' },
+  description: 'ORADENT platformasidan foydalanish shartlari: sinov davri, obuna, to‘lovlar, rollar va javobgarlik.',
+  alternates: { canonical: '/terms' },
 };
 
 export default function TermsPage() {

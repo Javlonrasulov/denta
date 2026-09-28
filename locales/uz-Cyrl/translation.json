@@ -1,6 +1,6 @@
 {
   "common": {
-    "app_name": "DENTA.UZ",
+    "app_name": "ORADENT",
     "tagline": "Замонавий стоматология платформаси",
     "add": "Қўшиш",
     "export": "Экспорт",
@@ -80,7 +80,7 @@
     "good_evening": "Хайрли кеч",
     "quick_actions": "Тез амаллар",
     "book": "Банд қилиш",
-    "hero_kicker": "DENTA.UZ",
+    "hero_kicker": "ORADENT",
     "hero_title": "Яқин стоматологияни топинг",
     "hero_subtitle": "Клиника ёки шифокорни танланг ва қулай вақтга қабулга ёзилинг.",
     "cta_find_clinic": "Топиш",
@@ -99,7 +99,7 @@
     "legend_clinics": "Клиникалар",
     "legend_open": "Очиқ",
     "legend_closed": "Ёпиқ",
-    "trust_title": "Нега DENTA.UZ?",
+    "trust_title": "Нега ORADENT?",
     "trust_subtitle": "Қабулга ёзилиш осон, тез ва ишончли",
     "trust_verified": "Тасдиқланган клиникалар",
     "trust_doctors": "Малакали шифокорлар",
@@ -313,7 +313,7 @@
     "title": "Профил",
     "cabinet_subtitle": "Шахсий кабинетингиз",
     "cabinet_badge": "Менинг ҳисобим",
-    "guest_name": "DENTA.UZ бемори",
+    "guest_name": "ORADENT бемори",
     "personal_info": "Шахсий маълумотлар",
     "verify_email": "Emailни тасдиқлаш",
     "phone": "Телефон",
@@ -351,7 +351,7 @@
     "logout_confirm": "Чиқиш",
     "edit_profile": "Профилни таҳрирлаш",
     "version": "Версия {{version}}",
-    "version_brand": "DENTA.UZ Client · v{{version}}"
+    "version_brand": "ORADENT Client · v{{version}}"
   },
   "map": {
     "title": "Харита",
@@ -825,7 +825,7 @@
     "logout_all": "Барча қурилмалардан чиқиш",
     "logout": "Чиқиш",
     "logout_title": "Ҳисобдан чиқасизми?",
-    "logout_body": "Сиз DENTA.UZ Doctor ҳисобидан чиқасиз. Қабуллар ва беморлар сақланиб қолади.",
+    "logout_body": "Сиз ORADENT Doctor ҳисобидан чиқасиз. Қабуллар ва беморлар сақланиб қолади.",
     "logout_confirm": "Чиқиш",
     "logout_all_title": "Барча қурилмалардан чиқасизми?",
     "logout_all_body": "Бошқа сессиялар якунланади ва бу қурилмадан ҳам чиқасиз.",
@@ -870,13 +870,13 @@
     "required": "Майдонни тўлдиринг",
     "email_invalid": "Email нотўғри",
     "phone_invalid": "Телефон нотўғри",
-    "version": "DENTA.UZ Doctor · {{version}}"
+    "version": "ORADENT Doctor · {{version}}"
   },
   "auth": {
     "title": "Кириш",
     "subtitle": "Давом этиш учун логин ва паролингизни киритинг",
     "welcome": "Хуш келибсиз",
-    "welcome_subtitle": "DENTA.UZ Doctor ҳисобингизга киринг",
+    "welcome_subtitle": "ORADENT Doctor ҳисобингизга киринг",
     "welcome_subtitle_generic": "Ҳисобингизга киринг",
     "tagline": "Амалиётингиз.\nБеморларингиз.\nБир жойда.",
     "tagline_generic": "Замонавий стоматология платформаси",
@@ -911,7 +911,7 @@
     "credentials_saved": "Сақланди",
     "register": {
       "title": "Рўйхатдан ўтиш",
-      "subtitle": "Бир неча дақиқада DENTA.UZ ҳисобини очинг",
+      "subtitle": "Бир неча дақиқада ORADENT ҳисобини очинг",
       "first_name": "Исм",
       "last_name": "Фамилия",
       "phone": "Телефон рақами",
@@ -1286,13 +1286,13 @@
       "email": "Email",
       "password": "Парол",
       "confirm_password": "Паролни такрорлаш",
-      "consent": "Рўйхатдан ўтиш орқали DENTA.UZ <terms>Фойдаланиш шартлари</terms> ва <privacy>Махфийлик сиёсати</privacy>га розилик билдираман.",
+      "consent": "Рўйхатдан ўтиш орқали ORADENT <terms>Фойдаланиш шартлари</terms> ва <privacy>Махфийлик сиёсати</privacy>га розилик билдираман.",
       "cta": "30 кун бепул бошлаш",
       "have_account": "Аккаунтингиз борми?",
       "sign_in": "Кириш"
     },
     "login": {
-      "title": "DENTA.UZ га кириш",
+      "title": "ORADENT га кириш",
       "subtitle": "Телефон ёки email ва парол билан киринг.",
       "identifier": "Телефон ёки email",
       "identifier_placeholder": "+998 90 123 45 67 ёки email",
@@ -1315,7 +1315,7 @@
       "dev_hint": "DEV код: {{code}}"
     },
     "success": {
-      "title": "Хуш келибсиз, DENTA.UZ’га!",
+      "title": "Хуш келибсиз, ORADENT’га!",
       "subtitle": "Ҳисобингиз муваффақиятли тасдиқланди.",
       "trial_started": "30 кунлик бепул синов даври бошланди.",
       "ends_on": "Синов тугаш санаси: {{date}}",
@@ -1371,11 +1371,11 @@
       "ends": "Тугайди",
       "status": "Статус",
       "status_trial": "Trial",
-      "payment_note": "Тўлов ҳозирча қўлда. Муддат тугагач DENTA.UZ билан боғланинг."
+      "payment_note": "Тўлов ҳозирча қўлда. Муддат тугагач ORADENT билан боғланинг."
     },
     "expired": {
       "title": "Синов муддати якунланди",
-      "body": "Хизматдан фойдаланишни давом эттириш учун DENTA.UZ билан боғланинг. Маълумотларингиз сақланади.",
+      "body": "Хизматдан фойдаланишни давом эттириш учун ORADENT билан боғланинг. Маълумотларингиз сақланади.",
       "phone": "Телефон",
       "data_kept": "Шифокорлар, беморлар, қабуллар ва молия ўчирилмайди.",
       "logout": "Чиқиш"

@@ -1,8 +1,8 @@
 {
   "name": "@denta/api",
   "version": "0.1.0",
-  "description": "DENTA.UZ central API — NestJS + Prisma + PostgreSQL",
-  "author": "DENTA.UZ",
+  "description": "ORADENT central API — NestJS + Prisma + PostgreSQL",
+  "author": "ORADENT",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

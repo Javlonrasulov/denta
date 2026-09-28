@@ -164,7 +164,7 @@ export async function getDoctorSessions(): Promise<DoctorDeviceSession[]> {
     return [
       {
         id: 'session-current',
-        device: 'Pixel · DENTA Doctor',
+        device: 'Pixel · ORADENT Doctor',
         location: 'Toshkent',
         lastActiveKey: 'now',
         current: true,

@@ -1,4 +1,4 @@
-# DENTA production stack — isolated from TAOMIM
+# ORADENT production stack — isolated from TAOMIM
 # Usage on server: docker compose -p denta -f docker-compose.prod.yml --env-file .env up -d --build
 name: denta
 

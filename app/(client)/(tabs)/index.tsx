@@ -386,7 +386,7 @@ export default function HomeDashboardScreen() {
                   paddingRight: 12,
                 }}
               >
-                DENTA.UZ
+                ORADENT
               </RNText>
             </View>
 

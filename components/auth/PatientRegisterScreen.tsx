@@ -49,8 +49,8 @@ import {
   normalizeUzPhone,
 } from '@/utils/phone';
 
-const TERMS_URL = 'https://denta.uz/terms';
-const PRIVACY_URL = 'https://denta.uz/privacy';
+const TERMS_URL = 'https://oradent.uz/terms';
+const PRIVACY_URL = 'https://oradent.uz/privacy';
 
 export function PatientRegisterScreen() {
   const { t } = useTranslation();

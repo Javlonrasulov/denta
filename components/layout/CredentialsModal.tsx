@@ -131,7 +131,7 @@ export function CredentialsModal({ visible, onClose }: CredentialsModalProps) {
                 onChangeText={setLogin}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholder={adminLogin || 'admin@denta.uz'}
+                placeholder={adminLogin || 'admin@oradent.uz'}
               />
               <Input
                 label={t('auth.current_password')}

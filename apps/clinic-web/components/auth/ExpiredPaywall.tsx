@@ -7,7 +7,8 @@ import { useAuth } from '@/components/providers/AuthProvider';
 
 const SUPPORT = {
   phone: process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? '+998 71 200 00 00',
-  telegram: process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM ?? 'https://t.me/dentauz',
+  email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'support@oradent.uz',
+  telegram: process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM,
 };
 
 export function ExpiredPaywall() {
@@ -32,16 +33,24 @@ export function ExpiredPaywall() {
             </a>
           </p>
           <p>
-            <span className="text-slate-500">Telegram: </span>
-            <a
-              href={SUPPORT.telegram}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-primary"
-            >
-              {SUPPORT.telegram.replace('https://t.me/', '@')}
+            <span className="text-slate-500">Email: </span>
+            <a href={`mailto:${SUPPORT.email}`} className="font-semibold text-primary">
+              {SUPPORT.email}
             </a>
           </p>
+          {SUPPORT.telegram ? (
+            <p>
+              <span className="text-slate-500">Telegram: </span>
+              <a
+                href={SUPPORT.telegram}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-primary"
+              >
+                {SUPPORT.telegram.replace('https://t.me/', '@')}
+              </a>
+            </p>
+          ) : null}
         </div>
         <p className="mt-4 text-xs text-slate-400">{t('clinicAuth.expired.data_kept')}</p>
         <button

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Server-side bootstrap for DENTA (run on Contabo as root)
+# Server-side bootstrap for ORADENT (run on Contabo as root)
 set -euo pipefail
 
 DENTA_ROOT=/opt/denta
@@ -15,7 +15,7 @@ fi
 chmod 600 .env
 chmod +x deploy/backup-denta.sh || true
 
-echo "==> Building and starting DENTA stack (isolated project name: denta)"
+echo "==> Building and starting ORADENT stack (isolated project name: denta)"
 docker compose -p denta -f docker-compose.prod.yml --env-file .env up -d --build
 
 echo "==> Waiting for API health"

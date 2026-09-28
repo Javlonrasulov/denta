@@ -54,7 +54,7 @@ export const useSettingsStore = create<SettingsState>()(
       isAuthenticated: false,
       patientOnboardingDone: true,
       adminName: 'Admin',
-      adminLogin: 'admin@denta.uz',
+      adminLogin: 'admin@oradent.uz',
       adminPassword: '',
       workspaces: [],
       activeWorkspace: null,

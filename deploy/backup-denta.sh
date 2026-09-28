@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Daily DENTA PostgreSQL dump — isolated from TAOMIM backups
+# Daily ORADENT PostgreSQL dump — isolated from TAOMIM backups
 set -euo pipefail
 
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/denta}"
