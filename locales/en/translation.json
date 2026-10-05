@@ -1398,6 +1398,7 @@
       "phone_taken": "This phone number is already registered.",
       "invalid_credentials": "Incorrect email/phone or password.",
       "email_not_verified": "Your email is not verified yet.",
+      "email_not_registered": "No account is registered with this email. Check the address or sign up.",
       "invalid_code": "Invalid verification code.",
       "code_expired": "This code has expired.",
       "resend_cooldown": "You can resend the code in {{seconds}} seconds.",

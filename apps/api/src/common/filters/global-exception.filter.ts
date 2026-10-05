@@ -54,7 +54,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             exception.message);
       return response.status(status).json({
         statusCode: status,
-        code: status === 401 ? 'UNAUTHORIZED' : 'UNKNOWN',
+        code:
+          status === 401
+            ? 'UNAUTHORIZED'
+            : status === 429
+              ? 'RATE_LIMITED'
+              : 'UNKNOWN',
         message: Array.isArray(message) ? message.join(', ') : message,
       });
     }

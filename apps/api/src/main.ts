@@ -17,6 +17,8 @@ async function bootstrap() {
   const port = config.get<number>('app.port') ?? 4000;
   const origins = config.get<string[]>('app.corsOrigins') ?? [];
 
+  // Behind nginx: rate limits and audit IPs must use the real client address.
+  app.set('trust proxy', 'loopback, linklocal, uniquelocal');
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.enableCors({
     origin: origins,

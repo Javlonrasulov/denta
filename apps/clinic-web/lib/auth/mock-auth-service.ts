@@ -306,10 +306,7 @@ export function createMockAuthService(): AuthService {
       const email = normalizeEmail(emailRaw);
       if (!isValidEmail(email)) throw new AuthError('INVALID_EMAIL');
       const account = findByEmail(email);
-      // Don't leak existence in production; for DEV still send if exists
-      if (!account) {
-        return { resendAvailableIn: RESEND_COOLDOWN_SEC };
-      }
+      if (!account) throw new AuthError('EMAIL_NOT_REGISTERED');
       return issueOtp(account, 'reset_password');
     },
 
@@ -331,7 +328,6 @@ export function createMockAuthService(): AuthService {
       const resetToken = generateToken();
       account.resetTokenHash = await sha256(resetToken);
       account.resetTokenExpiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
-      account.otp = null;
       upsert(account);
       return { resetToken };
     },

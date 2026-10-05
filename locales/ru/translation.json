@@ -1398,6 +1398,7 @@
       "phone_taken": "Этот телефон уже зарегистрирован.",
       "invalid_credentials": "Неверный email/телефон или пароль.",
       "email_not_verified": "Email ещё не подтверждён.",
+      "email_not_registered": "Аккаунт с этим email не найден. Проверьте адрес или зарегистрируйтесь.",
       "invalid_code": "Неверный код подтверждения.",
       "code_expired": "Срок действия кода истёк.",
       "resend_cooldown": "Код можно отправить через {{seconds}} сек.",

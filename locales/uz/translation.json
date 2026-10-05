@@ -1398,6 +1398,7 @@
       "phone_taken": "Bu telefon raqami allaqachon ro‘yxatdan o‘tgan.",
       "invalid_credentials": "Email/telefon yoki parol noto‘g‘ri.",
       "email_not_verified": "Email manzilingiz hali tasdiqlanmagan.",
+      "email_not_registered": "Bu email bilan ro‘yxatdan o‘tgan akkaunt topilmadi. Emailni tekshiring yoki ro‘yxatdan o‘ting.",
       "invalid_code": "Tasdiqlash kodi noto‘g‘ri.",
       "code_expired": "Kodning amal qilish muddati tugagan.",
       "resend_cooldown": "Kodni {{seconds}} soniyadan keyin qayta yuborishingiz mumkin.",

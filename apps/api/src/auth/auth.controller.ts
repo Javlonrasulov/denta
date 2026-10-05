@@ -146,12 +146,14 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('forgot-password')
   forgot(@Body() dto: ForgotPasswordDto) {
     return this.auth.forgotPassword(dto.email);
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('reset-password/verify')
   verifyReset(@Body() dto: VerifyResetCodeDto) {
     return this.auth.verifyResetCode(dto.email, dto.code);

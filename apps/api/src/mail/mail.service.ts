@@ -45,7 +45,8 @@ export class MailService {
     }
 
     const footerText = `\n\n—\nORADENT · https://oradent.uz\nYordam: ${support}`;
-    const footerHtml = `<hr style="border:none;border-top:1px solid #E5E7EB;margin:24px 0 12px" /><p style="color:#6B7280;font-size:12px">ORADENT · <a href="https://oradent.uz">oradent.uz</a><br />Yordam: <a href="mailto:${support}">${support}</a></p>`;
+    const footerHtml = `<hr style="border:none;border-top:1px solid #E5E7EB;margin:28px 0 14px" /><p style="margin:0;color:#6B7280;font-size:14px;line-height:1.6">ORADENT · <a href="https://oradent.uz" style="color:#4338CA">oradent.uz</a><br />Yordam: <a href="mailto:${support}" style="color:#4338CA">${support}</a></p>`;
+    const body = opts.html ?? `<p style="margin:0 0 12px">${opts.text}</p>`;
 
     // BullMQ queue integration will wrap this; sync send for MVP.
     await this.transporter.sendMail({
@@ -54,25 +55,36 @@ export class MailService {
       to: opts.to,
       subject: opts.subject,
       text: opts.text + footerText,
-      html: (opts.html ?? `<p>${opts.text}</p>`) + footerHtml,
+      html: `<div style="font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.6;color:#111827;max-width:520px">${body}${footerHtml}</div>`,
     });
+  }
+
+  private otpHtml(title: string, code: string): string {
+    return [
+      `<p style="margin:0 0 8px;font-size:20px;font-weight:700">${title}</p>`,
+      `<div style="margin:16px 0;padding:20px 16px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:14px;text-align:center">`,
+      `<span style="font-family:Consolas,'Courier New',monospace;font-size:40px;font-weight:700;letter-spacing:10px;color:#1E1B4B;user-select:all;-webkit-user-select:all">${code}</span>`,
+      `</div>`,
+      `<p style="margin:0 0 6px;font-size:15px;color:#4B5563">Nusxalash uchun kod ustiga ikki marta bosing (telefonda — bosib turing).</p>`,
+      `<p style="margin:0;font-size:17px">Amal qilish muddati: <strong>10 daqiqa</strong>.</p>`,
+    ].join('');
   }
 
   async sendVerificationOtp(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
-      subject: 'ORADENT — Email manzilingizni tasdiqlang',
+      subject: `${code} — ORADENT email tasdiqlash kodi`,
       text: `Tasdiqlash kodi: ${code}\nAmal qilish muddati: 10 daqiqa.`,
-      html: `<p>Tasdiqlash kodi: <strong>${code}</strong></p><p>Amal qilish muddati: 10 daqiqa.</p>`,
+      html: this.otpHtml('Email manzilingizni tasdiqlash kodi', code),
     });
   }
 
   async sendPasswordResetOtp(email: string, code: string): Promise<void> {
     await this.sendMail({
       to: email,
-      subject: 'ORADENT — Parolni tiklash',
+      subject: `${code} — ORADENT parolni tiklash kodi`,
       text: `Parolni tiklash kodi: ${code}\nAmal qilish muddati: 10 daqiqa.`,
-      html: `<p>Parolni tiklash kodi: <strong>${code}</strong></p><p>Amal qilish muddati: 10 daqiqa.</p>`,
+      html: this.otpHtml('Parolni tiklash kodi', code),
     });
   }
 

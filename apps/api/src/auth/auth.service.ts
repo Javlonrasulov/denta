@@ -788,9 +788,13 @@ export class AuthService {
   async forgotPassword(emailRaw: string) {
     const email = normalizeEmail(emailRaw);
     const user = await this.prisma.user.findUnique({ where: { email } });
-    const cooldown =
-      this.config.get<number>('app.otp.resendCooldownSeconds') ?? 60;
-    if (!user) return { resendAvailableIn: cooldown };
+    if (!user) {
+      throw new AppError(
+        'EMAIL_NOT_REGISTERED',
+        'No account with this email',
+        404,
+      );
+    }
     const resendAvailableIn = await this.issueOtp(
       email,
       OtpPurpose.PASSWORD_RESET,

@@ -184,6 +184,8 @@ export function mapAuthError(
         return t('clinicAuth.errors.invalid_credentials');
       case 'EMAIL_NOT_VERIFIED':
         return t('clinicAuth.errors.email_not_verified');
+      case 'EMAIL_NOT_REGISTERED':
+        return t('clinicAuth.errors.email_not_registered');
       case 'INVALID_CODE':
         return t('clinicAuth.errors.invalid_code');
       case 'CODE_EXPIRED':

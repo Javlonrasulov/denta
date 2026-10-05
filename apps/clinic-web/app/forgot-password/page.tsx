@@ -64,7 +64,15 @@ export default function ForgotPasswordPage() {
       setError(t('clinicAuth.errors.invalid_code'));
       return;
     }
-    setStep('password');
+    setLoading(true);
+    try {
+      await service.verifyResetCode(normalizeEmail(email), code);
+      setStep('password');
+    } catch (err) {
+      setError(mapAuthError(err, t));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function submitPassword() {
@@ -149,7 +157,7 @@ export default function ForgotPasswordPage() {
                   {t('clinicAuth.verify.dev_hint', { code: devHint })}
                 </p>
               ) : null}
-              <AuthButton type="button" onClick={() => void goPassword()}>
+              <AuthButton type="button" loading={loading} onClick={() => void goPassword()}>
                 {t('clinicAuth.forgot.continue')}
               </AuthButton>
               <AuthButton
