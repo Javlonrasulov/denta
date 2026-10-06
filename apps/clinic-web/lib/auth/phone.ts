@@ -22,15 +22,8 @@ export function normalizeUzPhone(input: string): string | null {
   return `+${digits}`;
 }
 
-/** Format for display: +998 90 123 45 67 */
-export function formatUzPhoneDisplay(input: string): string {
-  const normalized = normalizeUzPhone(input);
-  const digits = normalized ? digitsOnly(normalized) : digitsOnly(input);
-
-  let local = digits;
-  if (local.startsWith('998')) local = local.slice(3);
-  local = local.slice(0, 9);
-
+/** +998 XX XXX XX XX from up to 9 national digits, without reinterpreting them. */
+function formatLocalGroups(local: string): string {
   const p1 = local.slice(0, 2);
   const p2 = local.slice(2, 5);
   const p3 = local.slice(5, 7);
@@ -44,12 +37,24 @@ export function formatUzPhoneDisplay(input: string): string {
   return out;
 }
 
-/** Mask while typing: keep +998 prefix and format groups. */
+/** Format for display: +998 90 123 45 67 */
+export function formatUzPhoneDisplay(input: string): string {
+  const normalized = normalizeUzPhone(input);
+  const digits = normalized ? digitsOnly(normalized) : digitsOnly(input);
+  const local = digits.startsWith('998') ? digits.slice(3) : digits;
+  return formatLocalGroups(local.slice(0, 9));
+}
+
+/**
+ * Mask while typing: keep +998 prefix and format groups.
+ * Must not go through normalizeUzPhone — a partial "998" + 6 digits is 9 digits long
+ * and would be misread as a full national number, prepending another 998.
+ */
 export function maskUzPhoneInput(raw: string): string {
   let digits = digitsOnly(raw);
   if (digits.startsWith('998')) digits = digits.slice(3);
-  digits = digits.slice(0, 9);
-  return formatUzPhoneDisplay(`998${digits}`);
+  else if (digits.startsWith('0') && digits.length >= 10) digits = digits.slice(1);
+  return formatLocalGroups(digits.slice(0, 9));
 }
 
 export function isValidUzPhone(input: string): boolean {
