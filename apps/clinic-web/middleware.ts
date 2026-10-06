@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { safeNextPath } from './lib/auth/next-path';
+
 const SESSION_COOKIE = 'denta.clinic.session';
 
 const PUBLIC_PATHS = [
@@ -40,9 +42,8 @@ export function middleware(request: NextRequest) {
   }
 
   if (authed && (pathname === '/login' || pathname === '/register')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/overview';
-    return NextResponse.redirect(url);
+    const next = pathname === '/login' ? safeNextPath(request.nextUrl.searchParams.get('next')) : null;
+    return NextResponse.redirect(new URL(next ?? '/overview', request.url));
   }
 
   if (pathname === '/' ) {

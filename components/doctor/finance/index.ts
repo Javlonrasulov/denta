@@ -12,3 +12,4 @@ export { AddPaymentSheet } from './AddPaymentSheet';
 export { FinanceFilterSheet } from './FinanceFilterSheet';
 export { FinanceEmpty } from './FinanceEmpty';
 export { FinanceSkeleton } from './FinanceSkeleton';
+export { ClinicSettlementCard } from './ClinicSettlementCard';

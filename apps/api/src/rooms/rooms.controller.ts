@@ -27,14 +27,14 @@ export class RoomsController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('room:manage')
   @Post()
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateRoomDto) {
     return this.rooms.create(this.clinicId(user), dto);
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('room:manage')
   @Patch(':id')
   patch(
     @CurrentUser() user: AuthUser,

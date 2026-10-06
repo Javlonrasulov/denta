@@ -52,6 +52,35 @@ table {
   font: inherit;
 }
 
+.scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.slate.200') transparent;
+}
+
+/* Chromium draws arrow buttons for the standard thin scrollbar on Windows. */
+@supports selector(::-webkit-scrollbar) {
+  .scrollbar-subtle {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+  .scrollbar-subtle::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: theme('colors.slate.200');
+  }
+  .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.slate.300');
+  }
+  .scrollbar-subtle::-webkit-scrollbar-button {
+    display: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

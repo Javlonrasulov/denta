@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -7,11 +8,14 @@ import {
   IsOptional,
   IsString,
   Max,
+  Matches,
   Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export class NearbyClinicsQueryDto {
   @Type(() => Number)
@@ -146,15 +150,61 @@ export class WorkingHoursDayDto {
   @Max(6)
   day!: number;
 
-  @IsString()
+  @Matches(HHMM)
   open!: string;
 
-  @IsString()
+  @Matches(HHMM)
   close!: string;
 
   @IsOptional()
   @IsBoolean()
   closed?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  lunchEnabled?: boolean;
+
+  @IsOptional()
+  @Matches(HHMM)
+  lunchStart?: string;
+
+  @IsOptional()
+  @Matches(HHMM)
+  lunchEnd?: string;
+}
+
+export class WorkingHoursPreviewDto {
+  @IsArray()
+  @ArrayMaxSize(7)
+  @ValidateNested({ each: true })
+  @Type(() => WorkingHoursDayDto)
+  workingHours!: WorkingHoursDayDto[];
+}
+
+export class ClinicLocationDto {
+  @IsString()
+  @MinLength(1)
+  address!: string;
+
+  @IsString()
+  @MinLength(1)
+  city!: string;
+
+  @IsOptional()
+  @IsString()
+  region?: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude!: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude!: number;
 }
 
 export class UpdateClinicProfileDto {
@@ -170,6 +220,20 @@ export class UpdateClinicProfileDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  timezone?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ClinicLocationDto)
+  location?: ClinicLocationDto;
 
   @IsOptional()
   @IsString()
@@ -197,6 +261,7 @@ export class UpdateClinicProfileDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(7)
   @ValidateNested({ each: true })
   @Type(() => WorkingHoursDayDto)
   workingHours?: WorkingHoursDayDto[];

@@ -15,6 +15,8 @@ export const NOTIFICATION_TYPES = [
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
+export type LocalizedRender = (locale: string | null) => { title: string; body: string };
+
 @Injectable()
 export class NotificationsService {
   constructor(
@@ -108,26 +110,25 @@ export class NotificationsService {
     return row;
   }
 
+  /** Title/body are rendered per member in their saved locale (also used for push). */
   async notifyClinicStaff(
     clinicId: string,
     input: {
       type: NotificationType | string;
-      title: string;
-      body: string;
+      render: LocalizedRender;
       data?: Record<string, unknown>;
     },
   ) {
     const members = await this.prisma.clinicMember.findMany({
       where: { clinicId, isActive: true },
-      select: { userId: true },
+      select: { userId: true, user: { select: { locale: true } } },
     });
     await Promise.all(
       members.map((m) =>
         this.create({
           userId: m.userId,
           type: input.type,
-          title: input.title,
-          body: input.body,
+          ...input.render(m.user.locale),
           data: input.data,
         }),
       ),

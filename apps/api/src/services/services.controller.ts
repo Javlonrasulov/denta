@@ -109,7 +109,7 @@ export class ServicesController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('service:manage')
   @Post('setup')
   setup(
     @CurrentUser() user: AuthUser,
@@ -122,7 +122,7 @@ export class ServicesController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('service:manage')
   @Put()
   upsert(
     @CurrentUser() user: AuthUser,

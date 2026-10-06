@@ -3,6 +3,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Platform } from 'react-native';
 import {
   apiBaseUrl,
+  appClientHeaders,
   apiDelete,
   apiPost,
   getAccessToken,
@@ -132,6 +133,7 @@ export async function uploadDoctorAvatar(localUri: string): Promise<DoctorAvatar
     method: 'POST',
     headers: {
       Accept: 'application/json',
+      ...appClientHeaders(),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: form,
@@ -176,6 +178,7 @@ export async function getDoctorSessions(): Promise<DoctorDeviceSession[]> {
   const token = await getAccessToken();
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    ...appClientHeaders(),
   };
   if (token) headers.Authorization = `Bearer ${token}`;
   if (refresh) headers['X-Refresh-Token'] = refresh;

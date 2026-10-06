@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsEmail,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -79,7 +80,7 @@ export class LoginDto {
   identifier!: string;
 
   @IsString()
-  @MinLength(4)
+  @MinLength(1)
   password!: string;
 }
 
@@ -169,4 +170,56 @@ export class CheckEmailDto {
   @MinLength(3)
   @MaxLength(254)
   email!: string;
+}
+
+export class UpdateLocaleDto {
+  @IsIn(['uz', 'uz-Cyrl', 'ru', 'en'])
+  locale!: 'uz' | 'uz-Cyrl' | 'ru' | 'en';
+}
+
+export class ChangePasswordDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  currentPassword!: string;
+
+  @IsString()
+  @MaxLength(256)
+  newPassword!: string;
+
+  @IsOptional()
+  @IsString()
+  refreshToken?: string;
+}
+
+export class ChangePhoneDto {
+  @IsString()
+  @MaxLength(32)
+  phone!: string;
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  currentPassword!: string;
+}
+
+export class RequestEmailChangeDto {
+  @IsString()
+  @MaxLength(254)
+  newEmail!: string;
+
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  currentPassword!: string;
+}
+
+export class ConfirmEmailChangeDto {
+  @IsString()
+  @MaxLength(254)
+  newEmail!: string;
+
+  @IsString()
+  @Matches(/^\d{6}$/)
+  code!: string;
 }

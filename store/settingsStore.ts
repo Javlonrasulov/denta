@@ -23,6 +23,9 @@ interface SettingsState {
   adminPassword: string;
   workspaces: WorkspaceInfo[];
   activeWorkspace: WorkspaceInfo | null;
+  /** Doctor still uses the clinic-issued default password. Refreshed from /auth/me, not persisted. */
+  mustChangePassword: boolean;
+  setMustChangePassword: (value: boolean) => void;
   setLocale: (locale: LocaleCode) => void;
   setThemeMode: (mode: ThemeMode) => void;
   setFontSize: (size: UiFontSize) => void;
@@ -58,6 +61,8 @@ export const useSettingsStore = create<SettingsState>()(
       adminPassword: '',
       workspaces: [],
       activeWorkspace: null,
+      mustChangePassword: false,
+      setMustChangePassword: (mustChangePassword) => set({ mustChangePassword }),
       setLocale: (locale) => set({ locale }),
       setThemeMode: (themeMode) => set({ themeMode }),
       setFontSize: (fontSize) => set({ fontSize }),
@@ -102,6 +107,7 @@ export const useSettingsStore = create<SettingsState>()(
           patientOnboardingDone: true,
           workspaces: [],
           activeWorkspace: null,
+          mustChangePassword: false,
         }),
     }),
     {

@@ -13,11 +13,13 @@ import { AppError } from '../common/filters/global-exception.filter';
 import type { AuthUser } from '../common/guards/auth.guards';
 import { RequirePermissions } from '../common/guards/auth.guards';
 import {
+  CreateExpenseCategoryDto,
   CreateFinanceRecordDto,
   FinancePeriodQueryDto,
   ListChargesQueryDto,
   PatchFinanceRecordDto,
   RecordChargePaymentDto,
+  RefundPaymentDto,
 } from './dto/finance.dto';
 import { FinanceService } from './finance.service';
 
@@ -75,6 +77,34 @@ export class FinanceController {
     @Body() dto: RecordChargePaymentDto,
   ) {
     return this.finance.recordChargePayment(this.clinicId(user), id, dto);
+  }
+
+  @ApiBearerAuth()
+  @RequirePermissions('finance:write')
+  @Post('payments/:id/refund')
+  refund(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: RefundPaymentDto,
+  ) {
+    return this.finance.refundPayment(this.clinicId(user), user.id, id, dto);
+  }
+
+  @ApiBearerAuth()
+  @RequirePermissions('finance:read')
+  @Get('categories')
+  listCategories(@CurrentUser() user: AuthUser) {
+    return this.finance.listExpenseCategories(this.clinicId(user));
+  }
+
+  @ApiBearerAuth()
+  @RequirePermissions('finance:write')
+  @Post('categories')
+  createCategory(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: CreateExpenseCategoryDto,
+  ) {
+    return this.finance.createExpenseCategory(this.clinicId(user), dto.name);
   }
 
   @ApiBearerAuth()

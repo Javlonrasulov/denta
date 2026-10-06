@@ -8,7 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { AuthCard, AuthShell } from '@/components/auth/AuthShell';
 import { AuthButton, AuthField, AuthLinkRow, PasswordField } from '@/components/auth/AuthFields';
 import { mapAuthError, useAuth } from '@/components/providers/AuthProvider';
-import { looksLikeEmail, maskUzPhoneInput } from '@/lib/auth/phone';
+import { safeNextPath } from '@/lib/auth/next-path';
+import { looksLikeEmail, maskUzPhoneInput, normalizeLoginIdentifier } from '@/lib/auth/phone';
+
+/** Only the characters a phone number can contain; anything else means the user is typing an email. */
+const PHONE_INPUT = /^[\d+\s()-]+$/;
 
 function LoginForm() {
   const { t } = useTranslation();
@@ -21,7 +25,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(
-    params.get('unverified') ? decodeURIComponent(params.get('unverified')!) : null,
+    params.get('unverified') || null,
   );
   const [resendLoading, setResendLoading] = useState(false);
 
@@ -29,9 +33,27 @@ function LoginForm() {
     e.preventDefault();
     setError('');
     setUnverifiedEmail(null);
+    const trimmed = identifier.trim();
+    if (!trimmed) {
+      setError(t('clinicAuth.errors.identifier_required'));
+      return;
+    }
+    const normalized = normalizeLoginIdentifier(trimmed);
+    if (!normalized) {
+      setError(
+        looksLikeEmail(trimmed) || !/\d/.test(trimmed)
+          ? t('clinicAuth.errors.invalid_email')
+          : t('clinicAuth.errors.invalid_phone'),
+      );
+      return;
+    }
+    if (!password) {
+      setError(t('clinicAuth.errors.password_required'));
+      return;
+    }
     setLoading(true);
     try {
-      const result = await login(identifier, password);
+      const result = await login(normalized.value, password);
       if (result.requiresEmailVerification) {
         setUnverifiedEmail(result.email ?? null);
         return;
@@ -50,7 +72,7 @@ function LoginForm() {
       } else if (user?.subscription.status === 'expired') {
         router.replace('/overview?expired=1');
       } else {
-        router.replace('/overview');
+        router.replace(safeNextPath(params.get('next')) ?? '/overview');
       }
     } catch (err) {
       setError(mapAuthError(err, t));
@@ -95,7 +117,7 @@ function LoginForm() {
             value={identifier}
             onChange={(e) => {
               const v = e.target.value;
-              if (!looksLikeEmail(v) && /[\d+]/.test(v)) {
+              if (!looksLikeEmail(v) && PHONE_INPUT.test(v) && /\d/.test(v)) {
                 setIdentifier(maskUzPhoneInput(v));
               } else {
                 setIdentifier(v);

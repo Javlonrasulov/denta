@@ -4,14 +4,17 @@ import { useMemo } from 'react';
 
 import { RevenueSeriesCard } from '@/components/analytics/RevenueSeriesCard';
 import { CrmQueryState } from '@/components/crm/CrmQueryState';
+import { DoctorRentReport } from '@/components/doctor-finance/DoctorRentReport';
 import { AppShell } from '@/components/layout/AppShell';
 import { KpiCard, Panel } from '@/components/ui/crm';
 import { clinicApi } from '@/lib/api/clinic-api';
 import { useClinicQuery } from '@/lib/api/useClinicData';
+import { useDoctorFinanceAccess } from '@/lib/doctor-finance';
 import { useCrmI18n } from '@/lib/i18n/useCrmI18n';
 
 export default function ReportsPage() {
   const { t, money } = useCrmI18n();
+  const doctorFinance = useDoctorFinanceAccess();
   const dashboard = useClinicQuery('dashboard', clinicApi.dashboard);
   const appointments = useClinicQuery('appointments', clinicApi.appointments);
   const finance = useClinicQuery('finance', clinicApi.finance);
@@ -81,6 +84,8 @@ export default function ReportsPage() {
               </p>
             </Panel>
           </div>
+
+          {doctorFinance.read ? <DoctorRentReport /> : null}
         </div>
       </CrmQueryState>
     </AppShell>

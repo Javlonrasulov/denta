@@ -2,8 +2,10 @@
 
 import { LogOut, Menu, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AdminCabinetModal } from '@/components/account/AdminCabinetModal';
 import { TrialBanner } from '@/components/auth/TrialBanner';
 import { WorkspaceSwitcher } from '@/components/auth/WorkspaceSwitcher';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
@@ -22,6 +24,8 @@ export function TopHeader({
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [cabinetOpen, setCabinetOpen] = useState(false);
+  const closeCabinet = useCallback(() => setCabinetOpen(false), []);
 
   const initials = user
     ? `${user.adminFirstName.charAt(0)}${user.adminLastName.charAt(0)}`.toUpperCase()
@@ -37,7 +41,8 @@ export function TopHeader({
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 font-sans backdrop-blur">
-      <div className="flex h-16 items-center gap-3 px-4 laptop:gap-4 laptop:px-8">
+      {/* Below tablet the title wraps to its own row so the actions never squeeze it to zero. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 tablet:h-16 tablet:flex-nowrap tablet:py-0 laptop:gap-4 laptop:px-8">
         <button
           type="button"
           onClick={onMenuClick}
@@ -47,10 +52,10 @@ export function TopHeader({
           <Menu className="h-5 w-5" />
         </button>
 
-        <div className="min-w-0 flex-1">
+        <div className="order-last min-w-0 basis-full tablet:order-none tablet:flex-1 tablet:basis-auto">
           <h1 className="truncate text-page-title text-slate-900">{title}</h1>
           {subtitle ? (
-            <p className="mt-0.5 truncate text-sm font-normal leading-snug text-slate-500">
+            <p className="mt-0.5 hidden truncate text-sm font-normal leading-snug text-slate-500 tablet:block">
               {subtitle}
             </p>
           ) : null}
@@ -73,18 +78,27 @@ export function TopHeader({
 
           <NotificationsMenu />
 
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-semibold tracking-normal text-white">
-              {initials}
-            </div>
-            <div className="hidden min-w-0 leading-tight desktop:block">
-              <p className="max-w-[120px] truncate text-sm font-medium tracking-normal text-slate-900">
-                {displayName}
-              </p>
-              <p className="truncate text-caption text-slate-500">
-                {user?.clinicName ?? t('crm.header.role_manager')}
-              </p>
-            </div>
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white py-1 pl-1 pr-2">
+            <button
+              type="button"
+              onClick={() => setCabinetOpen(true)}
+              className="flex min-w-0 items-center gap-2 rounded-lg p-0.5 pr-1.5 text-left transition hover:bg-slate-50"
+              aria-label={t('clinicAuth.account.open')}
+              title={t('clinicAuth.account.open')}
+              aria-haspopup="dialog"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-semibold tracking-normal text-white">
+                {initials}
+              </span>
+              <span className="hidden min-w-0 leading-tight desktop:block">
+                <span className="block max-w-[120px] truncate text-sm font-medium tracking-normal text-slate-900">
+                  {displayName}
+                </span>
+                <span className="block truncate text-caption text-slate-500">
+                  {user?.clinicName ?? t('crm.header.role_manager')}
+                </span>
+              </span>
+            </button>
             <button
               type="button"
               onClick={() => void onLogout()}
@@ -97,10 +111,19 @@ export function TopHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 tablet:hidden">
-          <TrialBanner />
+        <div className="ml-auto flex shrink-0 items-center gap-2 tablet:hidden">
+          <TrialBanner compact />
           <LanguageSelector />
           <NotificationsMenu />
+          <button
+            type="button"
+            onClick={() => setCabinetOpen(true)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-xs font-semibold text-white"
+            aria-label={t('clinicAuth.account.open')}
+            aria-haspopup="dialog"
+          >
+            {initials}
+          </button>
           <button
             type="button"
             onClick={() => void onLogout()}
@@ -111,6 +134,7 @@ export function TopHeader({
           </button>
         </div>
       </div>
+      <AdminCabinetModal open={cabinetOpen} onClose={closeCabinet} />
     </header>
   );
 }

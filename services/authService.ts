@@ -41,6 +41,7 @@ export type AuthMeResponse = {
   clinicId?: string | null;
   membershipId?: string | null;
   specialty?: string;
+  mustChangePassword?: boolean;
   activeWorkspace?: WorkspaceInfo | null;
   workspaces?: WorkspaceInfo[];
   requiresWorkspaceSelection?: boolean;
@@ -314,6 +315,40 @@ export async function updatePatientProfile(payload: {
   await apiPatch('/auth/patient/profile', payload);
 }
 
+/** Staff password rule enforced by the API: ≥8 chars with a letter and a digit. */
+export function isValidStaffPassword(password: string): boolean {
+  return (
+    password.length >= 8 && /[A-Za-zА-Яа-яЁё]/.test(password) && /\d/.test(password)
+  );
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  if (useMockApi()) {
+    const result = useSettingsStore
+      .getState()
+      .updateCredentials({ currentPassword, newPassword });
+    if (!result.ok) {
+      throw new ApiError(
+        result.error,
+        400,
+        result.error === 'weak_password' ? 'INVALID_PASSWORD' : 'WRONG_PASSWORD',
+      );
+    }
+  } else {
+    const SecureStore = await import('expo-secure-store');
+    const refreshToken = await SecureStore.getItemAsync('denta.refreshToken');
+    await apiPost('/auth/account/password', {
+      currentPassword,
+      newPassword,
+      refreshToken: refreshToken ?? undefined,
+    });
+  }
+  useSettingsStore.getState().setMustChangePassword(false);
+}
+
 export async function restoreSession(): Promise<boolean> {
   if (useMockApi()) {
     return useSettingsStore.getState().isAuthenticated;
@@ -404,6 +439,12 @@ function applyMeToStores(me: AuthMeResponse, fallbackLogin?: string) {
     login: email || phone,
     password: '',
   });
+
+  useSettingsStore
+    .getState()
+    .setMustChangePassword(
+      role === 'doctor' && Boolean(u.mustChangePassword ?? me.mustChangePassword),
+    );
 
   if (role === 'doctor') {
     useSettingsStore.getState().setRole('doctor');

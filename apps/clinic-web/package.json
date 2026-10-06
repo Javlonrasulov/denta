@@ -16,6 +16,7 @@
     "clsx": "^2.1.1",
     "firebase": "^11.10.0",
     "i18next": "^26.4.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.544.0",
     "next": "^15.5.3",
     "react": "^19.1.1",
@@ -25,6 +26,7 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^22.18.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",

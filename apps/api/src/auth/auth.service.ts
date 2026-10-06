@@ -31,6 +31,10 @@ import {
   ResetPasswordDto,
   VerifyEmailDto,
   RegisterPatientDto,
+  ChangePasswordDto,
+  ChangePhoneDto,
+  RequestEmailChangeDto,
+  ConfirmEmailChangeDto,
 } from './dto/auth.dto';
 
 export type SessionMeta = {
@@ -837,6 +841,171 @@ export class AuthService {
     ]);
   }
 
+  // ─── Account self-service (personal cabinet) ──────────────────────────────
+
+  async changePassword(
+    actor: AuthUser,
+    dto: ChangePasswordDto,
+    meta: SessionMeta = {},
+  ) {
+    const user = await this.requirePasswordMatch(actor.id, dto.currentPassword);
+    if (!isValidPassword(dto.newPassword)) {
+      throw new AppError('INVALID_PASSWORD', 'Invalid password', 400);
+    }
+    if (await argon2.verify(user.passwordHash, dto.newPassword)) {
+      throw new AppError('SAME_PASSWORD', 'New password must differ', 400);
+    }
+    const passwordHash = await argon2.hash(dto.newPassword);
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      }),
+      this.prisma.clinicMember.updateMany({
+        where: { userId: user.id, mustChangePassword: true },
+        data: { mustChangePassword: false },
+      }),
+    ]);
+    await this.revokeAllOtherSessions(user.id, dto.refreshToken);
+    await this.audit.log({
+      userId: user.id,
+      clinicId: actor.clinicId,
+      action: 'account.password.change',
+      entity: 'User',
+      entityId: user.id,
+      ip: meta.ip,
+      userAgent: meta.userAgent,
+    });
+    return this.getCurrentUser(actor.id, actor.membershipId, actor.clinicId);
+  }
+
+  async changePhone(actor: AuthUser, dto: ChangePhoneDto, meta: SessionMeta = {}) {
+    const user = await this.requirePasswordMatch(actor.id, dto.currentPassword);
+    const phone = normalizePhone(dto.phone);
+    if (!phone) throw new AppError('INVALID_PHONE', 'Invalid phone', 400);
+    if (phone !== user.phone) {
+      const taken = await this.prisma.user.findFirst({
+        where: { phone, NOT: { id: user.id } },
+        select: { id: true },
+      });
+      if (taken) throw new AppError('PHONE_TAKEN', 'Phone already registered', 409);
+      try {
+        await this.prisma.user.update({ where: { id: user.id }, data: { phone } });
+      } catch (err) {
+        if ((err as { code?: string }).code === 'P2002') {
+          throw new AppError('PHONE_TAKEN', 'Phone already registered', 409);
+        }
+        throw err;
+      }
+      await this.audit.log({
+        userId: user.id,
+        clinicId: actor.clinicId,
+        action: 'account.phone.change',
+        entity: 'User',
+        entityId: user.id,
+        before: { phone: user.phone },
+        after: { phone },
+        ip: meta.ip,
+        userAgent: meta.userAgent,
+      });
+    }
+    return this.getCurrentUser(actor.id, actor.membershipId, actor.clinicId);
+  }
+
+  async requestEmailChange(actor: AuthUser, dto: RequestEmailChangeDto) {
+    const user = await this.requirePasswordMatch(actor.id, dto.currentPassword);
+    const newEmail = normalizeEmail(dto.newEmail);
+    if (!isValidEmail(newEmail)) {
+      throw new AppError('INVALID_EMAIL', 'Invalid email', 400);
+    }
+    if (user.email && normalizeEmail(user.email) === newEmail) {
+      throw new AppError('SAME_EMAIL', 'New email equals current email', 400);
+    }
+    const taken = await this.prisma.user.findFirst({
+      where: { email: newEmail, NOT: { id: user.id } },
+      select: { id: true },
+    });
+    if (taken) throw new AppError('EMAIL_TAKEN', 'Email already registered', 409);
+    const domain = newEmail.split('@')[1] ?? '';
+    if (!(await this.isEmailDomainDeliverable(domain))) {
+      throw new AppError('INVALID_EMAIL', 'Email domain cannot receive mail', 400);
+    }
+    const resendAvailableIn = await this.issueOtp(
+      newEmail,
+      OtpPurpose.EMAIL_CHANGE,
+      user.id,
+    );
+    return { email: newEmail, resendAvailableIn };
+  }
+
+  async confirmEmailChange(
+    actor: AuthUser,
+    dto: ConfirmEmailChangeDto,
+    meta: SessionMeta = {},
+  ) {
+    const newEmail = normalizeEmail(dto.newEmail);
+    const otp = await this.verifyOtpOnly(newEmail, OtpPurpose.EMAIL_CHANGE, dto.code);
+    if (otp.userId !== actor.id) {
+      throw new AppError('INVALID_CODE', 'Invalid code', 400);
+    }
+    const user = await this.prisma.user.findUnique({ where: { id: actor.id } });
+    if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
+    const taken = await this.prisma.user.findFirst({
+      where: { email: newEmail, NOT: { id: user.id } },
+      select: { id: true },
+    });
+    if (taken) throw new AppError('EMAIL_TAKEN', 'Email already registered', 409);
+
+    try {
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { id: user.id },
+          data: { email: newEmail, emailVerifiedAt: new Date() },
+        }),
+        this.prisma.otpCode.update({
+          where: { id: otp.id },
+          data: { consumedAt: new Date() },
+        }),
+      ]);
+    } catch (err) {
+      if ((err as { code?: string }).code === 'P2002') {
+        throw new AppError('EMAIL_TAKEN', 'Email already registered', 409);
+      }
+      throw err;
+    }
+
+    await this.audit.log({
+      userId: user.id,
+      clinicId: actor.clinicId,
+      action: 'account.email.change',
+      entity: 'User',
+      entityId: user.id,
+      before: { email: user.email },
+      after: { email: newEmail },
+      ip: meta.ip,
+      userAgent: meta.userAgent,
+    });
+    if (user.email) {
+      void this.mail.sendEmailChangedNotice(user.email, newEmail).catch(() => undefined);
+    }
+    return this.getCurrentUser(actor.id, actor.membershipId, actor.clinicId);
+  }
+
+  async updateLocale(userId: string, locale: string) {
+    await this.prisma.user.update({ where: { id: userId }, data: { locale } });
+    return { locale };
+  }
+
+  private async requirePasswordMatch(userId: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new AppError('NOT_FOUND', 'User not found', 404);
+    const ok = user.passwordHash
+      ? await argon2.verify(user.passwordHash, password).catch(() => false)
+      : false;
+    if (!ok) throw new AppError('WRONG_PASSWORD', 'Current password is incorrect', 400);
+    return user;
+  }
+
   async getCurrentUser(userId: string, membershipId?: string | null, clinicId?: string | null) {
     const resolved = await resolveWorkspaceSelection({
       prisma: this.prisma,
@@ -1337,6 +1506,8 @@ export class AuthService {
 
     if (purpose === OtpPurpose.EMAIL_VERIFICATION) {
       await this.mail.sendVerificationOtp(email, code);
+    } else if (purpose === OtpPurpose.EMAIL_CHANGE) {
+      await this.mail.sendEmailChangeOtp(email, code);
     } else {
       await this.mail.sendPasswordResetOtp(email, code);
     }

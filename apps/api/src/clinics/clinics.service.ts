@@ -1,14 +1,39 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AppointmentStatus, Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
+import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { AppError } from '../common/filters/global-exception.filter';
+import { isValidEmail, normalizeEmail } from '../common/utils/phone.util';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  checkIntervalAgainstClinic,
+  clinicDayRule,
+  normalizeClinicWorkingHours,
+  parseClinicWorkingHours,
+  validateClinicWorkingHours,
+  type ClinicWorkingDay,
+} from '../slots/clinic-hours';
+import { STORAGE_SERVICE, StorageService } from '../storage/storage.types';
 import {
   CreateClinicBranchDto,
   NearbyClinicsQueryDto,
   PublishClinicDto,
   SearchClinicsQueryDto,
   UpdateClinicProfileDto,
+  WorkingHoursDayDto,
 } from './dto/clinics.dto';
+
+export type ScheduleConflict = {
+  appointmentId: string;
+  date: string;
+  time: string;
+  endTime: string;
+  patientName: string;
+  doctorName: string;
+  reason: 'closed' | 'outside_hours' | 'lunch';
+};
 
 /** Frontend-compatible clinic card (marketplace). */
 export type MarketplaceClinicDto = {
@@ -22,7 +47,7 @@ export type MarketplaceClinicDto = {
   address: string;
   phone: string;
   coordinates: { latitude: number; longitude: number };
-  workingHours: { day: number; open: string; close: string; closed?: boolean }[];
+  workingHours: ClinicWorkingDay[];
   isOpenNow: boolean;
   specializations: string[];
   photos: string[];
@@ -49,12 +74,58 @@ type NearbyRow = {
   about: string | null;
   price_from_uzs: number | null;
   working_hours: unknown;
+  timezone: string | null;
   distance_km: number;
 };
 
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+};
+
+/** undefined = leave unchanged, blank string = clear (null). */
+function optionalText(value: string | undefined): string | null | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function validatedWorkingHours(
+  input: WorkingHoursDayDto[],
+): ClinicWorkingDay[] {
+  const issues = validateClinicWorkingHours(input);
+  if (issues.length) {
+    const lunch = issues.find((i) => i.code === 'LUNCH_OUTSIDE_HOURS');
+    throw new AppError(
+      'VALIDATION_ERROR',
+      lunch
+        ? 'Tushlik vaqti ish vaqtining ichida bo‘lishi kerak.'
+        : 'Ish vaqti noto‘g‘ri kiritilgan.',
+      400,
+      { field: 'workingHours', issues },
+    );
+  }
+  return normalizeClinicWorkingHours(input);
+}
+
+function isValidTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 @Injectable()
 export class ClinicsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+    @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+  ) {}
 
   async search(query: SearchClinicsQueryDto): Promise<MarketplaceClinicDto[]> {
     const q = query.query?.trim();
@@ -160,6 +231,7 @@ export class ClinicsService {
         c.about,
         c."priceFromUzs" AS price_from_uzs,
         b."workingHours" AS working_hours,
+        b.timezone,
         (
           6371 * acos(
             LEAST(1.0, GREATEST(-1.0,
@@ -204,7 +276,7 @@ export class ClinicsService {
         longitude: Number(r.longitude),
       },
       workingHours: this.parseWorkingHours(r.working_hours),
-      isOpenNow: this.computeIsOpenNow(this.parseWorkingHours(r.working_hours)),
+      isOpenNow: this.computeIsOpenNow(r.working_hours, r.timezone),
       specializations: r.specializations ?? [],
       photos: r.photos ?? [],
       about: r.about ?? '',
@@ -275,36 +347,206 @@ export class ClinicsService {
   }
 
   async updateProfile(clinicId: string, dto: UpdateClinicProfileDto) {
-    const clinic = await this.prisma.clinic.update({
-      where: { id: clinicId },
-      data: {
-        name: dto.name,
-        about: dto.about,
-        phone: dto.phone,
-        logoUrl: dto.logoUrl,
-        coverUrl: dto.coverUrl,
-        photos: dto.photos,
-        specializations: dto.specializations,
-        priceFromUzs: dto.priceFromUzs,
-      },
-    });
+    const email = optionalText(dto.email);
+    if (email && !isValidEmail(email)) {
+      throw new AppError('VALIDATION_ERROR', 'Invalid email', 400, {
+        field: 'email',
+      });
+    }
+    const timezone = dto.timezone?.trim();
+    if (timezone && !isValidTimeZone(timezone)) {
+      throw new AppError('VALIDATION_ERROR', 'Invalid timezone', 400, {
+        field: 'timezone',
+      });
+    }
+    const specializations = dto.specializations
+      ?.map((s) => s.trim())
+      .filter(Boolean);
+    const workingHours = dto.workingHours
+      ? (validatedWorkingHours(dto.workingHours) as unknown as Prisma.InputJsonValue)
+      : undefined;
 
-    if (dto.workingHours) {
-      const primary = await this.prisma.clinicBranch.findFirst({
+    await this.prisma.$transaction(async (tx) => {
+      const clinic = await tx.clinic.update({
+        where: { id: clinicId },
+        data: {
+          name: dto.name?.trim(),
+          about: optionalText(dto.about),
+          phone: optionalText(dto.phone),
+          email: email === undefined ? undefined : email && normalizeEmail(email),
+          timezone,
+          logoUrl: optionalText(dto.logoUrl),
+          coverUrl: optionalText(dto.coverUrl),
+          photos: dto.photos,
+          specializations: specializations
+            ? [...new Set(specializations)]
+            : undefined,
+          priceFromUzs: dto.priceFromUzs,
+        },
+      });
+
+      if (!dto.location && !workingHours && !timezone) return;
+
+      const primary = await tx.clinicBranch.findFirst({
         where: { clinicId, isActive: true },
         orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
       });
+
+      const branchData: Prisma.ClinicBranchUncheckedUpdateInput = {
+        ...(timezone ? { timezone } : {}),
+        ...(workingHours ? { workingHours } : {}),
+        ...(dto.location
+          ? {
+              address: dto.location.address.trim(),
+              city: dto.location.city.trim(),
+              region: optionalText(dto.location.region) ?? null,
+              latitude: dto.location.latitude,
+              longitude: dto.location.longitude,
+            }
+          : {}),
+      };
+
       if (primary) {
-        await this.prisma.clinicBranch.update({
+        await tx.clinicBranch.update({
           where: { id: primary.id },
+          data: { ...branchData, isPrimary: true },
+        });
+      } else if (dto.location) {
+        await tx.clinicBranch.create({
           data: {
-            workingHours: dto.workingHours as unknown as Prisma.InputJsonValue,
+            clinicId,
+            name: clinic.name,
+            address: dto.location.address.trim(),
+            city: dto.location.city.trim(),
+            region: optionalText(dto.location.region) ?? null,
+            latitude: dto.location.latitude,
+            longitude: dto.location.longitude,
+            timezone: clinic.timezone,
+            isPrimary: true,
+            ...(workingHours ? { workingHours } : {}),
           },
         });
       }
+    });
+
+    return this.getMyClinic(clinicId);
+  }
+
+  /**
+   * Upcoming appointments that a proposed schedule would place on a closed
+   * day, outside hours, or inside lunch. Read-only: nothing is cancelled.
+   */
+  async previewScheduleConflicts(
+    clinicId: string,
+    input: WorkingHoursDayDto[],
+  ): Promise<{ conflicts: ScheduleConflict[]; total: number }> {
+    const hours = validatedWorkingHours(input);
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id: clinicId },
+      select: {
+        timezone: true,
+        branches: {
+          where: { isActive: true },
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+          take: 1,
+          select: { id: true, timezone: true },
+        },
+      },
+    });
+    if (!clinic) throw new AppError('NOT_FOUND', 'Clinic not found', 404);
+    const branch = clinic.branches[0];
+    const tz = branch?.timezone ?? clinic.timezone ?? 'Asia/Tashkent';
+
+    const rows = await this.prisma.appointment.findMany({
+      where: {
+        clinicId,
+        startsAt: { gte: new Date() },
+        status: {
+          in: [
+            AppointmentStatus.PENDING,
+            AppointmentStatus.CONFIRMED,
+            AppointmentStatus.IN_PROGRESS,
+          ],
+        },
+        ...(branch ? { OR: [{ branchId: branch.id }, { branchId: null }] } : {}),
+      },
+      orderBy: { startsAt: 'asc' },
+      select: {
+        id: true,
+        startsAt: true,
+        endsAt: true,
+        patientName: true,
+        doctorName: true,
+      },
+    });
+
+    const conflicts: ScheduleConflict[] = [];
+    for (const row of rows) {
+      const start = toZonedTime(row.startsAt, tz);
+      const end = toZonedTime(row.endsAt, tz);
+      const startMin = start.getHours() * 60 + start.getMinutes();
+      const sameDay = format(start, 'yyyy-MM-dd') === format(end, 'yyyy-MM-dd');
+      const endMin = sameDay ? end.getHours() * 60 + end.getMinutes() : 24 * 60;
+      const verdict = checkIntervalAgainstClinic(
+        clinicDayRule(hours, start.getDay()),
+        startMin,
+        endMin,
+      );
+      if (verdict === 'ok') continue;
+      conflicts.push({
+        appointmentId: row.id,
+        date: format(start, 'yyyy-MM-dd'),
+        time: format(start, 'HH:mm'),
+        endTime: format(end, 'HH:mm'),
+        patientName: row.patientName,
+        doctorName: row.doctorName,
+        reason: verdict,
+      });
+    }
+    return { conflicts: conflicts.slice(0, 50), total: conflicts.length };
+  }
+
+  async uploadMedia(
+    clinicId: string,
+    kind: 'logo' | 'cover',
+    file: { buffer: Buffer; mimetype: string; size: number; originalname: string },
+  ) {
+    const mime = file.mimetype.toLowerCase();
+    const ext = ALLOWED_IMAGE_TYPES[mime];
+    if (!ext) {
+      throw new AppError('INVALID_FILE', 'Only JPEG/PNG/WebP images allowed', 400);
+    }
+    const maxBytes = this.config.get<number>('app.uploadMaxBytes') ?? 5_242_880;
+    if (file.size > maxBytes) {
+      throw new AppError('FILE_TOO_LARGE', `Max upload size is ${maxBytes} bytes`, 400);
     }
 
-    return this.getMyClinic(clinic.id);
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id: clinicId },
+      select: { logoUrl: true, coverUrl: true },
+    });
+    if (!clinic) throw new AppError('NOT_FOUND', 'Clinic not found', 404);
+
+    const uploaded = await this.storage.upload({
+      key: `clinics/${clinicId}/${kind}/${randomUUID()}${ext}`,
+      buffer: file.buffer,
+      mimeType: mime,
+      sizeBytes: file.size,
+    });
+
+    const field = kind === 'logo' ? 'logoUrl' : 'coverUrl';
+    await this.prisma.clinic.update({
+      where: { id: clinicId },
+      data: { [field]: uploaded.url },
+    });
+
+    const oldUrl = clinic[field];
+    if (oldUrl?.includes('/uploads/')) {
+      const oldKey = oldUrl.split('/uploads/')[1];
+      if (oldKey) await this.storage.delete(oldKey).catch(() => undefined);
+    }
+
+    return this.getMyClinic(clinicId);
   }
 
   /**
@@ -399,6 +641,7 @@ export class ClinicsService {
       latitude: Prisma.Decimal;
       longitude: Prisma.Decimal;
       workingHours: unknown;
+      timezone?: string | null;
     },
   ): MarketplaceClinicDto {
     const workingHours = this.parseWorkingHours(branch.workingHours);
@@ -417,7 +660,7 @@ export class ClinicsService {
         longitude: Number(branch.longitude),
       },
       workingHours,
-      isOpenNow: this.computeIsOpenNow(workingHours),
+      isOpenNow: this.computeIsOpenNow(branch.workingHours, branch.timezone),
       specializations: clinic.specializations,
       photos: clinic.photos,
       about: clinic.about ?? '',
@@ -428,9 +671,8 @@ export class ClinicsService {
   private parseWorkingHours(
     raw: unknown,
   ): MarketplaceClinicDto['workingHours'] {
-    if (Array.isArray(raw)) {
-      return raw as MarketplaceClinicDto['workingHours'];
-    }
+    const parsed = parseClinicWorkingHours(raw);
+    if (parsed) return parsed;
     // Default Mon–Sat 09:00–18:00
     return [1, 2, 3, 4, 5, 6].map((day) => ({
       day,
@@ -439,16 +681,12 @@ export class ClinicsService {
     }));
   }
 
-  private computeIsOpenNow(
-    hours: MarketplaceClinicDto['workingHours'],
-  ): boolean {
-    const now = new Date();
-    const day = now.getDay();
-    const entry = hours.find((h) => h.day === day);
-    if (!entry || entry.closed) return false;
+  /** Evaluated in the branch timezone; lunch counts as closed. */
+  private computeIsOpenNow(rawHours: unknown, timezone?: string | null): boolean {
+    const now = toZonedTime(new Date(), timezone || 'Asia/Tashkent');
+    const rule = clinicDayRule(this.parseWorkingHours(rawHours), now.getDay());
+    if (rule.kind !== 'open') return false;
     const mins = now.getHours() * 60 + now.getMinutes();
-    const [oh, om] = entry.open.split(':').map(Number);
-    const [ch, cm] = entry.close.split(':').map(Number);
-    return mins >= oh * 60 + om && mins <= ch * 60 + cm;
+    return checkIntervalAgainstClinic(rule, mins, mins + 1) === 'ok';
   }
 }

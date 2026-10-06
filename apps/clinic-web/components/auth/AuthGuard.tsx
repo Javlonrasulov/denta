@@ -5,8 +5,11 @@ import { useEffect, type ReactNode } from 'react';
 
 import { useAuth } from '@/components/providers/AuthProvider';
 import { ExpiredPaywall } from '@/components/auth/ExpiredPaywall';
+import { ForcePasswordChange } from '@/components/auth/ForcePasswordChange';
 import { ALL_NAV_ITEMS } from '@/lib/nav';
-import { readPersistedSession } from '@/lib/auth/session';
+import { safeNextPath } from '@/lib/auth/next-path';
+import { clearSessionCookie, readPersistedSession } from '@/lib/auth/session';
+import type { ClinicAuthUser } from '@/lib/auth/types';
 
 const PUBLIC_PREFIXES = [
   '/login',
@@ -28,6 +31,11 @@ function isPublic(path: string): boolean {
   return matchesPrefix(path, PUBLIC_PREFIXES);
 }
 
+/** Staff added by phone have no email to verify; the clinic vouched for them. */
+function needsEmailVerification(user: ClinicAuthUser): boolean {
+  return Boolean(user.email) && !user.emailVerifiedAt;
+}
+
 function pathAllowed(pathname: string, permissions: string[]): boolean {
   if (permissions.includes('*')) return true;
   const item = ALL_NAV_ITEMS.find(
@@ -46,17 +54,20 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const isOnboarding = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
   const isWorkspaceSelect =
     pathname === '/select-workspace' || pathname.startsWith('/select-workspace/');
+  const isInvite = matchesPrefix(pathname, ['/invite']);
 
   useEffect(() => {
     if (legalRoute || !ready || loading) return;
 
     if (!user && !publicRoute) {
-      router.replace('/login');
+      // A leftover cookie would make middleware bounce /login back here forever.
+      clearSessionCookie();
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
       return;
     }
 
-    if (user && publicRoute && pathname !== '/verify-success') {
-      if (!user.emailVerifiedAt) {
+    if (user && publicRoute && pathname !== '/verify-success' && !isInvite) {
+      if (needsEmailVerification(user)) {
         if (pathname !== '/verify-email') {
           router.replace(`/verify-email?email=${encodeURIComponent(user.email)}`);
         }
@@ -66,18 +77,22 @@ export function AuthGuard({ children }: { children: ReactNode }) {
         router.replace('/onboarding');
         return;
       }
-      router.replace('/overview');
+      const next =
+        pathname === '/login'
+          ? safeNextPath(new URLSearchParams(window.location.search).get('next'))
+          : null;
+      router.replace(next ?? '/overview');
       return;
     }
 
-    if (user && !user.emailVerifiedAt && !publicRoute) {
+    if (user && needsEmailVerification(user) && !publicRoute) {
       router.replace(`/verify-email?email=${encodeURIComponent(user.email)}`);
       return;
     }
 
     if (
       user &&
-      user.emailVerifiedAt &&
+      !needsEmailVerification(user) &&
       !user.onboardingCompleted &&
       !isOnboarding &&
       !isWorkspaceSelect &&
@@ -114,6 +129,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     pathname,
     isOnboarding,
     isWorkspaceSelect,
+    isInvite,
     router,
     getPermissions,
   ]);
@@ -136,9 +152,20 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
+  if (user?.mustChangePassword && !publicRoute) return <ForcePasswordChange />;
+
+  const perms = user && !publicRoute ? (getPermissions?.() ?? []) : [];
+  if (perms.length > 0 && !pathAllowed(pathname, perms)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      </div>
+    );
+  }
+
   const showPaywall =
     user &&
-    user.subscription.status === 'expired' &&
+    user.subscription?.status === 'expired' &&
     !publicRoute &&
     !isOnboarding;
 

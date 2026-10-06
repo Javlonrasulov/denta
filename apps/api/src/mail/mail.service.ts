@@ -88,6 +88,23 @@ export class MailService {
     });
   }
 
+  async sendEmailChangeOtp(email: string, code: string): Promise<void> {
+    await this.sendMail({
+      to: email,
+      subject: `${code} — ORADENT yangi emailni tasdiqlash kodi`,
+      text: `Yangi email manzilini tasdiqlash kodi: ${code}\nAmal qilish muddati: 10 daqiqa.\nAgar bu so‘rovni siz yubormagan bo‘lsangiz, xabarni e’tiborsiz qoldiring.`,
+      html: this.otpHtml('Yangi emailni tasdiqlash kodi', code),
+    });
+  }
+
+  async sendEmailChangedNotice(oldEmail: string, newEmail: string): Promise<void> {
+    await this.sendMail({
+      to: oldEmail,
+      subject: 'ORADENT — akkaunt emaili o‘zgartirildi',
+      text: `Akkauntingiz emaili ${newEmail} manziliga o‘zgartirildi. Agar buni siz qilmagan bo‘lsangiz, darhol qo‘llab-quvvatlash xizmatiga murojaat qiling.`,
+    });
+  }
+
   async sendClinicInvitation(opts: {
     to: string;
     clinicName: string;
@@ -97,6 +114,8 @@ export class MailService {
     expiresAt: Date;
   }): Promise<void> {
     const expires = opts.expiresAt.toISOString().slice(0, 16).replace('T', ' ');
+    const esc = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     await this.sendMail({
       to: opts.to,
       subject: `ORADENT — ${opts.clinicName} klinikaga taklif`,
@@ -108,9 +127,9 @@ export class MailService {
         `Amal qilish muddati: ${expires}`,
       ].join('\n'),
       html: `
-        <p>Salom <strong>${opts.inviteeName}</strong>,</p>
-        <p>Sizni <strong>${opts.clinicName}</strong> klinikaga (<em>${opts.role}</em>) sifatida taklif qilishdi.</p>
-        <p><a href="${opts.acceptUrl}">Taklifni qabul qilish</a></p>
+        <p>Salom <strong>${esc(opts.inviteeName)}</strong>,</p>
+        <p>Sizni <strong>${esc(opts.clinicName)}</strong> klinikaga (<em>${esc(opts.role)}</em>) sifatida taklif qilishdi.</p>
+        <p><a href="${esc(opts.acceptUrl)}">Taklifni qabul qilish</a></p>
         <p>Amal qilish muddati: ${expires}</p>
       `,
     });

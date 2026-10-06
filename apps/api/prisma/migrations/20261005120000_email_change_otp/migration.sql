@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "OtpPurpose" ADD VALUE IF NOT EXISTS 'EMAIL_CHANGE';

@@ -6,7 +6,7 @@ import { Building2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { clinicApi } from '@/lib/api/clinic-api';
+import { CLINIC_PROFILE_UPDATED_EVENT, clinicApi } from '@/lib/api/clinic-api';
 import { useClinicQuery } from '@/lib/api/useClinicData';
 import { NAV_BOTTOM, NAV_CLINIC, NAV_MAIN, NAV_OPS, filterNavByPermissions, type NavItem } from '@/lib/nav';
 import { readPersistedSession } from '@/lib/auth/session';
@@ -102,9 +102,9 @@ function NavLink({
         </span>
         <span
           className={cn(
-            'min-w-0 overflow-hidden whitespace-nowrap leading-[1.35] tracking-normal transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+            'min-w-0 overflow-hidden leading-[1.35] tracking-normal transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
             collapsed
-              ? 'max-w-0 translate-x-1 opacity-0'
+              ? 'max-w-0 translate-x-1 whitespace-nowrap opacity-0'
               : 'max-w-[160px] translate-x-0 opacity-100',
             active ? 'font-semibold' : 'font-medium',
           )}
@@ -241,6 +241,12 @@ export function Sidebar({
 }) {
   const { user, isMock } = useAuth();
   const clinicQuery = useClinicQuery('sidebar-clinic', clinicApi.clinicMe);
+  const refetchClinic = clinicQuery.refetch;
+  useEffect(() => {
+    const onUpdated = () => void refetchClinic();
+    window.addEventListener(CLINIC_PROFILE_UPDATED_EVENT, onUpdated);
+    return () => window.removeEventListener(CLINIC_PROFILE_UPDATED_EVENT, onUpdated);
+  }, [refetchClinic]);
   const clinicName = clinicQuery.data?.name ?? user?.clinicName ?? '—';
   const permissions =
     readPersistedSession()?.activeWorkspace?.permissions ??

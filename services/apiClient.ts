@@ -6,6 +6,14 @@
  */
 
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+
+import { APP_VARIANT } from '@/constants/appVariant';
+
+/** Lets the API attribute requests to the mobile app (clinic "last seen in app"). */
+export function appClientHeaders(): Record<string, string> {
+  return { 'X-Client-App': APP_VARIANT, 'X-Device-Platform': Platform.OS };
+}
 
 export class ApiError extends Error {
   status: number;
@@ -123,6 +131,7 @@ async function refreshAccessToken(): Promise<boolean> {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
+          ...appClientHeaders(),
         },
         body: JSON.stringify({ refreshToken: refresh }),
       });
@@ -158,6 +167,7 @@ export async function apiRequest<T>(
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
+    ...appClientHeaders(),
   };
 
   if (opts.auth !== false) {

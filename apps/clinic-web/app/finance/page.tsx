@@ -1,14 +1,29 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Plus, RotateCcw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CrmQueryState } from '@/components/crm/CrmQueryState';
+import { DoctorRentsPanel } from '@/components/doctor-finance/DoctorRentsPanel';
+import { AddExpenseModal } from '@/components/finance/AddExpenseModal';
+import { expenseCategoryLabel } from '@/components/finance/ExpenseCategoryPicker';
+import { RefundPaymentModal } from '@/components/finance/RefundPaymentModal';
 import { AppShell } from '@/components/layout/AppShell';
 import { Badge, DataTable, KpiCard, Panel } from '@/components/ui/crm';
-import { clinicApi } from '@/lib/api/clinic-api';
+import { clinicApi, type ClinicFinanceRecord } from '@/lib/api/clinic-api';
 import { useClinicQuery } from '@/lib/api/useClinicData';
 import { readPersistedSession } from '@/lib/auth/session';
+import { useDoctorFinanceAccess } from '@/lib/doctor-finance';
 import { useCrmI18n } from '@/lib/i18n/useCrmI18n';
+
+function useCanWriteFinance(): boolean {
+  const [can, setCan] = useState(false);
+  useEffect(() => {
+    const perms = readPersistedSession()?.activeWorkspace?.permissions;
+    setCan(!perms || perms.includes('*') || perms.includes('finance:write'));
+  }, []);
+  return can;
+}
 
 export default function FinancePage() {
   const { t, money, date, status } = useCrmI18n();
@@ -21,6 +36,27 @@ export default function FinancePage() {
   );
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
+  const [expenseOpen, setExpenseOpen] = useState(false);
+  const [refunding, setRefunding] = useState<ClinicFinanceRecord | null>(null);
+  const doctorFinance = useDoctorFinanceAccess();
+  const canWrite = useCanWriteFinance();
+
+  const closeExpense = useCallback(() => setExpenseOpen(false), []);
+  const onExpenseCreated = useCallback(() => {
+    void summaryQuery.refetch();
+    void transactionsQuery.refetch();
+  }, [summaryQuery, transactionsQuery]);
+
+  const addExpenseButton = (
+    <button
+      type="button"
+      onClick={() => setExpenseOpen(true)}
+      className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-indigo-700"
+    >
+      <Plus className="h-4 w-4" strokeWidth={2.5} />
+      {t('crm.finance.expense_modal.add_button')}
+    </button>
+  );
 
   const outstandingCharges = useMemo(
     () =>
@@ -88,6 +124,8 @@ export default function FinancePage() {
         error={error}
       >
         <div className="space-y-6">
+          <div className="flex justify-end">{addExpenseButton}</div>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard
               label={t('crm.finance.income')}
@@ -110,7 +148,7 @@ export default function FinancePage() {
           <Panel title={t('crm.finance.outstanding_charges')}>
             {payError ? <p className="mb-3 text-sm text-rose-600">{payError}</p> : null}
             {outstandingCharges.length === 0 ? (
-              <p className="text-sm text-slate-500">{t('crm.patient_flow.empty_title')}</p>
+              <p className="text-sm text-slate-500">{t('crm.finance.empty_charges')}</p>
             ) : (
               <DataTable
                 columns={[
@@ -154,7 +192,7 @@ export default function FinancePage() {
 
           <Panel title={t('crm.finance.transactions')}>
             {(transactionsQuery.data ?? []).length === 0 ? (
-              <p className="text-sm text-slate-500">{t('crm.patient_flow.empty_title')}</p>
+              <p className="text-sm text-slate-500">{t('crm.finance.empty_transactions')}</p>
             ) : (
               <DataTable
                 columns={[
@@ -164,28 +202,83 @@ export default function FinancePage() {
                   t('crm.columns.service'),
                   t('crm.columns.amount'),
                   t('crm.columns.status'),
+                  ...(canWrite ? [''] : []),
                 ]}
                 rows={(transactionsQuery.data ?? []).map((r) => [
                   date(r.date),
-                  r.patientName ?? '—',
+                  r.type === 'expense' && r.category ? (
+                    <span
+                      key="c"
+                      className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-600"
+                    >
+                      {expenseCategoryLabel(t, r.category)}
+                    </span>
+                  ) : (
+                    r.patientName ?? '—'
+                  ),
                   r.doctorName ?? '—',
-                  r.serviceName,
+                  r.serviceName ||
+                    (r.category ? expenseCategoryLabel(t, r.category) : t('crm.finance.expenses')),
                   <span
                     key="a"
-                    className={r.type === 'expense' ? 'font-medium text-rose-600' : 'font-medium'}
+                    className={
+                      r.type === 'expense' || r.amount < 0 ? 'font-medium text-rose-600' : 'font-medium'
+                    }
                   >
-                    {r.type === 'expense' ? '−' : '+'}
-                    {money(r.amount)}
+                    {r.type === 'expense' || r.amount < 0 ? '−' : '+'}
+                    {money(Math.abs(r.amount))}
+                    {r.refundOfId ? (
+                      <span className="ml-1.5 rounded bg-rose-50 px-1 py-0.5 text-[10px] font-semibold text-rose-600">
+                        {t('crm.doctor_finance.refund.badge')}
+                      </span>
+                    ) : null}
                   </span>,
                   <Badge key="s" status={r.paymentStatus}>
                     {status(r.paymentStatus)}
                   </Badge>,
+                  ...(canWrite
+                    ? [
+                        r.type === 'income' && r.amount > 0 && r.paymentStatus === 'paid' && !r.refundOfId ? (
+                          <button
+                            key="rf"
+                            type="button"
+                            onClick={() => setRefunding(r)}
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            {t('crm.doctor_finance.refund.action')}
+                          </button>
+                        ) : (
+                          ''
+                        ),
+                      ]
+                    : []),
                 ])}
               />
             )}
           </Panel>
+
+          {doctorFinance.read ? <DoctorRentsPanel access={doctorFinance} /> : null}
         </div>
       </CrmQueryState>
+
+      <AddExpenseModal open={expenseOpen} onClose={closeExpense} onCreated={onExpenseCreated} />
+      <RefundPaymentModal
+        record={refunding}
+        refundedSoFar={
+          refunding
+            ? (transactionsQuery.data ?? [])
+                .filter((r) => r.refundOfId === refunding.id && r.paymentStatus === 'paid')
+                .reduce((s, r) => s - r.amount, 0)
+            : 0
+        }
+        onClose={() => setRefunding(null)}
+        onDone={() => {
+          void summaryQuery.refetch();
+          void transactionsQuery.refetch();
+          void chargesQuery.refetch();
+        }}
+      />
     </AppShell>
   );
 }

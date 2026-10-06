@@ -102,7 +102,7 @@ export function AuthButton({
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
 }) {
   return (
     <button
@@ -116,6 +116,8 @@ export function AuthButton({
         variant === 'secondary' &&
           'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
         variant === 'ghost' && 'text-primary hover:bg-primary/5',
+        variant === 'danger' &&
+          'bg-rose-600 text-white shadow-lg shadow-rose-600/25 hover:bg-rose-700',
         className,
       )}
     >

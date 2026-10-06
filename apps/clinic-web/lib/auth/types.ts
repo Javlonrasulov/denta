@@ -79,6 +79,26 @@ export interface ResetPasswordInput {
   newPassword: string;
 }
 
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePhoneInput {
+  phone: string;
+  currentPassword: string;
+}
+
+export interface RequestEmailChangeInput {
+  newEmail: string;
+  currentPassword: string;
+}
+
+export interface ConfirmEmailChangeInput {
+  newEmail: string;
+  code: string;
+}
+
 export interface SubscriptionStatusDto {
   status: SubscriptionStatus;
   trialStartedAt: string | null;
@@ -104,6 +124,10 @@ export type AuthErrorCode =
   | 'RESEND_COOLDOWN'
   | 'RATE_LIMITED'
   | 'NOT_FOUND'
+  | 'NOT_CLINIC_ACCOUNT'
+  | 'WRONG_PASSWORD'
+  | 'SAME_PASSWORD'
+  | 'SAME_EMAIL'
   | 'UNAUTHORIZED'
   | 'NETWORK'
   | 'UNKNOWN';
@@ -132,6 +156,15 @@ export interface AuthService {
   getCurrentUser(): Promise<ClinicAuthUser | null>;
   getSubscriptionStatus(): Promise<SubscriptionStatusDto | null>;
   updateOnboarding(step: number, completed?: boolean): Promise<ClinicAuthUser>;
+  changePassword(input: ChangePasswordInput): Promise<ClinicAuthUser>;
+  changePhone(input: ChangePhoneInput): Promise<ClinicAuthUser>;
+  /** Sends a code to the new address; the email itself changes only after confirmEmailChange. */
+  requestEmailChange(
+    input: RequestEmailChangeInput,
+  ): Promise<{ email: string; resendAvailableIn: number }>;
+  confirmEmailChange(input: ConfirmEmailChangeInput): Promise<ClinicAuthUser>;
+  /** Saves the UI language server-side so push notifications use it. */
+  updateLocale?(locale: string): Promise<void>;
   switchWorkspace?(clinicId: string): Promise<AuthSession>;
   getWorkspaces?(): Promise<WorkspaceDto[]>;
   getActivePermissions?(): string[];

@@ -20,7 +20,7 @@ export default function PatientsPage() {
       >
         <Panel title={t('crm.patients.list')}>
           {(query.data ?? []).length === 0 ? (
-            <p className="text-sm text-slate-500">{t('crm.patient_flow.empty_title')}</p>
+            <p className="text-sm text-slate-500">{t('crm.state.empty')}</p>
           ) : (
             <DataTable
               columns={[

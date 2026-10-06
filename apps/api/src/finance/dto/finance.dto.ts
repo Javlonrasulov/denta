@@ -1,13 +1,28 @@
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export type FinancePeriod = 'today' | 'week' | 'month' | 'year';
+
+export const EXPENSE_CATEGORIES = [
+  'rent',
+  'salary',
+  'materials',
+  'equipment',
+  'utilities',
+  'marketing',
+  'taxes',
+  'other',
+] as const;
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
 export class FinancePeriodQueryDto {
   @IsOptional()
@@ -24,8 +39,18 @@ export class CreateFinanceRecordDto {
   @Min(1)
   amount!: number;
 
+  @IsOptional()
   @IsString()
-  serviceName!: string;
+  @MaxLength(200)
+  serviceName?: string;
+
+  @IsOptional()
+  @IsIn(EXPENSE_CATEGORIES)
+  category?: ExpenseCategory;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
 
   @IsOptional()
   @IsString()
@@ -61,6 +86,7 @@ export class CreateFinanceRecordDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(1000)
   notes?: string;
 
   @IsOptional()
@@ -105,6 +131,25 @@ export class RecordChargePaymentDto {
   @IsOptional()
   @IsString()
   notes?: string;
+}
+
+export class RefundPaymentDto {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  amount!: number;
+
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  reason!: string;
+}
+
+export class CreateExpenseCategoryDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(60)
+  name!: string;
 }
 
 export class ListChargesQueryDto {

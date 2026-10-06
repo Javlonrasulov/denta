@@ -11,6 +11,7 @@ import { DoctorsModule } from './doctors/doctors.module';
 import { MembersModule } from './members/members.module';
 import { AdminModule } from './admin/admin.module';
 import { FinanceModule } from './finance/finance.module';
+import { DoctorFinanceModule } from './doctor-finance/doctor-finance.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { PatientsModule } from './patients/patients.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -50,12 +51,16 @@ class RedisBootstrap implements OnModuleInit {
       load: [configuration],
       validate: validateEnv,
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60_000,
-        limit: 120,
-      },
-    ]),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60_000,
+          limit: 120,
+        },
+      ],
+      // e2e suites log in many times from one IP; per-route limits would make them flaky.
+      skipIf: () => process.env.NODE_ENV === 'test',
+    }),
     PrismaModule,
     RedisModule,
     StorageModule,
@@ -68,6 +73,7 @@ class RedisBootstrap implements OnModuleInit {
     DoctorsModule,
     PatientsModule,
     FinanceModule,
+    DoctorFinanceModule,
     InventoryModule,
     RoomsModule,
     ServicesModule,

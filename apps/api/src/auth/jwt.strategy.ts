@@ -1,24 +1,28 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthUser, JwtPayload } from '../common/guards/auth.guards';
 import { PrismaService } from '../prisma/prisma.service';
+import { AppActivityService, mobileAppPlatform } from './app-activity.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly activity: AppActivityService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('app.jwt.accessSecret'),
+      passReqToCallback: true,
     });
   }
 
-  async validate(payload: JwtPayload): Promise<AuthUser> {
+  async validate(req: Request, payload: JwtPayload): Promise<AuthUser> {
     if (payload.type !== 'access') {
       throw new UnauthorizedException({
         statusCode: 401,
@@ -43,6 +47,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
           message: 'Active clinic membership required',
         });
       }
+      const platform = mobileAppPlatform(req);
+      if (platform) this.activity.touch(membership.id, platform);
       return {
         id: payload.sub,
         clinicId: membership.clinicId,

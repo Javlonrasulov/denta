@@ -740,7 +740,45 @@
     "mark_all_read": "Mark all as read",
     "empty": "No notifications",
     "empty_title": "No notifications yet",
-    "empty_subtitle": "Updates about bookings and clinics will show up here."
+    "empty_subtitle": "Updates about bookings and clinics will show up here.",
+    "time": {
+      "now": "now",
+      "minutes": "{{count}}m",
+      "hours": "{{count}}h",
+      "days": "{{count}}d"
+    },
+    "types": {
+      "appointment_created": {
+        "title": "New appointment"
+      },
+      "appointment_cancelled": {
+        "title": "Appointment cancelled"
+      },
+      "appointment_rescheduled": {
+        "title": "Appointment rescheduled"
+      },
+      "payment_received": {
+        "title": "Payment received"
+      },
+      "low_inventory": {
+        "title": "Low inventory"
+      },
+      "trial_expiring": {
+        "title": "Trial ending soon"
+      },
+      "rent_due": {
+        "title": "Doctor rent due today",
+        "body": "{{doctor}} owes {{amount}} today."
+      },
+      "rent_overdue": {
+        "title": "Doctor rent overdue",
+        "body": "{{doctor}} is {{days}} days overdue. Balance: {{amount}}."
+      },
+      "rent_payment_submitted": {
+        "title": "Payment awaiting confirmation",
+        "body": "{{doctor}} submitted a payment of {{amount}} ({{date}})."
+      }
+    }
   },
   "empty": {
     "no_data": "No data",
@@ -870,7 +908,14 @@
     "required": "Please fill in this field",
     "email_invalid": "Invalid email",
     "phone_invalid": "Invalid phone",
-    "version": "ORADENT Doctor · {{version}}"
+    "version": "ORADENT Doctor · {{version}}",
+    "password_rules": "At least 8 characters with 1 letter and 1 digit",
+    "password_same": "The new password must differ from the current one",
+    "password_changed": "Password changed successfully",
+    "password_force_title": "Update your password",
+    "password_force_body": "You signed in with the initial password issued by the clinic. Set a personal password to keep your account safe.",
+    "password_force_current_hint": "Current password is the clinic-issued one (123456)",
+    "password_force_later": "Later"
   },
   "auth": {
     "title": "Sign in",
@@ -986,6 +1031,7 @@
       "finance": "Finance",
       "inventory": "Inventory",
       "reports": "Reports",
+      "users": "System users",
       "settings": "Settings",
       "help": "Help",
       "section_main": "Main",
@@ -1032,7 +1078,9 @@
       "income_records": "Income records",
       "all_statuses": "All statuses",
       "rooms_free": "{{count}} rooms free",
-      "empty_today": "No appointments scheduled for today."
+      "empty_today": "No appointments scheduled for today.",
+      "limited_title": "Welcome",
+      "limited_hint": "Your pages are in the menu on the left. Ask the clinic administrator if you need more access."
     },
     "appointments": {
       "title": "Appointments",
@@ -1070,13 +1118,210 @@
       "revenue": "Revenue",
       "rating": "Rating",
       "status": "Status",
-      "schedule": "Schedule",
+      "schedule": {
+        "title": "Working hours",
+        "col": "Hours",
+        "none": "Not set",
+        "hint": "Patients can book within these hours",
+        "slot": "Visit length",
+        "minutes": "{{count}} min",
+        "min_unit": "min",
+        "from": "start",
+        "to": "end",
+        "custom": "Other",
+        "per_patient": "Average time per patient",
+        "per_patient_hint": "How long the doctor spends on one patient. The patient app shows free times in these steps.",
+        "per_patient_short": "{{count}} min/patient",
+        "capacity": "Up to {{day}} patients a day · {{week}} a week",
+        "capacity_range": "{{min}}–{{max}} patients a day · {{week}} a week",
+        "preview": "In the app:",
+        "days_title": "Working days and hours",
+        "presets": {
+          "weekdays": "Mon–Fri · 09:00–18:00",
+          "six_days": "Mon–Sat · 09:00–18:00",
+          "everyday": "Every day · 09:00–21:00"
+        },
+        "day_off": "Day off",
+        "lunch": "Lunch",
+        "add_lunch": "Lunch",
+        "remove_lunch": "Remove lunch",
+        "copy_all": "Apply these hours to all working days",
+        "summary": "{{days}} days a week · {{hours}} h",
+        "conflict_title": "Overlaps with another clinic",
+        "conflict": "{{day}}: works at «{{clinic}}» at this time ({{time}})",
+        "errors": {
+          "range": "Start must be before end",
+          "lunch": "Lunch must be within working hours",
+          "empty": "Select at least one working day",
+          "fix": "Fix the errors in working hours",
+          "slot": "Enter {{min}} to {{max}} minutes"
+        },
+        "day_short": {
+          "0": "Sun",
+          "1": "Mon",
+          "2": "Tue",
+          "3": "Wed",
+          "4": "Thu",
+          "5": "Fri",
+          "6": "Sat"
+        },
+        "day_long": {
+          "0": "Sunday",
+          "1": "Monday",
+          "2": "Tuesday",
+          "3": "Wednesday",
+          "4": "Thursday",
+          "5": "Friday",
+          "6": "Saturday"
+        }
+      },
       "patients": "Patients",
       "finance": "Finance",
       "roster": "Doctor roster",
       "specialization": "Specialization",
       "experience": "Experience",
-      "years_short": "{{count}} yrs"
+      "years_short": "{{count}} yrs",
+      "add": "Add doctor",
+      "col_app": "App",
+      "status_default_password": "Default password",
+      "status_default_password_hint": "The doctor still signs in with the initial password (123456)",
+      "status_active": "Active",
+      "empty_title": "No doctors yet",
+      "empty_hint": "Add a doctor — they sign in to the doctor app with their phone number and appear in the patient app.",
+      "modal": {
+        "title": "New doctor",
+        "subtitle": "Doctor app sign-in details are created automatically",
+        "preview_label": "How patients will see the doctor",
+        "preview_name": "First Last",
+        "preview_specialty": "Specialization",
+        "preview_badge": "New",
+        "section_personal": "Personal details",
+        "section_specialty": "Specialization",
+        "section_access": "App sign-in",
+        "first_name": "First name",
+        "last_name": "Last name",
+        "experience_years": "Experience (years)",
+        "phone": "Phone (login)",
+        "phone_hint": "The doctor signs in to the app with this number",
+        "default_password": "Initial password",
+        "default_password_hint": "The doctor is asked to change it on first sign-in, and can change it any time in the app under Profile → Change password.",
+        "submit": "Add doctor",
+        "cancel": "Cancel",
+        "close": "Close",
+        "required": "Required",
+        "invalid_phone": "Invalid phone number",
+        "invalid_experience": "Enter a number from 0 to 60",
+        "errors": {
+          "already_member": "A user with this phone already works at your clinic",
+          "generic": "Could not add the doctor. Please try again."
+        },
+        "done_created_title": "Doctor added",
+        "done_created_hint": "{{name}} can now sign in to the doctor app and is visible in the patient app.",
+        "done_attached_title": "Doctor linked to the clinic",
+        "done_attached_hint": "{{name}} already has an account — they sign in with their existing password.",
+        "login": "Login (phone)",
+        "password": "Password",
+        "steps_title": "Send to the doctor",
+        "step_download": "Install the ORADENT Doctor app",
+        "step_login": "Sign in with the phone number and password 123456",
+        "step_change": "Set a personal password on first sign-in",
+        "add_another": "Add another"
+      },
+      "specialty": {
+        "manage": "Manage",
+        "manage_title": "Manage specializations",
+        "done": "Done",
+        "add": "Add",
+        "add_new": "Add specialization",
+        "new_placeholder": "e.g. Endodontist",
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "delete": "Delete",
+        "delete_confirm": "Delete “{{name}}”?",
+        "delete_confirm_used": "Delete “{{name}}”? It will also be removed from {{count}} doctor(s).",
+        "doctor_count": "Doctors: {{count}}",
+        "hint": "You can select several specializations",
+        "selected": "Selected: {{count}}",
+        "required": "Select at least one specialization",
+        "empty": "No specializations yet",
+        "retry": "Reload",
+        "errors": {
+          "exists": "This specialization already exists",
+          "invalid": "Use 1–60 characters without commas",
+          "generic": "Could not complete the action. Please try again."
+        }
+      },
+      "edit": {
+        "open": "Edit",
+        "title": "Edit doctor",
+        "save": "Save",
+        "price_from": "Visit price (from), UZS",
+        "price_hint": "Shown as “from ...” in the patient app",
+        "login_locked": "App login — cannot be changed",
+        "reset_title": "Reset password",
+        "reset_hint": "If the doctor forgot their password, reset it to {{password}}.",
+        "reset_confirm": "The password will be reset to {{password}} and the doctor signed out of all devices. Continue?",
+        "reset_button": "Reset password",
+        "reset_confirm_yes": "Yes, reset",
+        "reset_done": "Password reset. The doctor will set a new one after signing in.",
+        "errors": {
+          "reset_forbidden": "This account is also used in another clinic — the password cannot be reset here.",
+          "generic": "Could not save. Please try again."
+        }
+      },
+      "col_price": "Visit price",
+      "app": {
+        "online": "Online",
+        "never": "Not signed in yet",
+        "today": "Today, {{time}}",
+        "yesterday": "Yesterday, {{time}}",
+        "last_seen_exact": "Last activity in the app: {{value}}"
+      },
+      "lookup": {
+        "searching": "Searching…",
+        "phone_first_hint": "If the number is already registered, we’ll find the doctor automatically",
+        "found_phone": "This number is already registered",
+        "found_name": "A doctor with this name was found",
+        "already_here": "This doctor already works at your clinic",
+        "works_now": "Works now",
+        "worked": "Worked {{from}} – {{to}}",
+        "this_clinic": "your clinic",
+        "patient_account": "This number is registered in the app but has not worked as a doctor yet. The doctor will sign in with this account and their own password.",
+        "no_history": "Not working at any clinic right now",
+        "question": "Add this doctor to your clinic?",
+        "question_busy": "They also work at «{{clinic}}» right now. Add them to your clinic?",
+        "use_hint": "Their details are kept and filled into the form. Set working hours below.",
+        "use": "Yes, add",
+        "dismiss": "No, a different person",
+        "hide": "Hide",
+        "other_phone": "Enter another number",
+        "answer_first": "Answer the question about the found doctor first",
+        "selected": "Adding {{name}}",
+        "selected_hint": "Details filled in — edit if needed",
+        "cancel_selection": "Cancel",
+        "existing_login": "The doctor signs in with their existing account and password — no new password is issued.",
+        "phone_locked": "The doctor’s registered number — used to sign in to the app"
+      },
+      "remove": {
+        "open": "Remove",
+        "title": "Remove doctor",
+        "subtitle": "From your clinic only",
+        "only_here": "The doctor is removed from your clinic only.",
+        "points": {
+          "kept": "Their account, visit history and work at other clinics are kept",
+          "hidden": "They won’t appear among your clinic’s doctors in the patient app",
+          "restore": "If you add them again later, their details are restored"
+        },
+        "confirm": "Yes, remove",
+        "force": "Remove anyway",
+        "upcoming_title": "Upcoming visits: {{count}}",
+        "upcoming_hint": "Bookings are not deleted. Reassign them to another doctor or notify the patients.",
+        "errors": {
+          "owner": "The clinic owner can’t be removed",
+          "generic": "Couldn’t remove. Please try again."
+        }
+      }
     },
     "rooms": {
       "title": "Rooms",
@@ -1113,7 +1358,59 @@
       "patient_vendor": "Patient / Vendor",
       "actions": "Actions",
       "partial_pay": "Partial pay",
-      "full_pay": "Pay in full"
+      "full_pay": "Pay in full",
+      "empty_charges": "No outstanding charges yet",
+      "empty_transactions": "No transactions in this period",
+      "expense_modal": {
+        "add_button": "Add expense",
+        "title": "New expense",
+        "subtitle": "Record a clinic expense",
+        "close": "Close",
+        "amount": "Amount",
+        "currency": "UZS",
+        "amount_required": "Enter the amount",
+        "amount_too_large": "Amount is too large",
+        "category": "Category",
+        "category_required": "Select a category",
+        "new_category": "New category",
+        "new_category_placeholder": "Category name, e.g. Laboratory",
+        "new_category_create": "Add",
+        "new_category_short": "Name must be at least 2 characters",
+        "categories": {
+          "rent": "Rent",
+          "salary": "Salaries",
+          "materials": "Materials",
+          "equipment": "Equipment",
+          "utilities": "Utilities",
+          "marketing": "Marketing",
+          "taxes": "Taxes",
+          "other": "Other"
+        },
+        "details": "Details",
+        "date": "Date",
+        "date_required": "Select a date",
+        "date_future": "Date cannot be in the future",
+        "method": "Payment method",
+        "methods": {
+          "cash": "Cash",
+          "card": "Card",
+          "transfer": "Transfer"
+        },
+        "name": "Title",
+        "name_placeholder": "e.g. October rent",
+        "notes": "Notes",
+        "notes_placeholder": "Additional details",
+        "optional": "optional",
+        "cancel": "Cancel",
+        "submit": "Save"
+      }
+    },
+    "datepicker": {
+      "placeholder": "Select a date",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "prev_month": "Previous month",
+      "next_month": "Next month"
     },
     "inventory": {
       "title": "Inventory",
@@ -1146,14 +1443,195 @@
     },
     "settings": {
       "title": "Settings",
-      "subtitle": "Clinic preferences",
-      "clinic_profile": "Clinic profile",
+      "subtitle": "Clinic details, address and working hours",
+      "clinic_profile": "General information",
       "name": "Name",
       "city": "City",
       "timezone": "Timezone",
       "currency": "Currency",
       "timezone_value": "Asia/Tashkent (UTC+5)",
-      "currency_value": "UZS (so'm)"
+      "currency_value": "UZS (so'm)",
+      "section_media": "Logo and cover",
+      "section_location": "Address and map location",
+      "section_hours": "Working hours",
+      "logo": "Logo",
+      "cover": "Cover image",
+      "media_hint": "JPEG, PNG or WebP, up to 5 MB. Shown in the patient app.",
+      "upload": "Upload",
+      "remove": "Remove",
+      "phone": "Phone",
+      "email": "Email",
+      "price_from": "Prices from",
+      "specializations": "Specializations",
+      "specializations_placeholder": "e.g. implantology, orthodontics",
+      "specializations_hint": "Press Enter or comma to add.",
+      "about": "About the clinic",
+      "about_placeholder": "Briefly describe your clinic, equipment and services",
+      "region": "Region",
+      "address": "Address",
+      "address_placeholder": "Street, building, landmark",
+      "coordinates": "Coordinates",
+      "map_search_placeholder": "Search for an address or place",
+      "map_search": "Search",
+      "map_my_location": "My location",
+      "map_no_results": "Nothing found. Place the pin on the map manually.",
+      "map_search_failed": "Search failed. Please try again later.",
+      "map_geo_failed": "Could not detect your location. Check browser permissions.",
+      "map_hint": "Click the map or drag the pin to mark the exact clinic location. The address fills in automatically.",
+      "hours_need_location": "Set the location on the map first to save working hours.",
+      "open": "Open",
+      "closed": "Closed",
+      "day_0": "Sunday",
+      "day_1": "Monday",
+      "day_2": "Tuesday",
+      "day_3": "Wednesday",
+      "day_4": "Thursday",
+      "day_5": "Friday",
+      "day_6": "Saturday",
+      "required": "Required field",
+      "name_short": "Name must be at least 2 characters",
+      "email_invalid": "Invalid email",
+      "price_invalid": "Invalid price",
+      "pin_required": "Mark the clinic location on the map",
+      "hours_invalid": "Closing time must be after opening time",
+      "fix_errors": "Please check the highlighted fields.",
+      "save": "Save changes",
+      "saved": "Saved",
+      "save_failed": "Could not save",
+      "read_only": "You do not have permission to edit clinic details.",
+      "changes_saved": "Changes saved",
+      "schedule": {
+        "col_day": "Day",
+        "col_status": "Status",
+        "col_hours": "Working hours",
+        "col_lunch": "Lunch break",
+        "col_actions": "Actions",
+        "open": "Open",
+        "day_off": "Day off",
+        "lunch": "Lunch",
+        "lunch_off": "No lunch",
+        "work_week_one": "Work week: {{count}} day",
+        "work_week": "Work week: {{count}} days",
+        "individual": "Custom schedule",
+        "all_closed": "All days closed",
+        "preset_standard": "Standard schedule",
+        "apply_weekdays": "Apply to weekdays",
+        "apply_weekdays_hint": "Copies Monday to Tuesday–Saturday. Sunday stays unchanged.",
+        "open_time": "Opening time",
+        "close_time": "Closing time",
+        "lunch_start": "Lunch start",
+        "lunch_end": "Lunch end",
+        "day_actions": "{{day}}: actions",
+        "copy_title": "Copy {{day}} schedule",
+        "copy_to": "Apply to which days?",
+        "copy_apply": "Apply ({{count}})",
+        "select_workdays": "All workdays",
+        "short_0": "Su",
+        "short_1": "Mo",
+        "short_2": "Tu",
+        "short_3": "We",
+        "short_4": "Th",
+        "short_5": "Fr",
+        "short_6": "Sa",
+        "err_invalid": "Invalid time.",
+        "err_hours_order": "Closing time must be after opening time.",
+        "err_lunch_order": "Lunch end must be after lunch start.",
+        "err_lunch_outside": "Lunch must be within working hours.",
+        "err_fix": "Fix the errors in working hours.",
+        "unsaved": "Unsaved changes",
+        "cancel": "Cancel",
+        "toast_saved": "Schedule saved",
+        "conflict_title": "There are existing appointments in this time range.",
+        "conflict_text": "Saving the schedule will not cancel these appointments. Reschedule them with the patients separately.",
+        "conflict_more": "{{count}} more appointments",
+        "conflict_back": "Back",
+        "conflict_confirm": "Save anyway",
+        "reason_lunch": "Falls on lunch break",
+        "reason_closed": "Falls on a day off",
+        "reason_outside": "Outside working hours"
+      }
+    },
+    "users": {
+      "subtitle": "Staff with access to the CRM and their permissions",
+      "add": "Add staff",
+      "team": "Team",
+      "team_empty": "No staff yet",
+      "col_member": "Staff member",
+      "col_actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit_modal": {
+        "title": "Edit staff member",
+        "login_locked": "Sign-in details are changed by the staff member themselves"
+      },
+      "delete_modal": {
+        "title": "Delete staff member",
+        "hint": "{{name}} will no longer be able to sign in. Their appointment and patient history is kept. If you add them again with the same phone number, access is restored.",
+        "confirm": "Delete"
+      },
+      "roles": {
+        "CLINIC_OWNER": "Clinic owner",
+        "CLINIC_ADMIN": "Administrator",
+        "RECEPTIONIST": "Reception",
+        "ACCOUNTANT": "Accountant",
+        "DOCTOR": "Doctor"
+      },
+      "modal": {
+        "title": "New staff member",
+        "subtitle": "Staff sign in with their own phone number and password",
+        "section_personal": "Personal details",
+        "section_contact": "Contact and sign-in",
+        "first_name": "First name",
+        "last_name": "Last name",
+        "phone": "Phone",
+        "email": "Email",
+        "optional": "optional",
+        "hint_invite": "An invitation will be emailed. The staff member sets their own password via the link.",
+        "hint_temp": "A temporary password will be generated. You hand it to the staff member yourself.",
+        "submit": "Add",
+        "required": "Required",
+        "invalid_phone": "Invalid phone number",
+        "invalid_email": "Invalid email",
+        "done_created_title": "Staff member added",
+        "done_created_hint": "These details are shown only once. Share them with the staff member — they will change the password on first sign-in.",
+        "login": "Login",
+        "temp_password": "Temporary password",
+        "copy": "Copy",
+        "copied": "Copied",
+        "done_invite_title": "Invitation sent",
+        "done_invite_hint": "An invitation was sent to {{email}}. The link is valid for 7 days.",
+        "dev_token": "Invitation link (DEV)",
+        "done_attached_title": "Staff member linked",
+        "done_attached_hint": "{{name}} already had an account and was added to your clinic. They sign in with their own password.",
+        "add_another": "Add another",
+        "close": "Close"
+      },
+      "col_access": "Access",
+      "full_access": "Full access",
+      "overview_only": "Overview only",
+      "access": {
+        "title": "Page access",
+        "hint": "“View” — read only. “Manage” — can also add, edit and delete.",
+        "all": "All:",
+        "none": "None",
+        "view": "View",
+        "manage": "Manage",
+        "required": "Select at least one page"
+      },
+      "you": "You",
+      "doctors_note": "Doctors ({{count}}) work in the mobile app and are managed on the Doctors page",
+      "errors": {
+        "ALREADY_MEMBER": "A staff member with this phone or email is already in the clinic",
+        "PERMISSION_NOT_GRANTABLE": "You cannot grant access you do not have yourself",
+        "INVALID_PERMISSION": "Unknown access was sent. Refresh the page and try again",
+        "SELF_MODIFY": "You cannot change your own access or remove yourself",
+        "MAIL_SEND_FAILED": "The invitation email could not be sent. Check the address or add without email",
+        "INVALID_PHONE": "Invalid phone number",
+        "INVALID_EMAIL": "Invalid email address",
+        "FORBIDDEN": "You do not have permission for this action"
+      }
     },
     "header": {
       "open_menu": "Open menu",
@@ -1270,6 +1748,472 @@
         "oct": "Oct",
         "nov": "Nov",
         "dec": "Dec"
+      }
+    },
+    "state": {
+      "loading": "Loading…",
+      "empty": "No data yet",
+      "load_error": "Couldn’t load data. Please try again.",
+      "forbidden": "You don’t have access to this section."
+    },
+    "doctor_finance": {
+      "currency": "UZS",
+      "close": "Close",
+      "cancel": "Cancel",
+      "remove": "Remove",
+      "retry": "Retry",
+      "reason": "Reason",
+      "reason_placeholder": "Describe the reason (stored in the audit log)",
+      "not_configured": "Financial agreement not set up",
+      "not_configured_hint": "No debt is calculated until rent, a revenue share or other terms are defined.",
+      "configure": "Set up agreement",
+      "list_banner": "{{count}} doctor(s) have no financial agreement. Set it up in the Finance tab on the doctor's page.",
+      "clinic": "Clinic",
+      "doctor": "Doctor",
+      "section_model": "Financial model",
+      "section_terms": "Terms",
+      "section_rent": "Rent",
+      "models": {
+        "CLINIC_REVENUE": {
+          "title": "Revenue to clinic",
+          "description": "Patient payments go to the clinic. The doctor's salary is handled separately.",
+          "note": "No rent or share is calculated. Patient payments are fully clinic revenue."
+        },
+        "DOCTOR_REVENUE_PLUS_RENT": {
+          "title": "Revenue to doctor + rent",
+          "description": "The doctor keeps revenue from their patients and pays the clinic a fixed rent."
+        },
+        "REVENUE_SHARE": {
+          "title": "Revenue share",
+          "description": "Only amounts actually paid are split by percentage."
+        },
+        "CUSTOM": {
+          "title": "Mixed (custom)",
+          "description": "Share and rent together, e.g. 30% to the clinic + monthly rent."
+        }
+      },
+      "effective_from": "Agreement start date",
+      "effective_from_hint": "Debt is only calculated from this date.",
+      "clinic_percent": "Clinic share",
+      "share_hint": "The share is calculated only from real payments: \"completed\" does not mean \"paid\". A refund reverses the share too.",
+      "custom_rent_toggle": "Includes rent",
+      "custom_rent_toggle_hint": "In addition to the share, the doctor pays a fixed rent.",
+      "recurrence": "Payment frequency",
+      "recurrences": {
+        "MONTHLY": "Monthly",
+        "WEEKLY": "Weekly",
+        "DAILY": "Daily",
+        "INTERVAL": "Every N",
+        "ONE_TIME": "One-time",
+        "CUSTOM_SCHEDULE": "Custom schedule"
+      },
+      "amount_per": {
+        "MONTHLY": "Monthly rent",
+        "WEEKLY": "Weekly rent",
+        "DAILY": "Daily rent",
+        "INTERVAL": "Amount per period",
+        "ONE_TIME": "Payment amount"
+      },
+      "due_day_of_month": "Day of the month",
+      "month_clamp_hint": "In months without day {{day}}, the payment moves to the last day of the month.",
+      "due_day_of_week": "Day of the week",
+      "weekdays_short": {
+        "0": "Su",
+        "1": "Mo",
+        "2": "Tu",
+        "3": "We",
+        "4": "Th",
+        "5": "Fr",
+        "6": "Sa"
+      },
+      "weekdays": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "daily_basis": "Which days count",
+      "daily": {
+        "WORKING_DAYS": "Working days",
+        "CALENDAR_DAYS": "Calendar days"
+      },
+      "daily_hint": {
+        "WORKING_DAYS": "Only working days from the doctor's schedule count; days off and vacations are skipped.",
+        "CALENDAR_DAYS": "Every calendar day counts, including weekends."
+      },
+      "interval_every": "Every",
+      "interval_unit": "Unit",
+      "units": {
+        "DAY": "days",
+        "WEEK": "weeks",
+        "MONTH": "months"
+      },
+      "interval_hint": "The first payment is on the start date, the next ones follow this interval.",
+      "one_time_due": "Payment date",
+      "schedule_items": "Payment dates",
+      "schedule_date": "Date",
+      "schedule_amount": "Amount",
+      "schedule_add": "Add date",
+      "advanced": "Advanced settings",
+      "grace_days": "Grace days",
+      "grace_hint": "A payment is marked overdue only after this many days past the due date.",
+      "prorate": "Prorate the first period",
+      "prorate_hint": "If the agreement starts mid-period, the first payment is reduced proportionally.",
+      "preview_title": "Upcoming payments",
+      "preview_empty": "Enter an amount and frequency to see the schedule here.",
+      "prorated": "Prorated",
+      "prior_question": "Has rent been paid so far?",
+      "prior": {
+        "none": {
+          "title": "No, starting fresh",
+          "hint": "Debt is counted from the start date."
+        },
+        "paid": {
+          "title": "Yes, paid before",
+          "hint": "We record the earlier payment for history.",
+          "amount": "Amount paid",
+          "paid_at": "Payment date",
+          "covered_from": "For period: from",
+          "covered_to": "to",
+          "align_hint": "To start counting debt after the paid period, set the start date to {{date}}.",
+          "align_action": "Set date",
+          "history_hint": "This payment is kept for history; debt is counted from the agreement start date."
+        },
+        "debt": {
+          "title": "Has a debt",
+          "hint": "Enter debt left from earlier periods.",
+          "amount": "Opening debt",
+          "amount_hint": "This amount shows as debt immediately, and later payments settle it first.",
+          "note": "Note",
+          "note_placeholder": "e.g. rent for September–October 2026"
+        }
+      },
+      "notes": "Agreement note",
+      "notes_placeholder": "Internal note (not visible to the doctor)",
+      "method": "Payment method",
+      "methods": {
+        "cash": "Cash",
+        "card": "Card",
+        "transfer": "Bank",
+        "other": "Other"
+      },
+      "errors": {
+        "model": "Choose a financial model",
+        "date": "Choose a date",
+        "start_range": "The start date must be within 1 year of today",
+        "percent": "Enter a percentage from 0 to 100",
+        "percent_precision": "At most 2 decimal places",
+        "custom_empty": "A custom agreement needs rent or a doctor share",
+        "amount": "Enter an amount",
+        "amount_max": "The amount is too large",
+        "interval": "Enter a number from 1 to 365",
+        "due_before_start": "The payment date cannot be before the start date",
+        "schedule_empty": "Add at least one payment date",
+        "schedule_date": "Dates must be on or after the start date",
+        "schedule_duplicate": "The same date is entered twice",
+        "schedule_amount": "Enter an amount for every date",
+        "grace": "0 to 60 days",
+        "date_future": "The date cannot be in the future",
+        "range": "The period end cannot be before its start",
+        "server": "The server rejected this value — please check it",
+        "fix_form": "Fix the highlighted fields",
+        "generic": "Something went wrong. Please try again.",
+        "reason": "Enter a reason (at least 3 characters)",
+        "doctor_inactive": "The doctor no longer works at this clinic — a new agreement cannot be created.",
+        "api": {
+          "validation": "Some data is invalid — check it and try again",
+          "too_old": "The date is too old — payments older than 1 year cannot be entered",
+          "attachment": "The receipt file is invalid — upload it again",
+          "file_type": "Only JPG, PNG, WEBP or PDF (up to 5 MB)",
+          "version_before": "A new agreement cannot start before the current one",
+          "unknown_service": "One of the selected services was not found",
+          "forbidden": "You don't have permission for this action",
+          "not_found": "Data not found — refresh the page",
+          "conflict": "The data has already changed — refresh the page",
+          "network": "No connection to the server. Check your internet."
+        }
+      },
+      "rule": {
+        "monthly": "day {{day}} of every month",
+        "weekly": "every {{day}}",
+        "daily_calendar": "every day",
+        "daily_working": "every working day",
+        "interval_day": "every {{count}} days",
+        "interval_week": "every {{count}} weeks",
+        "interval_month": "every {{count}} months",
+        "one_time": "one-time",
+        "custom_schedule": "Custom schedule"
+      },
+      "wizard": {
+        "step_details": "Details",
+        "step_finance": "Financial agreement",
+        "title": "Financial agreement with {{name}}",
+        "hint": "Set rent, a revenue share or other terms. Not sure yet? Choose \"Set up later\".",
+        "back": "Back",
+        "later": "Set up later",
+        "next": "Next",
+        "open_finance": "Open Finance tab",
+        "configure_now": "Set up now",
+        "outcome": {
+          "saved": "Financial agreement saved",
+          "skipped": "Financial agreement not set up",
+          "failed": "Doctor added, but the agreement was not saved"
+        }
+      },
+      "payment": {
+        "title": "Record rent payment",
+        "amount": "Payment amount",
+        "advance_hint": "All debt will be settled; {{amount}} stays as an advance and applies to future periods automatically.",
+        "fifo_hint": "The payment settles the oldest debt first.",
+        "details": "Details",
+        "paid_at": "Payment date",
+        "note": "Note",
+        "note_placeholder": "e.g. October rent",
+        "receipt": "Attach a receipt (JPG, PNG, PDF)",
+        "receipt_type": "Only JPG, PNG, WEBP or PDF",
+        "receipt_size": "The file must be 5 MB or less",
+        "submit": "Record"
+      },
+      "kpi": {
+        "debt": "Current debt",
+        "overdue": "Overdue",
+        "next_due": "Next payment",
+        "advance": "Advance",
+        "no_next": "Not scheduled"
+      },
+      "opening": {
+        "title": "Add opening debt",
+        "hint": "Enter debt from before switching to the system. It appears as a separate line and is written to the audit log.",
+        "amount": "Debt amount",
+        "as_of": "As of date",
+        "note": "Note",
+        "submit": "Add"
+      },
+      "agreement_modal": {
+        "title_new": "Set up financial agreement",
+        "title_edit": "Change agreement",
+        "version_hint": "A new version (v{{version}}) will be created. The old agreement is not deleted — it stays in history, and paid periods are not recalculated.",
+        "submit_new": "Save agreement",
+        "submit_edit": "Save new version"
+      },
+      "inactive_banner": "The doctor has not worked at the clinic since {{date}}. No new charges are created; the existing debt is kept.",
+      "row_status": {
+        "paid": "Paid",
+        "pending": "Pending",
+        "debtor": "Debtor",
+        "overdue": "Overdue",
+        "not_configured": "Not set up"
+      },
+      "share_line": "Clinic {{clinic}}% · Doctor {{doctor}}%",
+      "effective_since": "In effect since {{date}}",
+      "grace_line": "{{count}} grace days",
+      "record_payment": "Record payment",
+      "change_agreement": "Change agreement",
+      "add_opening": "Opening debt",
+      "pending_title": "Payments submitted by the doctor need confirmation ({{count}})",
+      "confirm": "Confirm",
+      "reject": "Reject",
+      "timeline": "Settlement history",
+      "timeline_filter": {
+        "all": "All",
+        "obligations": "Charges",
+        "payments": "Payments"
+      },
+      "timeline_empty": "No records yet",
+      "share": {
+        "title": "Revenue share",
+        "only_paid": "Only from real payments",
+        "collected_month": "Collected this month",
+        "clinic_month": "Clinic share (month)",
+        "doctor_month": "Doctor share (month)",
+        "clinic_owes": "Doctor's share of payments collected by the clinic: {{amount}}",
+        "doctor_owes": "Clinic's share of payments collected by the doctor: {{amount}}",
+        "entry": "C: {{clinic}} · D: {{doctor}}",
+        "empty": "No payments with a share yet"
+      },
+      "history": "Agreement history",
+      "open_ended": "open-ended",
+      "agreement_status": {
+        "ACTIVE": "Active",
+        "SUPERSEDED": "Superseded",
+        "ENDED": "Ended"
+      },
+      "reason_modal": {
+        "void": {
+          "title": "Void payment",
+          "description": "The payment is not deleted — it is marked as voided and the debts it settled reopen.",
+          "confirm": "Void"
+        },
+        "reject": {
+          "title": "Reject payment",
+          "description": "The payment submitted by the doctor will not be accepted. The doctor will see the reason.",
+          "confirm": "Reject"
+        },
+        "cancel": {
+          "title": "Cancel charge",
+          "description": "The debt for this period will be cancelled. Payments applied to it return to the advance.",
+          "confirm": "Cancel charge"
+        }
+      },
+      "aging": {
+        "title": "Debt by age",
+        "d0_7": "0–7 days",
+        "d8_30": "8–30 days",
+        "d31_60": "31–60 days",
+        "d60_plus": "60+ days"
+      },
+      "opening_label": "Opening debt",
+      "rent_label": "Rent",
+      "ob_status": {
+        "UPCOMING": "Upcoming",
+        "DUE": "Due today",
+        "PARTIALLY_PAID": "Partially paid",
+        "PAID": "Paid",
+        "OVERDUE": "Overdue",
+        "CANCELLED": "Cancelled"
+      },
+      "days_overdue": "{{count}} days late",
+      "due_on": "due {{date}}",
+      "cancelled_line": "Cancelled: {{reason}} · {{by}}",
+      "paid_of": "{{paid}} paid · {{left}} left",
+      "cancel_obligation": "Cancel",
+      "prior_payment_label": "Earlier payment (history)",
+      "payment_label": "Payment",
+      "pay_status": {
+        "SUBMITTED": "Awaiting confirmation",
+        "CONFIRMED": "Confirmed",
+        "REJECTED": "Rejected",
+        "VOIDED": "Voided"
+      },
+      "covered": "Period: {{from}} – {{to}}",
+      "advance_chip": "Advance {{amount}}",
+      "voided_line": "Voided: {{reason}} · {{by}}",
+      "receipt": "Receipt",
+      "void": "Void",
+      "page": {
+        "doctor": "Doctor",
+        "subtitle": "Doctor profile and settlements",
+        "tab_profile": "Profile",
+        "tab_finance": "Finance",
+        "back": "Doctors list",
+        "not_in_roster": "The doctor does not currently work at the clinic",
+        "contacts": "Contact and price"
+      },
+      "reminders": {
+        "open": "Reminders",
+        "title": "Rent reminders",
+        "subtitle": "Push and in-app notifications",
+        "when": "When to remind",
+        "d3": "3 days before",
+        "d1": "1 day before",
+        "due": "On the due day",
+        "overdue": "When overdue",
+        "frequency": "Repeat for overdue debt",
+        "freq": {
+          "DAILY": "Daily",
+          "EVERY_3_DAYS": "Every 3 days",
+          "WEEKLY": "Weekly",
+          "CUSTOM": "Custom"
+        },
+        "every": "Every",
+        "days": "days",
+        "custom_days_error": "Enter 1 to 60 days",
+        "recipients": "Who receives them",
+        "notify_doctor": "Doctor",
+        "notify_doctor_hint": "A notification in the doctor app with the amount and due date.",
+        "notify_staff": "Clinic staff",
+        "notify_staff_hint": "Owner, administrator and accountant with access to rent (on the due day and when overdue).",
+        "send_hour": "Send time",
+        "send_hour_hint": "In the clinic's time zone. Each reminder is sent only once.",
+        "save": "Save"
+      },
+      "rents": {
+        "title": "Doctor rent",
+        "expected": "Expected this month",
+        "paid": "Paid this month",
+        "remaining": "Remaining this month",
+        "overdue": "Overdue",
+        "next7": "Next 7 days",
+        "filter": {
+          "all": "All",
+          "paid": "Paid",
+          "pending": "Pending",
+          "debtor": "Debtors",
+          "overdue": "Overdue"
+        },
+        "search": "Search doctor",
+        "empty": "Nothing found",
+        "col": {
+          "doctor": "Doctor",
+          "agreement": "Agreement",
+          "next": "Next payment",
+          "debt": "Debt",
+          "status": "Status"
+        },
+        "left_clinic": "Left the clinic",
+        "open_pay": "Open / pay",
+        "open": "Open"
+      },
+      "refund": {
+        "title": "Refund payment",
+        "hint": "A refund is recorded as a negative payment. The original payment is unchanged, and the doctor's share is reversed accordingly.",
+        "amount": "Refund amount",
+        "too_much": "Maximum refundable amount: {{amount}}",
+        "submit": "Refund",
+        "badge": "refund",
+        "action": "Refund"
+      },
+      "report": {
+        "title": "Doctor rent income",
+        "from": "Period start",
+        "to": "Period end",
+        "doctor": "Doctor",
+        "all_doctors": "All doctors",
+        "status": "Status",
+        "total": "Total",
+        "col": {
+          "doctor": "Doctor",
+          "model": "Model",
+          "status": "Status",
+          "accrued": "Rent accrued",
+          "paid": "Paid",
+          "debt": "Debt",
+          "overdue": "Overdue",
+          "advance": "Advance",
+          "revenue": "Patient payments (shared)",
+          "clinic_share": "Clinic share",
+          "doctor_share": "Doctor share"
+        }
+      },
+      "access": {
+        "rent": "Doctor rent",
+        "rent_admin": "Rent: voids and settings",
+        "agreements": "Doctor financial agreements"
+      }
+    },
+    "invite": {
+      "title": "{{name}}, accept your invitation",
+      "subtitle_new": "A clinic invited you to the system. Set a password to sign in.",
+      "subtitle_existing": "You already have an ORADENT account. Enter your current password to confirm.",
+      "new_password": "New password",
+      "current_password": "Your current password",
+      "accept": "Accept invitation",
+      "go_login": "Go to sign in",
+      "invalid_title": "Invitation unavailable",
+      "done_title": "Invitation accepted",
+      "done_subtitle": "You are now part of the “{{clinic}}” team.",
+      "done_login": "Sign in with {{login}} and your password.",
+      "errors": {
+        "INVITATION_INVALID": "The link is invalid or was revoked. Ask the clinic for a new invitation.",
+        "INVITATION_EXPIRED": "The invitation has expired. Ask the clinic for a new one.",
+        "INVITATION_ALREADY_ACCEPTED": "This invitation was already accepted. You can sign in.",
+        "INVALID_CREDENTIALS": "Wrong password",
+        "INVALID_PASSWORD": "Use at least 8 characters with letters and numbers",
+        "ALREADY_MEMBER": "You are already a member of this clinic",
+        "UNKNOWN": "Something went wrong. Please try again"
       }
     }
   },
@@ -1399,13 +2343,73 @@
       "invalid_credentials": "Incorrect email/phone or password.",
       "email_not_verified": "Your email is not verified yet.",
       "email_not_registered": "No account is registered with this email. Check the address or sign up.",
+      "identifier_required": "Enter your phone number or email.",
+      "password_required": "Enter your password.",
       "invalid_code": "Invalid verification code.",
       "code_expired": "This code has expired.",
       "resend_cooldown": "You can resend the code in {{seconds}} seconds.",
       "rate_limited": "Too many attempts. Try again later.",
       "not_found": "Account not found.",
       "network": "Network error. Please try again.",
-      "unknown": "Something went wrong. Please try again."
+      "unknown": "Something went wrong. Please try again.",
+      "not_clinic_account": "This is not a clinic account. Doctors and patients use the ORADENT mobile app.",
+      "wrong_password": "Current password is incorrect.",
+      "same_password": "The new password must differ from the current one.",
+      "same_email": "The new email is the same as the current one.",
+      "unauthorized": "Your session has expired. Please sign in again."
+    },
+    "account": {
+      "title": "Personal account",
+      "subtitle": "Manage your login, password and email",
+      "open": "Open personal account",
+      "close": "Close",
+      "verified": "Verified",
+      "unverified": "Not verified",
+      "login_label": "Login",
+      "email_label": "Email",
+      "current_password": "Current password",
+      "current_password_hint": "Enter your current password to confirm it is you.",
+      "tabs": {
+        "phone": "Login",
+        "password": "Password",
+        "email": "Email"
+      },
+      "phone": {
+        "title": "Change login",
+        "hint": "Your login is your phone number. You will sign in with the new number.",
+        "new": "New phone number",
+        "same": "This number is already your login.",
+        "save": "Save login",
+        "success": "Login updated successfully."
+      },
+      "password": {
+        "title": "Change password",
+        "hint": "At least 8 characters, 1 letter and 1 digit.",
+        "new": "New password",
+        "confirm": "Repeat new password",
+        "save": "Save password",
+        "success": "Password updated. Sessions on other devices were signed out."
+      },
+      "email": {
+        "title": "Change email",
+        "hint": "A verification code will be sent to the new email. Your email will not change until the code is confirmed.",
+        "new": "New email",
+        "send_code": "Send code",
+        "code_sent": "We sent a 6-digit code to {{email}}.",
+        "confirm": "Confirm and save",
+        "resend": "Resend code",
+        "resend_in": "Resend in {{time}}",
+        "change_address": "Use a different email",
+        "success": "Email changed and verified successfully."
+      }
+    },
+    "force_password": {
+      "title": "Change your password",
+      "subtitle": "You signed in with a temporary password from the clinic.",
+      "hint": "For security, set your own password before continuing.",
+      "current": "Temporary password",
+      "save": "Save password and continue",
+      "logout": "Sign out"
     }
   },
   "legal": {
@@ -1427,5 +2431,35 @@
     "whitening": "Whitening",
     "orthodontic_consult": "Orthodontic consultation",
     "implant_consult": "Implant consultation"
+  },
+  "doctorApp": {
+    "clinicFinance": {
+      "title": "Settlement with the clinic",
+      "not_configured": "No financial agreement with the clinic yet",
+      "debt": "Current debt",
+      "overdue": "Overdue",
+      "next_due": "Next payment",
+      "advance": "Advance",
+      "agreement": "Agreement",
+      "history": "Recent records",
+      "empty": "No records yet",
+      "paid": "Payment",
+      "rent": "Rent",
+      "opening": "Opening debt",
+      "pending": "Awaiting confirmation",
+      "read_only": "These records are kept by the clinic. Contact the clinic administrator with any questions.",
+      "error": "Could not load data",
+      "models": {
+        "CLINIC_REVENUE": "Clinic keeps revenue",
+        "DOCTOR_REVENUE_PLUS_RENT": "Rent based",
+        "REVENUE_SHARE": "Revenue share",
+        "CUSTOM": "Mixed agreement"
+      },
+      "share": "Clinic share {{percent}}%",
+      "since": "since {{date}}",
+      "voided": "Voided",
+      "rejected": "Rejected",
+      "overdue_days": "{{count}} days overdue"
+    }
   }
 }

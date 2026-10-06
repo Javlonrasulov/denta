@@ -8,6 +8,7 @@ import {
   Package,
   Settings,
   Stethoscope,
+  UserCog,
   Users,
   Wallet,
   Wrench,
@@ -23,6 +24,7 @@ export type ClinicNavKey =
   | 'finance'
   | 'inventory'
   | 'reports'
+  | 'users'
   | 'settings'
   | 'help';
 
@@ -42,7 +44,7 @@ export const NAV_MAIN: NavItem[] = [
     href: '/appointments',
     labelKey: 'crm.nav.appointments',
     icon: CalendarDays,
-    permissions: ['appointment:create', 'appointment:update'],
+    permissions: ['appointment:read'],
   },
   {
     key: 'patients',
@@ -59,21 +61,21 @@ export const NAV_CLINIC: NavItem[] = [
     href: '/doctors',
     labelKey: 'crm.nav.doctors',
     icon: Stethoscope,
-    permissions: ['doctor:manage', 'clinic:read'],
+    permissions: ['doctor:read'],
   },
   {
     key: 'rooms',
     href: '/rooms',
     labelKey: 'crm.nav.rooms',
     icon: DoorOpen,
-    permissions: ['clinic:read'],
+    permissions: ['room:read'],
   },
   {
     key: 'services',
     href: '/services',
     labelKey: 'crm.nav.services',
     icon: Wrench,
-    permissions: ['clinic:read'],
+    permissions: ['service:read'],
   },
 ];
 
@@ -90,7 +92,7 @@ export const NAV_OPS: NavItem[] = [
     href: '/inventory',
     labelKey: 'crm.nav.inventory',
     icon: Package,
-    permissions: ['inventory:manage'],
+    permissions: ['inventory:read'],
   },
   {
     key: 'reports',
@@ -103,13 +105,26 @@ export const NAV_OPS: NavItem[] = [
 
 export const NAV_BOTTOM: NavItem[] = [
   {
+    key: 'users',
+    href: '/users',
+    labelKey: 'crm.nav.users',
+    icon: UserCog,
+    permissions: ['members:manage'],
+  },
+  {
     key: 'settings',
     href: '/settings',
     labelKey: 'crm.nav.settings',
     icon: Settings,
-    permissions: ['settings:manage', 'members:manage', 'clinic:read'],
+    permissions: ['settings:read', 'settings:manage'],
   },
-  { key: 'help', href: '/settings', labelKey: 'crm.nav.help', icon: CircleHelp },
+  {
+    key: 'help',
+    href: '/settings',
+    labelKey: 'crm.nav.help',
+    icon: CircleHelp,
+    permissions: ['settings:read', 'settings:manage'],
+  },
 ];
 
 export function filterNavByPermissions(

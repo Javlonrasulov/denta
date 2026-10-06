@@ -4,13 +4,18 @@ import {
   readPersistedSession,
   updatePersistedUser,
 } from './session';
+import { refreshAccessToken } from './token-refresh';
 import {
   AuthError,
   type AuthErrorCode,
   type AuthService,
   type AuthSession,
+  type ChangePasswordInput,
+  type ChangePhoneInput,
   type ClinicAuthUser,
+  type ConfirmEmailChangeInput,
   type RegisterClinicInput,
+  type RequestEmailChangeInput,
   type ResetPasswordInput,
   type SubscriptionStatusDto,
   type VerifyEmailInput,
@@ -40,6 +45,7 @@ function apiBase(): string {
 async function request<T>(
   path: string,
   init: RequestInit & { token?: string | null } = {},
+  retried = false,
 ): Promise<T> {
   const { token, ...rest } = init;
   const headers = new Headers(rest.headers);
@@ -52,6 +58,11 @@ async function request<T>(
     res = await fetch(`${apiBase()}${path}`, { ...rest, headers, credentials: 'include' });
   } catch {
     throw new AuthError('NETWORK');
+  }
+
+  if (res.status === 401 && token && !retried) {
+    const fresh = await refreshAccessToken(token);
+    if (fresh) return request<T>(path, { ...init, token: fresh }, true);
   }
 
   if (!res.ok) {
@@ -79,8 +90,17 @@ async function request<T>(
   return (await res.json()) as T;
 }
 
+type AccountResponse = { user: ClinicAuthUser };
+
 function currentToken(): string | null {
   return readPersistedSession()?.accessToken ?? null;
+}
+
+/** /auth/login and /auth/me are shared with the mobile apps; doctor/patient payloads have no subscription. */
+function isClinicUser(user: unknown): user is ClinicAuthUser {
+  if (!user || typeof user !== 'object') return false;
+  const u = user as { role?: string; subscription?: unknown };
+  return u.role !== 'doctor' && u.role !== 'patient' && Boolean(u.subscription);
 }
 
 export function createApiAuthService(): AuthService {
@@ -117,6 +137,14 @@ export function createApiAuthService(): AuthService {
         method: 'POST',
         body: JSON.stringify({ identifier, password }),
       });
+      if (result.session && !isClinicUser(result.session.user)) {
+        await request<void>('/auth/logout', {
+          method: 'POST',
+          token: result.session.accessToken,
+        }).catch(() => undefined);
+        clearPersistedSession();
+        throw new AuthError('NOT_CLINIC_ACCOUNT');
+      }
       if (result.session) persistSession(result.session);
       return {
         ...result,
@@ -172,6 +200,10 @@ export function createApiAuthService(): AuthService {
           method: 'GET',
           token,
         });
+        if (!isClinicUser(me.user)) {
+          clearPersistedSession();
+          return null;
+        }
         const session = readPersistedSession();
         if (session) {
           persistSession({
@@ -185,9 +217,13 @@ export function createApiAuthService(): AuthService {
         }
         return me.user;
       } catch (e) {
-        if (e instanceof AuthError && (e.code === 'UNAUTHORIZED' || e.code === 'NETWORK')) {
+        if (e instanceof AuthError && e.code === 'UNAUTHORIZED') {
           clearPersistedSession();
           return null;
+        }
+        // An unreachable API (restart, flaky network) must not sign the user out.
+        if (e instanceof AuthError && e.code === 'NETWORK') {
+          return readPersistedSession()?.user ?? null;
         }
         throw e;
       }
@@ -228,6 +264,60 @@ export function createApiAuthService(): AuthService {
       });
       updatePersistedUser(user);
       return user;
+    },
+
+    async changePassword(input: ChangePasswordInput) {
+      const me = await request<AccountResponse>('/auth/account/password', {
+        method: 'POST',
+        token: currentToken(),
+        body: JSON.stringify({
+          ...input,
+          refreshToken: readPersistedSession()?.refreshToken,
+        }),
+      });
+      updatePersistedUser(me.user);
+      return me.user;
+    },
+
+    async changePhone(input: ChangePhoneInput) {
+      const me = await request<AccountResponse>('/auth/account/phone', {
+        method: 'POST',
+        token: currentToken(),
+        body: JSON.stringify(input),
+      });
+      updatePersistedUser(me.user);
+      return me.user;
+    },
+
+    async requestEmailChange(input: RequestEmailChangeInput) {
+      return request<{ email: string; resendAvailableIn: number }>(
+        '/auth/account/email/request',
+        {
+          method: 'POST',
+          token: currentToken(),
+          body: JSON.stringify(input),
+        },
+      );
+    },
+
+    async updateLocale(locale: string) {
+      const token = currentToken();
+      if (!token) return;
+      await request<{ locale: string }>('/auth/account/locale', {
+        method: 'PATCH',
+        token,
+        body: JSON.stringify({ locale }),
+      });
+    },
+
+    async confirmEmailChange(input: ConfirmEmailChangeInput) {
+      const me = await request<AccountResponse>('/auth/account/email/confirm', {
+        method: 'POST',
+        token: currentToken(),
+        body: JSON.stringify(input),
+      });
+      updatePersistedUser(me.user);
+      return me.user;
     },
   };
 }

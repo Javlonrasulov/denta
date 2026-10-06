@@ -36,7 +36,7 @@ export class AppointmentsController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('appointment:create')
+  @RequirePermissions('appointment:read')
   @Get('appointments')
   list(
     @CurrentUser() user: AuthUser,

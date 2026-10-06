@@ -21,6 +21,7 @@ import {
   normalizePhone,
 } from '../common/utils/phone.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { clinicDayRule } from '../slots/clinic-hours';
 import { generateTimeSlots } from '../slots/slot-generator';
 import { resolveServiceName } from '../services/service-catalog';
 import {
@@ -34,6 +35,7 @@ import {
   TopDoctorsQueryDto,
   UpdateDoctorProfileDto,
 } from './dto/doctors.dto';
+import { DEFAULT_SLOT_MINUTES, type ScheduleDay } from './schedule.util';
 
 export type DoctorDto = {
   id: string;
@@ -60,6 +62,27 @@ export type DoctorDto = {
     price: number;
     category: string;
   }[];
+};
+
+export type ClinicDoctorRowDto = {
+  id: string;
+  membershipId: string | null;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  phone: string;
+  email: string | null;
+  photoUrl: string;
+  specialization: string;
+  experienceYears: number;
+  rating: number;
+  priceFrom: number;
+  isActive: boolean;
+  mustChangePassword: boolean;
+  lastAppSeenAt: string | null;
+  lastAppPlatform: string | null;
+  schedule: ScheduleDay[];
+  slotDuration: number;
 };
 
 export type DoctorProfileDto = {
@@ -163,6 +186,59 @@ export class DoctorsService {
     return doctors.map((d) => this.toDoctorDto(d));
   }
 
+  async listForClinic(clinicId: string): Promise<ClinicDoctorRowDto[]> {
+    const doctors = await this.prisma.doctorProfile.findMany({
+      where: { clinics: { some: { clinicId, isActive: true } } },
+      include: {
+        user: {
+          include: {
+            clinicMemberships: { where: { clinicId }, take: 1 },
+          },
+        },
+        schedules: {
+          where: { isActive: true, doctorClinic: { clinicId, isActive: true } },
+          orderBy: { dayOfWeek: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return doctors.map((d) => {
+      const membership = d.user.clinicMemberships[0];
+      const days = new Map<number, ScheduleDay>();
+      for (const s of d.schedules) {
+        if (days.has(s.dayOfWeek)) continue;
+        days.set(s.dayOfWeek, {
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          breakStart: s.breakStart,
+          breakEnd: s.breakEnd,
+        });
+      }
+      return {
+        id: d.id,
+        membershipId: membership?.id ?? null,
+        firstName: d.user.firstName,
+        lastName: d.user.lastName,
+        fullName: `${d.user.firstName} ${d.user.lastName}`.trim(),
+        phone: d.user.phone ?? '',
+        email: d.user.email,
+        photoUrl: d.avatarUrl ?? '',
+        specialization: d.specialty ?? '',
+        experienceYears: d.experienceYears,
+        rating: d.ratingAvg,
+        priceFrom: d.priceFromUzs ?? 0,
+        isActive: d.isActive,
+        mustChangePassword: membership?.mustChangePassword ?? false,
+        lastAppSeenAt: membership?.lastAppSeenAt?.toISOString() ?? null,
+        lastAppPlatform: membership?.lastAppPlatform ?? null,
+        schedule: [...days.values()],
+        slotDuration: d.schedules[0]?.slotDuration ?? DEFAULT_SLOT_MINUTES,
+      };
+    });
+  }
+
   async top(query: TopDoctorsQueryDto): Promise<DoctorDto[]> {
     return this.list({ limit: query.limit ?? 10 });
   }
@@ -196,12 +272,19 @@ export class DoctorsService {
     const available = doctors.filter((d) => {
       const schedule = d.schedules.find((s) => s.dayOfWeek === localDay);
       if (!schedule) return false;
+      const clinicDay = clinicDayRule(
+        d.clinics[0]?.clinic?.branches?.[0]?.workingHours,
+        localDay,
+      );
+      if (clinicDay.kind === 'closed') return false;
       const slots = generateTimeSlots({
         workingHours: { start: schedule.startTime, end: schedule.endTime },
         breakTime:
           schedule.breakStart && schedule.breakEnd
             ? { start: schedule.breakStart, end: schedule.breakEnd }
             : null,
+        clinicHours: clinicDay.kind === 'open' ? clinicDay.hours : null,
+        clinicLunch: clinicDay.kind === 'open' ? clinicDay.lunch : null,
         durationMinutes:
           schedule.slotDuration ?? d.appointmentDurationMinutes ?? 30,
         date: today,
@@ -210,6 +293,7 @@ export class DoctorsService {
           return {
             date: today,
             time: `${String(local.getHours()).padStart(2, '0')}:${String(local.getMinutes()).padStart(2, '0')}`,
+            endTime: format(toZonedTime(a.endsAt, tz), 'HH:mm'),
             status: a.status,
           };
         }),
@@ -462,13 +546,16 @@ export class DoctorsService {
       durationMinutes: number;
     } | null = null;
 
-    if (schedule) {
+    const clinicDay = clinicDayRule(link?.clinic?.branches?.[0]?.workingHours, localDay);
+    if (schedule && clinicDay.kind !== 'closed') {
       const slots = generateTimeSlots({
         workingHours: { start: schedule.startTime, end: schedule.endTime },
         breakTime:
           schedule.breakStart && schedule.breakEnd
             ? { start: schedule.breakStart, end: schedule.breakEnd }
             : null,
+        clinicHours: clinicDay.kind === 'open' ? clinicDay.hours : null,
+        clinicLunch: clinicDay.kind === 'open' ? clinicDay.lunch : null,
         durationMinutes: schedule.slotDuration ?? duration,
         date: todayKey,
         bookings: appointments.map((a) => {
@@ -476,6 +563,7 @@ export class DoctorsService {
           return {
             date: todayKey,
             time: `${String(local.getHours()).padStart(2, '0')}:${String(local.getMinutes()).padStart(2, '0')}`,
+            endTime: format(toZonedTime(a.endsAt, tz), 'HH:mm'),
             status: a.status,
           };
         }),
@@ -510,10 +598,10 @@ export class DoctorsService {
     if (dto.email && (!email || !isValidEmail(email))) {
       throw new AppError('INVALID_EMAIL', 'Invalid email', 400);
     }
-    const phone = normalizePhone(dto.phone);
+    const phone = normalizePhone(dto.phone ?? '');
     if (!phone) throw new AppError('INVALID_PHONE', 'Invalid phone', 400);
 
-    const password = dto.password ?? `Oradent${Math.random().toString(36).slice(2, 10)}`;
+    const password = `Oradent${Math.random().toString(36).slice(2, 10)}`;
     if (!isValidPassword(password)) {
       throw new AppError(
         'INVALID_PASSWORD',
@@ -718,6 +806,11 @@ export class DoctorsService {
               services: {
                 where: { isActive: true },
                 include: { service: true },
+              },
+              branches: {
+                where: { isActive: true },
+                orderBy: [{ isPrimary: 'desc' }],
+                take: 1,
               },
             },
           },

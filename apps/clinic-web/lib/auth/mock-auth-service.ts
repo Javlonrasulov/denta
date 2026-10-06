@@ -18,8 +18,12 @@ import {
   AuthError,
   type AuthService,
   type AuthSession,
+  type ChangePasswordInput,
+  type ChangePhoneInput,
   type ClinicAuthUser,
+  type ConfirmEmailChangeInput,
   type RegisterClinicInput,
+  type RequestEmailChangeInput,
   type ResetPasswordInput,
   type SubscriptionStatusDto,
   type VerifyEmailInput,
@@ -33,8 +37,10 @@ const MAX_VERIFY_ATTEMPTS = 8;
 interface StoredOtp {
   hash: string;
   expiresAt: string;
-  purpose: 'verify_email' | 'reset_password';
+  purpose: 'verify_email' | 'reset_password' | 'change_email';
   attempts: number;
+  /** Target address for 'change_email'; the account email stays unchanged until confirmed. */
+  pendingEmail?: string;
   /** DEV only — never sent to production API */
   plainDev?: string;
 }
@@ -100,6 +106,7 @@ function logDevOtp(email: string, code: string, purpose: string): void {
 async function issueOtp(
   account: StoredAccount,
   purpose: StoredOtp['purpose'],
+  targetEmail: string = account.user.email,
 ): Promise<{ resendAvailableIn: number }> {
   const now = Date.now();
   if (account.lastOtpSentAt) {
@@ -112,19 +119,20 @@ async function issueOtp(
   }
 
   const code = generateOtp6();
-  const hash = await sha256(`${purpose}:${account.user.email}:${code}`);
+  const hash = await sha256(`${purpose}:${targetEmail}:${code}`);
   account.otp = {
     hash,
     expiresAt: new Date(now + OTP_TTL_MS).toISOString(),
     purpose,
     attempts: 0,
+    pendingEmail: purpose === 'change_email' ? targetEmail : undefined,
     plainDev: process.env.NODE_ENV === 'production' ? undefined : code,
   };
   account.lastOtpSentAt = new Date(now).toISOString();
   account.resetTokenHash = null;
   account.resetTokenExpiresAt = null;
   upsert(account);
-  logDevOtp(account.user.email, code, purpose);
+  logDevOtp(targetEmail, code, purpose);
   return { resendAvailableIn: RESEND_COOLDOWN_SEC };
 }
 
@@ -426,10 +434,91 @@ export function createMockAuthService(): AuthService {
       return account.user;
     },
 
+    async changePassword(input: ChangePasswordInput) {
+      await delay();
+      const account = await requireSessionAccount(input.currentPassword);
+      if (!isStrongPassword(input.newPassword)) throw new AuthError('INVALID_PASSWORD');
+      const nextHash = await sha256(input.newPassword);
+      if (nextHash === account.passwordHash) throw new AuthError('SAME_PASSWORD');
+      account.passwordHash = nextHash;
+      account.user = { ...account.user, mustChangePassword: false };
+      upsert(account);
+      updatePersistedUser(account.user);
+      return account.user;
+    },
+
+    async changePhone(input: ChangePhoneInput) {
+      await delay();
+      const account = await requireSessionAccount(input.currentPassword);
+      const phone = normalizeUzPhone(input.phone);
+      if (!phone || !isValidUzPhone(phone)) throw new AuthError('INVALID_PHONE');
+      const owner = findByPhone(phone);
+      if (owner && owner.user.id !== account.user.id) throw new AuthError('PHONE_TAKEN');
+      account.user = { ...account.user, phone };
+      upsert(account);
+      updatePersistedUser(account.user);
+      return account.user;
+    },
+
+    async requestEmailChange(input: RequestEmailChangeInput) {
+      await delay();
+      const account = await requireSessionAccount(input.currentPassword);
+      const email = normalizeEmail(input.newEmail);
+      if (!isValidEmail(email)) throw new AuthError('INVALID_EMAIL');
+      if (email === account.user.email) throw new AuthError('SAME_EMAIL');
+      if (findByEmail(email)) throw new AuthError('EMAIL_TAKEN');
+      const { resendAvailableIn } = await issueOtp(account, 'change_email', email);
+      return { email, resendAvailableIn };
+    },
+
+    async confirmEmailChange(input: ConfirmEmailChangeInput) {
+      await delay();
+      const account = sessionAccount();
+      const email = normalizeEmail(input.newEmail);
+      const otp = account.otp;
+      if (!otp || otp.purpose !== 'change_email' || otp.pendingEmail !== email) {
+        throw new AuthError('INVALID_CODE');
+      }
+      if (new Date(otp.expiresAt).getTime() < Date.now()) throw new AuthError('CODE_EXPIRED');
+      if (otp.attempts >= MAX_VERIFY_ATTEMPTS) throw new AuthError('RATE_LIMITED');
+      const hash = await sha256(`change_email:${email}:${input.code.trim()}`);
+      if (hash !== otp.hash) {
+        otp.attempts += 1;
+        account.otp = otp;
+        upsert(account);
+        throw new AuthError('INVALID_CODE');
+      }
+      const owner = findByEmail(email);
+      if (owner && owner.user.id !== account.user.id) throw new AuthError('EMAIL_TAKEN');
+      account.user = { ...account.user, email, emailVerifiedAt: new Date().toISOString() };
+      account.otp = null;
+      upsert(account);
+      updatePersistedUser(account.user);
+      return account.user;
+    },
+
     getDevLastOtp(email: string) {
       if (process.env.NODE_ENV === 'production') return null;
-      const account = findByEmail(email);
+      const e = normalizeEmail(email);
+      const account =
+        findByEmail(e) ?? loadAccounts().find((a) => a.otp?.pendingEmail === e);
       return account?.otp?.plainDev ?? null;
     },
   };
+}
+
+function sessionAccount(): StoredAccount {
+  const session = readPersistedSession();
+  if (!session) throw new AuthError('UNAUTHORIZED');
+  const account = findById(session.user.id);
+  if (!account) throw new AuthError('UNAUTHORIZED');
+  return account;
+}
+
+async function requireSessionAccount(currentPassword: string): Promise<StoredAccount> {
+  const account = sessionAccount();
+  if ((await sha256(currentPassword)) !== account.passwordHash) {
+    throw new AuthError('WRONG_PASSWORD');
+  }
+  return account;
 }

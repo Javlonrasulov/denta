@@ -68,6 +68,16 @@ export class CreateMemberDto {
 
 export class UpdateMemberDto {
   @IsOptional()
+  @IsString()
+  @MinLength(1)
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  lastName?: string;
+
+  @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
 
@@ -86,6 +96,6 @@ export class UpdateMemberPermissionsDto {
 
 export class AcceptInvitationDto {
   @IsString()
-  @MinLength(8)
+  @MinLength(1)
   password!: string;
 }

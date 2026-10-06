@@ -31,6 +31,11 @@ import {
   UpdatePatientProfileDto,
   VerifyEmailDto,
   VerifyResetCodeDto,
+  ChangePasswordDto,
+  ChangePhoneDto,
+  RequestEmailChangeDto,
+  ConfirmEmailChangeDto,
+  UpdateLocaleDto,
 } from './dto/auth.dto';
 
 function sessionMetaFromRequest(req: Request): SessionMeta {
@@ -120,6 +125,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login')
   @HttpCode(200)
   login(@Body() dto: LoginDto, @Req() req: Request) {
@@ -216,6 +222,59 @@ export class AuthController {
     @Param('id') id: string,
   ) {
     return this.auth.revokeSession(user.id, id);
+  }
+
+  @ApiBearerAuth()
+  @Patch('account/locale')
+  updateLocale(@CurrentUser() user: AuthUser, @Body() dto: UpdateLocaleDto) {
+    return this.auth.updateLocale(user.id, dto.locale);
+  }
+
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('account/password')
+  @HttpCode(200)
+  changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
+    return this.auth.changePassword(user, dto, sessionMetaFromRequest(req));
+  }
+
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('account/phone')
+  @HttpCode(200)
+  changePhone(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ChangePhoneDto,
+    @Req() req: Request,
+  ) {
+    return this.auth.changePhone(user, dto, sessionMetaFromRequest(req));
+  }
+
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('account/email/request')
+  @HttpCode(200)
+  requestEmailChange(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: RequestEmailChangeDto,
+  ) {
+    return this.auth.requestEmailChange(user, dto);
+  }
+
+  @ApiBearerAuth()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('account/email/confirm')
+  @HttpCode(200)
+  confirmEmailChange(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ConfirmEmailChangeDto,
+    @Req() req: Request,
+  ) {
+    return this.auth.confirmEmailChange(user, dto, sessionMetaFromRequest(req));
   }
 
   @ApiBearerAuth()

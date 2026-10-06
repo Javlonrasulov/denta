@@ -36,6 +36,7 @@ import {
   getFinanceRecords,
   type FinanceFilter,
 } from '@/services/financeService';
+import { getMyClinicFinance, type ClinicFinance } from '@/services/clinicFinanceService';
 import { getInventory, getLowStock } from '@/services/inventoryService';
 import { getClinicMarkers, type MapMarker } from '@/services/mapService';
 import { getPatientById, getPatients } from '@/services/patientService';
@@ -72,6 +73,7 @@ export const queryKeys = {
     list: (filter?: FinanceFilter) => ['finance', 'list', filter] as const,
     doctorStats: ['finance', 'doctorStats'] as const,
     clinicStats: ['finance', 'clinicStats'] as const,
+    clinicSettlement: ['finance', 'clinicSettlement'] as const,
   },
   inventory: {
     all: ['inventory'] as const,
@@ -249,6 +251,16 @@ export function useClinicStats(
   return useQuery({
     queryKey: queryKeys.finance.clinicStats,
     queryFn: () => getClinicDashboardStats(),
+    ...options,
+  });
+}
+
+export function useMyClinicFinance(
+  options?: Omit<UseQueryOptions<ClinicFinance | null>, 'queryKey' | 'queryFn'>,
+): UseQueryResult<ClinicFinance | null> {
+  return useQuery({
+    queryKey: queryKeys.finance.clinicSettlement,
+    queryFn: () => getMyClinicFinance(),
     ...options,
   });
 }

@@ -740,7 +740,45 @@
     "mark_all_read": "Barchasini o‘qilgan deb belgilash",
     "empty": "Bildirishnoma yo‘q",
     "empty_title": "Hozircha bildirishnomalar yo‘q",
-    "empty_subtitle": "Qabul va klinikaga oid yangiliklar shu yerda ko‘rinadi."
+    "empty_subtitle": "Qabul va klinikaga oid yangiliklar shu yerda ko‘rinadi.",
+    "time": {
+      "now": "hozir",
+      "minutes": "{{count}} daq",
+      "hours": "{{count}} soat",
+      "days": "{{count}} kun"
+    },
+    "types": {
+      "appointment_created": {
+        "title": "Yangi qabul"
+      },
+      "appointment_cancelled": {
+        "title": "Qabul bekor qilindi"
+      },
+      "appointment_rescheduled": {
+        "title": "Qabul vaqti o‘zgardi"
+      },
+      "payment_received": {
+        "title": "To‘lov qabul qilindi"
+      },
+      "low_inventory": {
+        "title": "Omborda zaxira kamaydi"
+      },
+      "trial_expiring": {
+        "title": "Sinov muddati tugamoqda"
+      },
+      "rent_due": {
+        "title": "Bugun arenda muddati",
+        "body": "{{doctor}}: bugun {{amount}} to‘lashi kerak."
+      },
+      "rent_overdue": {
+        "title": "Shifokor arendasi kechikdi",
+        "body": "{{doctor}}: {{days}} kundan beri qarzdor. Qarz: {{amount}}."
+      },
+      "rent_payment_submitted": {
+        "title": "To‘lov tasdiqlashni kutmoqda",
+        "body": "{{doctor}}: {{amount}} to‘lov yubordi ({{date}})."
+      }
+    }
   },
   "empty": {
     "no_data": "Ma’lumot yo‘q",
@@ -870,7 +908,14 @@
     "required": "Maydonni to‘ldiring",
     "email_invalid": "Email noto‘g‘ri",
     "phone_invalid": "Telefon noto‘g‘ri",
-    "version": "ORADENT Doctor · {{version}}"
+    "version": "ORADENT Doctor · {{version}}",
+    "password_rules": "Kamida 8 belgi: kamida 1 harf va 1 raqam",
+    "password_same": "Yangi parol joriy paroldan farq qilishi kerak",
+    "password_changed": "Parol muvaffaqiyatli o‘zgartirildi",
+    "password_force_title": "Parolingizni yangilang",
+    "password_force_body": "Siz klinika bergan boshlang‘ich parol bilan kirdingiz. Xavfsizlik uchun shaxsiy parol o‘rnating.",
+    "password_force_current_hint": "Joriy parol — klinika bergan boshlang‘ich parol (123456)",
+    "password_force_later": "Keyinroq"
   },
   "auth": {
     "title": "Kirish",
@@ -986,6 +1031,7 @@
       "finance": "Moliya",
       "inventory": "Ombor",
       "reports": "Hisobotlar",
+      "users": "Tizim foydalanuvchilari",
       "settings": "Sozlamalar",
       "help": "Yordam",
       "section_main": "Asosiy",
@@ -1032,7 +1078,9 @@
       "income_records": "Daromad yozuvlari",
       "all_statuses": "Barcha holatlar",
       "rooms_free": "{{count}} xona bo‘sh",
-      "empty_today": "Bugun uchun qabul yo‘q."
+      "empty_today": "Bugun uchun qabul yo‘q.",
+      "limited_title": "Xush kelibsiz",
+      "limited_hint": "Sizga ochilgan sahifalar chap menyuda. Qo‘shimcha ruxsat kerak bo‘lsa, klinika administratoriga murojaat qiling."
     },
     "appointments": {
       "title": "Qabullar",
@@ -1070,13 +1118,210 @@
       "revenue": "Daromad",
       "rating": "Reyting",
       "status": "Holat",
-      "schedule": "Jadval",
+      "schedule": {
+        "title": "Ish vaqti",
+        "col": "Ish vaqti",
+        "none": "Belgilanmagan",
+        "hint": "Mijozlar shu vaqtlarga yozila oladi",
+        "slot": "Bitta qabul",
+        "minutes": "{{count}} daq",
+        "min_unit": "daq",
+        "from": "boshlanishi",
+        "to": "tugashi",
+        "custom": "Boshqa",
+        "per_patient": "Bitta mijozga o‘rtacha vaqt",
+        "per_patient_hint": "Shifokor bitta mijozni qancha vaqtda qabul qiladi. Mijozlar ilovasida bo‘sh vaqtlar shu oraliq bilan chiqadi.",
+        "per_patient_short": "{{count}} daq/mijoz",
+        "capacity": "Kuniga {{day}} tagacha mijoz · haftada {{week}} ta",
+        "capacity_range": "Kuniga {{min}}–{{max}} ta mijoz · haftada {{week}} ta",
+        "preview": "Ilovada shunday chiqadi:",
+        "days_title": "Ish kunlari va soatlari",
+        "presets": {
+          "weekdays": "Du–Ju · 09:00–18:00",
+          "six_days": "Du–Sha · 09:00–18:00",
+          "everyday": "Har kuni · 09:00–21:00"
+        },
+        "day_off": "Dam olish kuni",
+        "lunch": "Tushlik",
+        "add_lunch": "Tushlik",
+        "remove_lunch": "Tushlikni olib tashlash",
+        "copy_all": "Shu vaqtni barcha ish kunlariga qo‘llash",
+        "summary": "Haftada {{days}} kun · {{hours}} soat",
+        "conflict_title": "Vaqtlar boshqa klinika bilan to‘qnashadi",
+        "conflict": "{{day}}: shu vaqtda «{{clinic}}» klinikasida ishlaydi ({{time}})",
+        "errors": {
+          "range": "Ish boshlanishi tugashidan oldin bo‘lishi kerak",
+          "lunch": "Tushlik ish vaqti ichida bo‘lishi kerak",
+          "empty": "Kamida bitta ish kunini belgilang",
+          "fix": "Ish vaqtidagi xatolarni tuzating",
+          "slot": "{{min}} dan {{max}} daqiqagacha kiriting"
+        },
+        "day_short": {
+          "0": "Ya",
+          "1": "Du",
+          "2": "Se",
+          "3": "Cho",
+          "4": "Pa",
+          "5": "Ju",
+          "6": "Sha"
+        },
+        "day_long": {
+          "0": "Yakshanba",
+          "1": "Dushanba",
+          "2": "Seshanba",
+          "3": "Chorshanba",
+          "4": "Payshanba",
+          "5": "Juma",
+          "6": "Shanba"
+        }
+      },
       "patients": "Bemorlar",
       "finance": "Moliya",
       "roster": "Shifokorlar ro‘yxati",
       "specialization": "Mutaxassislik",
       "experience": "Tajriba",
-      "years_short": "{{count}} yil"
+      "years_short": "{{count}} yil",
+      "add": "Shifokor qo‘shish",
+      "col_app": "Ilova",
+      "status_default_password": "Parol o‘zgartirilmagan",
+      "status_default_password_hint": "Shifokor hali boshlang‘ich parol (123456) bilan kiradi",
+      "status_active": "Faol",
+      "empty_title": "Hali shifokor qo‘shilmagan",
+      "empty_hint": "Shifokor qo‘shing — u telefon raqami orqali shifokor ilovasiga kiradi va mijozlar ilovasida ko‘rinadi.",
+      "modal": {
+        "title": "Yangi shifokor",
+        "subtitle": "Shifokor ilovasiga kirish ma’lumotlari avtomatik yaratiladi",
+        "preview_label": "Mijozlar ilovasida shunday ko‘rinadi",
+        "preview_name": "Ism Familiya",
+        "preview_specialty": "Mutaxassislik",
+        "preview_badge": "Yangi",
+        "section_personal": "Shaxsiy ma’lumotlar",
+        "section_specialty": "Mutaxassislik",
+        "section_access": "Ilovaga kirish",
+        "first_name": "Ism",
+        "last_name": "Familiya",
+        "experience_years": "Tajriba (yil)",
+        "phone": "Telefon raqam (login)",
+        "phone_hint": "Shifokor ilovaga shu raqam bilan kiradi",
+        "default_password": "Boshlang‘ich parol",
+        "default_password_hint": "Birinchi kirishda shifokordan parolni o‘zgartirish so‘raladi. Keyin ham ilovadagi Profil → Parolni o‘zgartirish bo‘limida yangilashi mumkin.",
+        "submit": "Shifokorni qo‘shish",
+        "cancel": "Bekor qilish",
+        "close": "Yopish",
+        "required": "Majburiy maydon",
+        "invalid_phone": "Telefon raqam noto‘g‘ri",
+        "invalid_experience": "0 dan 60 gacha son kiriting",
+        "errors": {
+          "already_member": "Bu raqamdagi foydalanuvchi allaqachon klinikangizda ishlaydi",
+          "generic": "Shifokorni qo‘shib bo‘lmadi. Qayta urinib ko‘ring."
+        },
+        "done_created_title": "Shifokor qo‘shildi",
+        "done_created_hint": "{{name}} endi shifokor ilovasiga kira oladi va mijozlar ilovasida ko‘rinadi.",
+        "done_attached_title": "Shifokor klinikaga biriktirildi",
+        "done_attached_hint": "{{name}} tizimda allaqachon ro‘yxatdan o‘tgan — ilovaga o‘zining joriy paroli bilan kiradi.",
+        "login": "Login (telefon)",
+        "password": "Parol",
+        "steps_title": "Shifokorga yuboring",
+        "step_download": "ORADENT Doctor ilovasini o‘rnatsin",
+        "step_login": "Telefon raqam va 123456 paroli bilan kirsin",
+        "step_change": "Birinchi kirishda shaxsiy parol o‘rnatsin",
+        "add_another": "Yana qo‘shish"
+      },
+      "specialty": {
+        "manage": "Boshqarish",
+        "manage_title": "Mutaxassisliklarni boshqarish",
+        "done": "Tayyor",
+        "add": "Qo‘shish",
+        "add_new": "Yangi mutaxassislik qo‘shish",
+        "new_placeholder": "Masalan: Endodont",
+        "save": "Saqlash",
+        "cancel": "Bekor qilish",
+        "edit": "Tahrirlash",
+        "delete": "O‘chirish",
+        "delete_confirm": "«{{name}}» o‘chirilsinmi?",
+        "delete_confirm_used": "«{{name}}» o‘chirilsinmi? U {{count}} ta shifokordan ham olib tashlanadi.",
+        "doctor_count": "{{count}} shifokor",
+        "hint": "Bir nechta mutaxassislikni tanlash mumkin",
+        "selected": "{{count}} ta tanlandi",
+        "required": "Kamida bitta mutaxassislik tanlang",
+        "empty": "Hali mutaxassislik yo‘q",
+        "retry": "Qayta yuklash",
+        "errors": {
+          "exists": "Bunday mutaxassislik allaqachon bor",
+          "invalid": "Nom 1–60 belgidan iborat bo‘lsin, vergul ishlatmang",
+          "generic": "Amalni bajarib bo‘lmadi. Qayta urinib ko‘ring."
+        }
+      },
+      "edit": {
+        "open": "Tahrirlash",
+        "title": "Shifokorni tahrirlash",
+        "save": "Saqlash",
+        "price_from": "Qabul narxi (dan), so‘m",
+        "price_hint": "Mijozlar ilovasida «...dan» bo‘lib ko‘rinadi",
+        "login_locked": "Ilovaga kirish logini — o‘zgartirilmaydi",
+        "reset_title": "Parolni tiklash",
+        "reset_hint": "Shifokor parolni unutgan bo‘lsa, uni {{password}} ga qaytaring.",
+        "reset_confirm": "Parol {{password}} ga tiklanadi va shifokor barcha qurilmalardan chiqariladi. Davom etasizmi?",
+        "reset_button": "Parolni tiklash",
+        "reset_confirm_yes": "Ha, tiklash",
+        "reset_done": "Parol tiklandi. Shifokor kirgach yangi parol o‘rnatadi.",
+        "errors": {
+          "reset_forbidden": "Bu akkaunt boshqa klinikada ham ishlatiladi — parolni bu yerdan tiklab bo‘lmaydi.",
+          "generic": "Saqlab bo‘lmadi. Qayta urinib ko‘ring."
+        }
+      },
+      "col_price": "Qabul narxi",
+      "app": {
+        "online": "Onlayn",
+        "never": "Hali kirmagan",
+        "today": "Bugun, {{time}}",
+        "yesterday": "Kecha, {{time}}",
+        "last_seen_exact": "Ilovada oxirgi faollik: {{value}}"
+      },
+      "lookup": {
+        "searching": "Tizimdan qidirilmoqda…",
+        "phone_first_hint": "Raqam tizimda bo‘lsa, shifokor ma‘lumotlarini avtomatik topamiz",
+        "found_phone": "Bu raqam tizimda mavjud",
+        "found_name": "Shu ism-familiyali shifokor topildi",
+        "already_here": "Bu shifokor allaqachon klinikangizda ishlaydi",
+        "works_now": "Hozir ishlaydi",
+        "worked": "{{from}} – {{to}} ishlagan",
+        "this_clinic": "sizning klinikangiz",
+        "patient_account": "Bu raqam ilovada ro‘yxatdan o‘tgan, lekin hali shifokor sifatida ishlamagan. Shifokor shu akkaunt va o‘z paroli bilan kiradi.",
+        "no_history": "Hozircha hech bir klinikada ishlamaydi",
+        "question": "Shu shifokorni klinikangizga qo‘shamizmi?",
+        "question_busy": "U hozir «{{clinic}}» klinikasida ham ishlaydi. Klinikangizga qo‘shamizmi?",
+        "use_hint": "Ma‘lumotlari saqlanadi va formaga to‘ldiriladi. Ish vaqtini quyida belgilaysiz.",
+        "use": "Ha, qo‘shish",
+        "dismiss": "Yo‘q, bu boshqa odam",
+        "hide": "Yashirish",
+        "other_phone": "Boshqa raqam kiritish",
+        "answer_first": "Avval topilgan shifokor haqidagi savolga javob bering",
+        "selected": "{{name}} qo‘shilmoqda",
+        "selected_hint": "Ma‘lumotlari to‘ldirildi — kerak bo‘lsa o‘zgartiring",
+        "cancel_selection": "Bekor qilish",
+        "existing_login": "Shifokor ilovaga o‘zining mavjud akkaunti va paroli bilan kiradi — yangi parol berilmaydi.",
+        "phone_locked": "Shifokorning tizimdagi raqami — ilovaga shu raqam bilan kiradi"
+      },
+      "remove": {
+        "open": "O‘chirish",
+        "title": "Shifokorni o‘chirish",
+        "subtitle": "Faqat sizning klinikangizdan",
+        "only_here": "Shifokor faqat sizning klinikangizdan o‘chiriladi.",
+        "points": {
+          "kept": "Akkaunti, qabul tarixi va boshqa klinikalardagi ishi saqlanadi",
+          "hidden": "Mijozlar ilovasida klinikangiz shifokorlari orasida ko‘rinmaydi",
+          "restore": "Keyin qayta qo‘shsangiz, ma‘lumotlari tiklanadi"
+        },
+        "confirm": "Ha, o‘chirish",
+        "force": "Baribir o‘chirish",
+        "upcoming_title": "Kelgusi qabullar bor: {{count}} ta",
+        "upcoming_hint": "Yozuvlar o‘chmaydi. Ularni boshqa shifokorga o‘tkazing yoki mijozlarni ogohlantiring.",
+        "errors": {
+          "owner": "Klinika egasini o‘chirib bo‘lmaydi",
+          "generic": "O‘chirib bo‘lmadi. Qayta urinib ko‘ring."
+        }
+      }
     },
     "rooms": {
       "title": "Xonalar",
@@ -1113,7 +1358,59 @@
       "outstanding_charges": "Qarzdorliklar",
       "actions": "Amallar",
       "partial_pay": "Qisman to'lov",
-      "full_pay": "To'liq to'lov"
+      "full_pay": "To'liq to'lov",
+      "empty_charges": "Hozircha to'lanmagan qarzdorliklar yo'q",
+      "empty_transactions": "Bu davrda tranzaksiyalar yo'q",
+      "expense_modal": {
+        "add_button": "Chiqim qo'shish",
+        "title": "Yangi chiqim",
+        "subtitle": "Klinika xarajatini ro'yxatga oling",
+        "close": "Yopish",
+        "amount": "Summa",
+        "currency": "so'm",
+        "amount_required": "Summani kiriting",
+        "amount_too_large": "Summa juda katta",
+        "category": "Kategoriya",
+        "category_required": "Kategoriyani tanlang",
+        "new_category": "Yangi kategoriya",
+        "new_category_placeholder": "Kategoriya nomi, masalan: Laboratoriya",
+        "new_category_create": "Qo'shish",
+        "new_category_short": "Nomi kamida 2 ta belgidan iborat bo'lsin",
+        "categories": {
+          "rent": "Ijara",
+          "salary": "Ish haqi",
+          "materials": "Materiallar",
+          "equipment": "Uskunalar",
+          "utilities": "Kommunal",
+          "marketing": "Marketing",
+          "taxes": "Soliqlar",
+          "other": "Boshqa"
+        },
+        "details": "Tafsilotlar",
+        "date": "Sana",
+        "date_required": "Sanani tanlang",
+        "date_future": "Kelajakdagi sanani tanlab bo'lmaydi",
+        "method": "To'lov usuli",
+        "methods": {
+          "cash": "Naqd",
+          "card": "Karta",
+          "transfer": "O'tkazma"
+        },
+        "name": "Nomi",
+        "name_placeholder": "Masalan: oktyabr oyi ijara haqi",
+        "notes": "Izoh",
+        "notes_placeholder": "Qo'shimcha ma'lumot",
+        "optional": "ixtiyoriy",
+        "cancel": "Bekor qilish",
+        "submit": "Saqlash"
+      }
+    },
+    "datepicker": {
+      "placeholder": "Sanani tanlang",
+      "today": "Bugun",
+      "yesterday": "Kecha",
+      "prev_month": "Oldingi oy",
+      "next_month": "Keyingi oy"
     },
     "inventory": {
       "title": "Ombor",
@@ -1146,14 +1443,194 @@
     },
     "settings": {
       "title": "Sozlamalar",
-      "subtitle": "Klinika sozlamalari",
-      "clinic_profile": "Klinika profili",
+      "subtitle": "Klinika ma’lumotlari, manzili va ish vaqti",
+      "clinic_profile": "Asosiy ma’lumotlar",
       "name": "Nomi",
       "city": "Shahar",
       "timezone": "Vaqt mintaqasi",
       "currency": "Valyuta",
       "timezone_value": "Asia/Tashkent (UTC+5)",
-      "currency_value": "UZS (so‘m)"
+      "currency_value": "UZS (so‘m)",
+      "section_media": "Logotip va muqova",
+      "section_location": "Manzil va xaritadagi joylashuv",
+      "section_hours": "Ish vaqti",
+      "logo": "Logotip",
+      "cover": "Muqova rasmi",
+      "media_hint": "JPEG, PNG yoki WebP, 5 MB gacha. Bemorlar ilovasida ko‘rinadi.",
+      "upload": "Yuklash",
+      "remove": "O‘chirish",
+      "phone": "Telefon",
+      "email": "Email",
+      "price_from": "Narxlar (dan)",
+      "specializations": "Mutaxassisliklar",
+      "specializations_placeholder": "Masalan: implantologiya, ortodontiya",
+      "specializations_hint": "Enter yoki vergul bilan qo‘shing.",
+      "about": "Klinika haqida",
+      "about_placeholder": "Klinikangiz, uskunalar va xizmatlar haqida qisqacha yozing",
+      "region": "Viloyat",
+      "address": "Manzil",
+      "address_placeholder": "Ko‘cha, uy, mo‘ljal",
+      "coordinates": "Koordinatalar",
+      "map_search_placeholder": "Manzil yoki joy nomini qidiring",
+      "map_search": "Qidirish",
+      "map_my_location": "Mening joylashuvim",
+      "map_no_results": "Hech narsa topilmadi. Xaritada qo‘lda belgilang.",
+      "map_search_failed": "Qidiruv ishlamadi. Keyinroq urinib ko‘ring.",
+      "map_geo_failed": "Joylashuvni aniqlab bo‘lmadi. Brauzer ruxsatini tekshiring.",
+      "map_hint": "Xaritani bosing yoki belgini sudrab klinikaning aniq joyini ko‘rsating. Manzil avtomatik to‘ldiriladi.",
+      "hours_need_location": "Ish vaqtini saqlash uchun avval xaritada joylashuvni belgilang.",
+      "open": "Ochiq",
+      "closed": "Dam olish",
+      "day_0": "Yakshanba",
+      "day_1": "Dushanba",
+      "day_2": "Seshanba",
+      "day_3": "Chorshanba",
+      "day_4": "Payshanba",
+      "day_5": "Juma",
+      "day_6": "Shanba",
+      "required": "Majburiy maydon",
+      "name_short": "Nomi kamida 2 ta belgidan iborat bo‘lsin",
+      "email_invalid": "Email noto‘g‘ri",
+      "price_invalid": "Narx noto‘g‘ri",
+      "pin_required": "Xaritada klinika joylashuvini belgilang",
+      "hours_invalid": "Yopilish vaqti ochilish vaqtidan keyin bo‘lishi kerak",
+      "fix_errors": "Belgilangan maydonlarni tekshiring.",
+      "save": "O‘zgarishlarni saqlash",
+      "saved": "Saqlandi",
+      "save_failed": "Saqlab bo‘lmadi",
+      "read_only": "Klinika ma’lumotlarini o‘zgartirish uchun sizda ruxsat yo‘q.",
+      "changes_saved": "O‘zgarishlar saqlandi",
+      "schedule": {
+        "col_day": "Kun",
+        "col_status": "Holat",
+        "col_hours": "Ish vaqti",
+        "col_lunch": "Tushlik tanaffusi",
+        "col_actions": "Amallar",
+        "open": "Ochiq",
+        "day_off": "Dam olish kuni",
+        "lunch": "Tushlik",
+        "lunch_off": "Tushliksiz",
+        "work_week": "Ish haftasi: {{count}} kun",
+        "individual": "Individual jadval",
+        "all_closed": "Barcha kunlar yopiq",
+        "preset_standard": "Standart grafik",
+        "apply_weekdays": "Hafta kunlariga qo‘llash",
+        "apply_weekdays_hint": "Dushanba jadvali Seshanba–Shanbaga ko‘chiriladi. Yakshanba o‘zgarmaydi.",
+        "open_time": "Ochilish vaqti",
+        "close_time": "Yopilish vaqti",
+        "lunch_start": "Tushlik boshlanishi",
+        "lunch_end": "Tushlik tugashi",
+        "day_actions": "{{day}}: amallar",
+        "copy_title": "{{day}} jadvalini nusxalash",
+        "copy_to": "Qaysi kunlarga qo‘llansin?",
+        "copy_apply": "Qo‘llash ({{count}})",
+        "select_workdays": "Barcha ish kunlari",
+        "short_0": "Ya",
+        "short_1": "Du",
+        "short_2": "Se",
+        "short_3": "Ch",
+        "short_4": "Pa",
+        "short_5": "Ju",
+        "short_6": "Sh",
+        "err_invalid": "Vaqt noto‘g‘ri kiritilgan.",
+        "err_hours_order": "Yopilish vaqti ochilish vaqtidan keyin bo‘lishi kerak.",
+        "err_lunch_order": "Tushlik tugashi boshlanishidan keyin bo‘lishi kerak.",
+        "err_lunch_outside": "Tushlik vaqti ish vaqtining ichida bo‘lishi kerak.",
+        "err_fix": "Ish vaqtidagi xatolarni tuzating.",
+        "unsaved": "O‘zgarishlar saqlanmagan",
+        "cancel": "Bekor qilish",
+        "toast_saved": "Jadval saqlandi",
+        "conflict_title": "Ushbu vaqt oralig‘ida mavjud qabul bor.",
+        "conflict_text": "Yangi jadval saqlansa ham bu qabullar bekor qilinmaydi. Ularni bemor bilan kelishib, alohida ko‘chiring.",
+        "conflict_more": "Yana {{count}} ta qabul",
+        "conflict_back": "Ortga",
+        "conflict_confirm": "Baribir saqlash",
+        "reason_lunch": "Tushlik vaqtiga to‘g‘ri keladi",
+        "reason_closed": "Dam olish kuniga to‘g‘ri keladi",
+        "reason_outside": "Ish vaqtidan tashqarida"
+      }
+    },
+    "users": {
+      "subtitle": "CRM tizimiga kiradigan xodimlar va ularning ruxsatlari",
+      "add": "Xodim qo‘shish",
+      "team": "Jamoa",
+      "team_empty": "Hali xodim yo‘q",
+      "col_member": "Xodim",
+      "col_actions": "Amallar",
+      "edit": "Tahrirlash",
+      "delete": "O‘chirish",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish",
+      "edit_modal": {
+        "title": "Xodimni tahrirlash",
+        "login_locked": "Login ma’lumotlarini xodimning o‘zi o‘zgartiradi"
+      },
+      "delete_modal": {
+        "title": "Xodimni o‘chirish",
+        "hint": "{{name}} endi tizimga kira olmaydi. Uning qabullar va bemorlar tarixi saqlanib qoladi. Keyin shu telefon raqami bilan qayta qo‘shsangiz, tiklanadi.",
+        "confirm": "O‘chirish"
+      },
+      "roles": {
+        "CLINIC_OWNER": "Klinika egasi",
+        "CLINIC_ADMIN": "Administrator",
+        "RECEPTIONIST": "Qabulxona",
+        "ACCOUNTANT": "Buxgalter",
+        "DOCTOR": "Shifokor"
+      },
+      "modal": {
+        "title": "Yangi xodim",
+        "subtitle": "Xodim tizimga o‘z telefon raqami va paroli bilan kiradi",
+        "section_personal": "Shaxsiy ma’lumotlar",
+        "section_contact": "Aloqa va kirish",
+        "first_name": "Ism",
+        "last_name": "Familiya",
+        "phone": "Telefon",
+        "email": "Email",
+        "optional": "ixtiyoriy",
+        "hint_invite": "Xodimning emailiga taklif xati boradi. U havola orqali o‘zi parol o‘rnatadi.",
+        "hint_temp": "Vaqtinchalik parol yaratiladi. Uni xodimga o‘zingiz yetkazasiz.",
+        "submit": "Qo‘shish",
+        "required": "Majburiy maydon",
+        "invalid_phone": "Telefon raqami noto‘g‘ri",
+        "invalid_email": "Email noto‘g‘ri",
+        "done_created_title": "Xodim qo‘shildi",
+        "done_created_hint": "Bu ma’lumotlar faqat bir marta ko‘rsatiladi. Xodimga yetkazing — birinchi kirishda parolni almashtiradi.",
+        "login": "Login",
+        "temp_password": "Vaqtinchalik parol",
+        "copy": "Nusxalash",
+        "copied": "Nusxalandi",
+        "done_invite_title": "Taklif yuborildi",
+        "done_invite_hint": "{{email}} manziliga taklif xati yuborildi. Havola 7 kun amal qiladi.",
+        "dev_token": "Taklif havolasi (DEV)",
+        "done_attached_title": "Xodim biriktirildi",
+        "done_attached_hint": "{{name}} tizimda allaqachon bor edi va klinikangizga qo‘shildi. U o‘z paroli bilan kiradi.",
+        "add_another": "Yana qo‘shish",
+        "close": "Yopish"
+      },
+      "col_access": "Ruxsatlar",
+      "full_access": "To‘liq ruxsat",
+      "overview_only": "Faqat bosh sahifa",
+      "access": {
+        "title": "Sahifalarga ruxsat",
+        "hint": "«Ko‘rish» — faqat ko‘radi. «Boshqarish» — qo‘shish, tahrirlash va o‘chirish ham mumkin.",
+        "all": "Hammasiga:",
+        "none": "Yo‘q",
+        "view": "Ko‘rish",
+        "manage": "Boshqarish",
+        "required": "Kamida bitta sahifani tanlang"
+      },
+      "you": "Siz",
+      "doctors_note": "Shifokorlar ({{count}}) mobil ilovada ishlaydi va «Shifokorlar» sahifasida boshqariladi",
+      "errors": {
+        "ALREADY_MEMBER": "Bu raqam yoki email bilan xodim klinikada allaqachon bor",
+        "PERMISSION_NOT_GRANTABLE": "O‘zingizda yo‘q ruxsatni boshqa xodimga bera olmaysiz",
+        "INVALID_PERMISSION": "Noma’lum ruxsat yuborildi. Sahifani yangilab, qayta urinib ko‘ring",
+        "SELF_MODIFY": "O‘zingizning ruxsatlaringizni o‘zgartira yoki o‘zingizni o‘chira olmaysiz",
+        "MAIL_SEND_FAILED": "Taklif xatini yuborib bo‘lmadi. Email manzilini tekshiring yoki emailsiz qo‘shing",
+        "INVALID_PHONE": "Telefon raqami noto‘g‘ri",
+        "INVALID_EMAIL": "Email manzili noto‘g‘ri",
+        "FORBIDDEN": "Bu amal uchun ruxsatingiz yo‘q"
+      }
     },
     "header": {
       "open_menu": "Menyuni ochish",
@@ -1270,6 +1747,472 @@
         "oct": "Okt",
         "nov": "Noy",
         "dec": "Dek"
+      }
+    },
+    "state": {
+      "loading": "Yuklanmoqda…",
+      "empty": "Hozircha ma’lumot yo‘q",
+      "load_error": "Ma’lumotlarni yuklab bo‘lmadi. Qayta urinib ko‘ring.",
+      "forbidden": "Bu bo‘limga kirish huquqingiz yo‘q."
+    },
+    "doctor_finance": {
+      "currency": "so'm",
+      "close": "Yopish",
+      "cancel": "Bekor qilish",
+      "remove": "O'chirish",
+      "retry": "Qayta urinish",
+      "reason": "Sabab",
+      "reason_placeholder": "Sababni yozing (audit jurnalida saqlanadi)",
+      "not_configured": "Moliyaviy kelishuv sozlanmagan",
+      "not_configured_hint": "Arenda, ulush yoki boshqa shartlar belgilanmaguncha qarzdorlik hisoblanmaydi.",
+      "configure": "Kelishuvni sozlash",
+      "list_banner": "{{count}} ta shifokorda moliyaviy kelishuv sozlanmagan. Shifokor sahifasidagi «Moliya» bo'limida sozlang.",
+      "clinic": "Klinika",
+      "doctor": "Shifokor",
+      "section_model": "Moliyaviy model",
+      "section_terms": "Shartlar",
+      "section_rent": "Arenda",
+      "models": {
+        "CLINIC_REVENUE": {
+          "title": "Daromad klinikaga",
+          "description": "Bemor to'lovlari klinikaga tushadi. Shifokor ish haqi alohida yuritiladi.",
+          "note": "Arenda yoki ulush hisoblanmaydi. Bemor to'lovlari to'liq klinika daromadi bo'ladi."
+        },
+        "DOCTOR_REVENUE_PLUS_RENT": {
+          "title": "Daromad shifokorga + arenda",
+          "description": "Shifokor o'z bemorlaridan daromad oladi va klinikaga belgilangan arenda to'laydi."
+        },
+        "REVENUE_SHARE": {
+          "title": "Daromad ulushi",
+          "description": "Faqat haqiqatda to'langan summalar foiz bo'yicha taqsimlanadi."
+        },
+        "CUSTOM": {
+          "title": "Aralash (maxsus)",
+          "description": "Ulush va arenda birgalikda: masalan, 30% klinikaga + oyiga arenda."
+        }
+      },
+      "effective_from": "Kelishuv boshlanish sanasi",
+      "effective_from_hint": "Qarzdorlik faqat shu sanadan boshlab hisoblanadi.",
+      "clinic_percent": "Klinika ulushi",
+      "share_hint": "Ulush faqat haqiqiy to'lovlardan hisoblanadi: «bajarildi» degani «to'landi» degani emas. Qaytarilgan to'lov ulushni ham qaytaradi.",
+      "custom_rent_toggle": "Arenda ham bor",
+      "custom_rent_toggle_hint": "Ulushdan tashqari shifokor belgilangan arenda to'laydi.",
+      "recurrence": "To'lov davriyligi",
+      "recurrences": {
+        "MONTHLY": "Oylik",
+        "WEEKLY": "Haftalik",
+        "DAILY": "Kunlik",
+        "INTERVAL": "Har N kunda",
+        "ONE_TIME": "Bir martalik",
+        "CUSTOM_SCHEDULE": "Maxsus jadval"
+      },
+      "amount_per": {
+        "MONTHLY": "Oylik arenda summasi",
+        "WEEKLY": "Haftalik arenda summasi",
+        "DAILY": "Kunlik arenda summasi",
+        "INTERVAL": "Har davr uchun summa",
+        "ONE_TIME": "To'lov summasi"
+      },
+      "due_day_of_month": "Har oyning qaysi sanasida",
+      "month_clamp_hint": "{{day}}-sana bo'lmagan oylarda to'lov oyning oxirgi kuniga o'tadi.",
+      "due_day_of_week": "Haftaning qaysi kuni",
+      "weekdays_short": {
+        "0": "Ya",
+        "1": "Du",
+        "2": "Se",
+        "3": "Ch",
+        "4": "Pa",
+        "5": "Ju",
+        "6": "Sh"
+      },
+      "weekdays": {
+        "0": "yakshanba",
+        "1": "dushanba",
+        "2": "seshanba",
+        "3": "chorshanba",
+        "4": "payshanba",
+        "5": "juma",
+        "6": "shanba"
+      },
+      "daily_basis": "Qaysi kunlar hisoblanadi",
+      "daily": {
+        "WORKING_DAYS": "Ish kunlari",
+        "CALENDAR_DAYS": "Kalendar kunlari"
+      },
+      "daily_hint": {
+        "WORKING_DAYS": "Faqat shifokor jadvalidagi ish kunlari hisoblanadi; dam olish va ta'til kunlari o'tkazib yuboriladi.",
+        "CALENDAR_DAYS": "Har kalendar kuni hisoblanadi, dam olish kunlari ham."
+      },
+      "interval_every": "Har",
+      "interval_unit": "Birlik",
+      "units": {
+        "DAY": "kun",
+        "WEEK": "hafta",
+        "MONTH": "oy"
+      },
+      "interval_hint": "Birinchi to'lov boshlanish sanasida, keyingilari shu oraliqda.",
+      "one_time_due": "To'lov sanasi",
+      "schedule_items": "To'lov sanalari",
+      "schedule_date": "Sana",
+      "schedule_amount": "Summa",
+      "schedule_add": "Sana qo'shish",
+      "advanced": "Qo'shimcha sozlamalar",
+      "grace_days": "Imtiyozli kunlar",
+      "grace_hint": "To'lov sanasidan keyin shuncha kun o'tgachgina «muddati o'tgan» deb belgilanadi.",
+      "prorate": "Birinchi davrni proporsional hisoblash",
+      "prorate_hint": "Kelishuv davr o'rtasida boshlansa, birinchi to'lov ishlangan kunlarga mos kamayadi.",
+      "preview_title": "Keyingi to'lovlar",
+      "preview_empty": "Summa va davriylikni kiriting — jadval shu yerda ko'rinadi.",
+      "prorated": "Proporsional",
+      "prior_question": "Hozirgacha arenda to'langanmi?",
+      "prior": {
+        "none": {
+          "title": "Yo'q, yangi boshlanadi",
+          "hint": "Qarz boshlanish sanasidan hisoblanadi."
+        },
+        "paid": {
+          "title": "Ha, oldin to'langan",
+          "hint": "Oldingi to'lovni tarix uchun yozib qo'yamiz.",
+          "amount": "To'langan summa",
+          "paid_at": "To'langan sana",
+          "covered_from": "Qaysi davr uchun: dan",
+          "covered_to": "gacha",
+          "align_hint": "To'langan davrdan keyin qarz hisoblanishi uchun boshlanish sanasini {{date}} ga qo'ying.",
+          "align_action": "Sanani qo'yish",
+          "history_hint": "Bu to'lov tarix uchun saqlanadi; qarz kelishuv boshlanish sanasidan hisoblanadi."
+        },
+        "debt": {
+          "title": "Qarzi bor",
+          "hint": "Oldingi davrlardan qolgan qarzni kiritish.",
+          "amount": "Boshlang'ich qarz",
+          "amount_hint": "Bu summa darhol qarz sifatida ko'rinadi va keyingi to'lovlar avval shu qarzni yopadi.",
+          "note": "Izoh",
+          "note_placeholder": "Masalan: 2026-yil sentabr–oktabr arendasi"
+        }
+      },
+      "notes": "Kelishuv bo'yicha izoh",
+      "notes_placeholder": "Ichki izoh (shifokorga ko'rinmaydi)",
+      "method": "To'lov usuli",
+      "methods": {
+        "cash": "Naqd",
+        "card": "Karta",
+        "transfer": "Bank",
+        "other": "Boshqa"
+      },
+      "errors": {
+        "model": "Moliyaviy modelni tanlang",
+        "date": "Sanani tanlang",
+        "start_range": "Boshlanish sanasi bugundan 1 yildan uzoq bo'lmasligi kerak",
+        "percent": "0 dan 100 gacha foiz kiriting",
+        "percent_precision": "Ko'pi bilan 2 ta kasr raqam",
+        "custom_empty": "Maxsus kelishuvda arenda yoki shifokor ulushi bo'lishi kerak",
+        "amount": "Summani kiriting",
+        "amount_max": "Summa juda katta",
+        "interval": "1 dan 365 gacha son kiriting",
+        "due_before_start": "To'lov sanasi boshlanish sanasidan oldin bo'lmasin",
+        "schedule_empty": "Kamida bitta to'lov sanasini qo'shing",
+        "schedule_date": "Sanalar boshlanish sanasidan keyin bo'lishi kerak",
+        "schedule_duplicate": "Bir xil sana ikki marta kiritilgan",
+        "schedule_amount": "Har bir sana uchun summani kiriting",
+        "grace": "0 dan 60 gacha kun",
+        "date_future": "Sana kelajakda bo'lmasin",
+        "range": "Davr oxiri boshlanishidan oldin bo'lmasin",
+        "server": "Server bu qiymatni qabul qilmadi — tekshiring",
+        "fix_form": "Belgilangan maydonlarni to'g'rilang",
+        "generic": "Xatolik yuz berdi. Qayta urinib ko'ring.",
+        "reason": "Sababni kamida 3 ta belgi bilan yozing",
+        "doctor_inactive": "Shifokor klinikada ishlamaydi — yangi kelishuv tuzib bo'lmaydi.",
+        "api": {
+          "validation": "Kiritilgan ma'lumotlarda xato bor — tekshirib qayta yuboring",
+          "too_old": "Sana juda eski — 1 yildan oldingi to'lovni kiritib bo'lmaydi",
+          "attachment": "Chek fayli yaroqsiz — qayta yuklang",
+          "file_type": "Faqat JPG, PNG, WEBP yoki PDF fayl (5 MB gacha)",
+          "version_before": "Yangi kelishuv joriy kelishuvdan oldingi sanadan boshlanmaydi",
+          "unknown_service": "Tanlangan xizmatlardan biri topilmadi",
+          "forbidden": "Bu amal uchun ruxsatingiz yo'q",
+          "not_found": "Ma'lumot topilmadi — sahifani yangilang",
+          "conflict": "Ma'lumot allaqachon o'zgargan — sahifani yangilang",
+          "network": "Server bilan aloqa yo'q. Internetni tekshiring."
+        }
+      },
+      "rule": {
+        "monthly": "har oyning {{day}}-sanasi",
+        "weekly": "har {{day}}",
+        "daily_calendar": "har kuni",
+        "daily_working": "har ish kuni",
+        "interval_day": "har {{count}} kunda",
+        "interval_week": "har {{count}} haftada",
+        "interval_month": "har {{count}} oyda",
+        "one_time": "bir martalik",
+        "custom_schedule": "Maxsus jadval bo'yicha"
+      },
+      "wizard": {
+        "step_details": "Ma'lumotlar",
+        "step_finance": "Moliyaviy kelishuv",
+        "title": "{{name}} bilan moliyaviy kelishuv",
+        "hint": "Arenda, ulush yoki boshqa shartlarni belgilang. Hozir bilmasangiz — «Keyinroq sozlash».",
+        "back": "Orqaga",
+        "later": "Keyinroq sozlash",
+        "next": "Keyingi",
+        "open_finance": "Moliya bo'limini ochish",
+        "configure_now": "Hozir sozlash",
+        "outcome": {
+          "saved": "Moliyaviy kelishuv saqlandi",
+          "skipped": "Moliyaviy kelishuv sozlanmagan",
+          "failed": "Shifokor qo'shildi, lekin kelishuv saqlanmadi"
+        }
+      },
+      "payment": {
+        "title": "Arenda to'lovini qabul qilish",
+        "amount": "To'lov summasi",
+        "advance_hint": "Barcha qarz yopiladi, {{amount}} avans bo'lib qoladi va keyingi davrlarga avtomatik o'tadi.",
+        "fifo_hint": "To'lov avval eng eski qarzni yopadi.",
+        "details": "Tafsilotlar",
+        "paid_at": "To'lov sanasi",
+        "note": "Izoh",
+        "note_placeholder": "Masalan: oktabr arendasi",
+        "receipt": "Chek yoki kvitansiyani biriktirish (JPG, PNG, PDF)",
+        "receipt_type": "Faqat JPG, PNG, WEBP yoki PDF",
+        "receipt_size": "Fayl 5 MB dan oshmasin",
+        "submit": "Qabul qilish"
+      },
+      "kpi": {
+        "debt": "Joriy qarz",
+        "overdue": "Muddati o'tgan",
+        "next_due": "Keyingi to'lov",
+        "advance": "Avans",
+        "no_next": "Rejalashtirilmagan"
+      },
+      "opening": {
+        "title": "Boshlang'ich qarz qo'shish",
+        "hint": "Tizimga o'tishdan oldingi qarzni kiriting. U alohida qator bo'lib ko'rinadi va audit jurnaliga yoziladi.",
+        "amount": "Qarz summasi",
+        "as_of": "Qaysi sanadagi holat",
+        "note": "Izoh",
+        "submit": "Qo'shish"
+      },
+      "agreement_modal": {
+        "title_new": "Moliyaviy kelishuvni sozlash",
+        "title_edit": "Kelishuvni o'zgartirish",
+        "version_hint": "Yangi versiya (v{{version}}) yaratiladi. Eski kelishuv o'chirilmaydi — tarixda qoladi, to'langan davrlar qayta hisoblanmaydi.",
+        "submit_new": "Kelishuvni saqlash",
+        "submit_edit": "Yangi versiyani saqlash"
+      },
+      "inactive_banner": "Shifokor {{date}} dan klinikada ishlamaydi. Yangi to'lov majburiyatlari yaratilmaydi, eski qarz saqlanadi.",
+      "row_status": {
+        "paid": "To'langan",
+        "pending": "Kutilmoqda",
+        "debtor": "Qarzdor",
+        "overdue": "Muddati o'tgan",
+        "not_configured": "Sozlanmagan"
+      },
+      "share_line": "Klinika {{clinic}}% · Shifokor {{doctor}}%",
+      "effective_since": "{{date}} dan amalda",
+      "grace_line": "{{count}} kun imtiyoz",
+      "record_payment": "To'lov qabul qilish",
+      "change_agreement": "Kelishuvni o'zgartirish",
+      "add_opening": "Boshlang'ich qarz",
+      "pending_title": "Shifokor yuborgan to'lovlar ({{count}}) tasdiqlanishi kerak",
+      "confirm": "Tasdiqlash",
+      "reject": "Rad etish",
+      "timeline": "Hisob-kitob tarixi",
+      "timeline_filter": {
+        "all": "Hammasi",
+        "obligations": "Majburiyatlar",
+        "payments": "To'lovlar"
+      },
+      "timeline_empty": "Hozircha yozuvlar yo'q",
+      "share": {
+        "title": "Daromad ulushi",
+        "only_paid": "Faqat haqiqiy to'lovlardan",
+        "collected_month": "Bu oy tushum",
+        "clinic_month": "Klinika ulushi (oy)",
+        "doctor_month": "Shifokor ulushi (oy)",
+        "clinic_owes": "Klinika qabul qilgan to'lovlardan shifokor ulushi: {{amount}}",
+        "doctor_owes": "Shifokor qabul qilgan to'lovlardan klinika ulushi: {{amount}}",
+        "entry": "K: {{clinic}} · Sh: {{doctor}}",
+        "empty": "Hali ulush hisoblangan to'lov yo'q"
+      },
+      "history": "Kelishuv tarixi",
+      "open_ended": "muddatsiz",
+      "agreement_status": {
+        "ACTIVE": "Amalda",
+        "SUPERSEDED": "Almashtirilgan",
+        "ENDED": "Tugagan"
+      },
+      "reason_modal": {
+        "void": {
+          "title": "To'lovni bekor qilish",
+          "description": "To'lov o'chirilmaydi — «bekor qilingan» deb belgilanadi va u yopgan qarzlar qayta ochiladi.",
+          "confirm": "Bekor qilish"
+        },
+        "reject": {
+          "title": "To'lovni rad etish",
+          "description": "Shifokor yuborgan to'lov qabul qilinmaydi. Sabab shifokorga ko'rinadi.",
+          "confirm": "Rad etish"
+        },
+        "cancel": {
+          "title": "Majburiyatni bekor qilish",
+          "description": "Bu davr uchun qarz bekor qilinadi. Unga taqsimlangan to'lovlar avansga qaytadi.",
+          "confirm": "Bekor qilish"
+        }
+      },
+      "aging": {
+        "title": "Qarz muddati bo'yicha",
+        "d0_7": "0–7 kun",
+        "d8_30": "8–30 kun",
+        "d31_60": "31–60 kun",
+        "d60_plus": "60+ kun"
+      },
+      "opening_label": "Boshlang'ich qarz",
+      "rent_label": "Arenda",
+      "ob_status": {
+        "UPCOMING": "Kutilmoqda",
+        "DUE": "Bugun to'lanadi",
+        "PARTIALLY_PAID": "Qisman to'langan",
+        "PAID": "To'langan",
+        "OVERDUE": "Muddati o'tgan",
+        "CANCELLED": "Bekor qilingan"
+      },
+      "days_overdue": "{{count}} kun kechikdi",
+      "due_on": "muddat: {{date}}",
+      "cancelled_line": "Bekor qilindi: {{reason}} · {{by}}",
+      "paid_of": "{{paid}} to'langan · {{left}} qoldi",
+      "cancel_obligation": "Bekor qilish",
+      "prior_payment_label": "Oldingi to'lov (tarix)",
+      "payment_label": "To'lov",
+      "pay_status": {
+        "SUBMITTED": "Tasdiq kutilmoqda",
+        "CONFIRMED": "Tasdiqlangan",
+        "REJECTED": "Rad etilgan",
+        "VOIDED": "Bekor qilingan"
+      },
+      "covered": "Davr: {{from}} – {{to}}",
+      "advance_chip": "Avans {{amount}}",
+      "voided_line": "Bekor qilindi: {{reason}} · {{by}}",
+      "receipt": "Chek",
+      "void": "Bekor qilish",
+      "page": {
+        "doctor": "Shifokor",
+        "subtitle": "Shifokor profili va hisob-kitoblari",
+        "tab_profile": "Profil",
+        "tab_finance": "Moliya",
+        "back": "Shifokorlar ro'yxati",
+        "not_in_roster": "Shifokor hozir klinikada ishlamaydi",
+        "contacts": "Aloqa va narx"
+      },
+      "reminders": {
+        "open": "Eslatmalar",
+        "title": "Arenda eslatmalari",
+        "subtitle": "Push va ilova ichidagi bildirishnomalar",
+        "when": "Qachon eslatish",
+        "d3": "3 kun oldin",
+        "d1": "1 kun oldin",
+        "due": "To'lov kuni",
+        "overdue": "Muddati o'tganda",
+        "frequency": "Muddati o'tgan qarz uchun takrorlash",
+        "freq": {
+          "DAILY": "Har kuni",
+          "EVERY_3_DAYS": "Har 3 kunda",
+          "WEEKLY": "Har hafta",
+          "CUSTOM": "Maxsus"
+        },
+        "every": "Har",
+        "days": "kunda",
+        "custom_days_error": "1 dan 60 gacha kun kiriting",
+        "recipients": "Kimga yuboriladi",
+        "notify_doctor": "Shifokorga",
+        "notify_doctor_hint": "Shifokor ilovasiga summa va muddat bilan bildirishnoma.",
+        "notify_staff": "Klinika xodimlariga",
+        "notify_staff_hint": "Arenda bo'limini ko'rish huquqi bor egasi, administrator va buxgalterga (to'lov kuni va kechikkanda).",
+        "send_hour": "Yuborish vaqti",
+        "send_hour_hint": "Klinika vaqt zonasi bo'yicha. Bitta eslatma bir marta yuboriladi.",
+        "save": "Saqlash"
+      },
+      "rents": {
+        "title": "Shifokor arendalari",
+        "expected": "Bu oy kutilgan",
+        "paid": "Bu oy to'langan",
+        "remaining": "Bu oy qolgan",
+        "overdue": "Muddati o'tgan",
+        "next7": "Keyingi 7 kun",
+        "filter": {
+          "all": "Hammasi",
+          "paid": "To'langan",
+          "pending": "Kutilmoqda",
+          "debtor": "Qarzdor",
+          "overdue": "Muddati o'tgan"
+        },
+        "search": "Shifokorni qidirish",
+        "empty": "Ma'lumot topilmadi",
+        "col": {
+          "doctor": "Shifokor",
+          "agreement": "Kelishuv",
+          "next": "Keyingi to'lov",
+          "debt": "Qarz",
+          "status": "Holat"
+        },
+        "left_clinic": "Klinikadan ketgan",
+        "open_pay": "Ochish / to'lov",
+        "open": "Ochish"
+      },
+      "refund": {
+        "title": "To'lovni qaytarish",
+        "hint": "Qaytarish manfiy to'lov sifatida yoziladi. Asl to'lov o'zgarmaydi, shifokor ulushi ham mos ravishda qaytariladi.",
+        "amount": "Qaytariladigan summa",
+        "too_much": "Qaytarish mumkin bo'lgan eng ko'p summa: {{amount}}",
+        "submit": "Qaytarish",
+        "badge": "qaytarish",
+        "action": "Qaytarish"
+      },
+      "report": {
+        "title": "Shifokor arenda tushumlari",
+        "from": "Davr boshi",
+        "to": "Davr oxiri",
+        "doctor": "Shifokor",
+        "all_doctors": "Barcha shifokorlar",
+        "status": "Holat",
+        "total": "Jami",
+        "col": {
+          "doctor": "Shifokor",
+          "model": "Model",
+          "status": "Holat",
+          "accrued": "Hisoblangan arenda",
+          "paid": "To'langan",
+          "debt": "Qarz",
+          "overdue": "Muddati o'tgan",
+          "advance": "Avans",
+          "revenue": "Bemor to'lovlari (ulushli)",
+          "clinic_share": "Klinika ulushi",
+          "doctor_share": "Shifokor ulushi"
+        }
+      },
+      "access": {
+        "rent": "Shifokor arendalari",
+        "rent_admin": "Arenda: bekor qilish va sozlamalar",
+        "agreements": "Shifokor moliyaviy kelishuvlari"
+      }
+    },
+    "invite": {
+      "title": "{{name}}, taklifni qabul qiling",
+      "subtitle_new": "Klinika sizni tizimga taklif qildi. Kirish uchun parol o‘rnating.",
+      "subtitle_existing": "Sizda ORADENT akkaunti bor. Tasdiqlash uchun joriy parolingizni kiriting.",
+      "new_password": "Yangi parol",
+      "current_password": "Joriy parolingiz",
+      "accept": "Taklifni qabul qilish",
+      "go_login": "Kirish sahifasiga o‘tish",
+      "invalid_title": "Taklif ishlamaydi",
+      "done_title": "Taklif qabul qilindi",
+      "done_subtitle": "Siz endi «{{clinic}}» jamoasidasiz.",
+      "done_login": "Tizimga {{login}} va parolingiz bilan kiring.",
+      "errors": {
+        "INVITATION_INVALID": "Havola noto‘g‘ri yoki bekor qilingan. Klinikadan yangi taklif so‘rang.",
+        "INVITATION_EXPIRED": "Taklif muddati tugagan. Klinikadan yangi taklif so‘rang.",
+        "INVITATION_ALREADY_ACCEPTED": "Bu taklif allaqachon qabul qilingan. Tizimga kirishingiz mumkin.",
+        "INVALID_CREDENTIALS": "Parol noto‘g‘ri",
+        "INVALID_PASSWORD": "Parol kamida 8 belgi, harf va raqamdan iborat bo‘lsin",
+        "ALREADY_MEMBER": "Siz bu klinikada allaqachon xodimsiz",
+        "UNKNOWN": "Xatolik yuz berdi. Qayta urinib ko‘ring"
       }
     }
   },
@@ -1399,13 +2342,73 @@
       "invalid_credentials": "Email/telefon yoki parol noto‘g‘ri.",
       "email_not_verified": "Email manzilingiz hali tasdiqlanmagan.",
       "email_not_registered": "Bu email bilan ro‘yxatdan o‘tgan akkaunt topilmadi. Emailni tekshiring yoki ro‘yxatdan o‘ting.",
+      "identifier_required": "Telefon raqami yoki emailni kiriting.",
+      "password_required": "Parolni kiriting.",
       "invalid_code": "Tasdiqlash kodi noto‘g‘ri.",
       "code_expired": "Kodning amal qilish muddati tugagan.",
       "resend_cooldown": "Kodni {{seconds}} soniyadan keyin qayta yuborishingiz mumkin.",
       "rate_limited": "Juda ko‘p urinish. Keyinroq qayta urinib ko‘ring.",
       "not_found": "Akkaunt topilmadi.",
       "network": "Tarmoq xatosi. Qayta urinib ko‘ring.",
-      "unknown": "Xatolik yuz berdi. Qayta urinib ko‘ring."
+      "unknown": "Xatolik yuz berdi. Qayta urinib ko‘ring.",
+      "not_clinic_account": "Bu akkaunt klinika akkaunti emas. Shifokor va bemorlar ORADENT mobil ilovasidan foydalanadi.",
+      "wrong_password": "Joriy parol noto‘g‘ri.",
+      "same_password": "Yangi parol joriy paroldan farq qilishi kerak.",
+      "same_email": "Yangi email joriy email bilan bir xil.",
+      "unauthorized": "Sessiya muddati tugagan. Qaytadan tizimga kiring."
+    },
+    "account": {
+      "title": "Shaxsiy kabinet",
+      "subtitle": "Login, parol va email manzilingizni boshqaring",
+      "open": "Shaxsiy kabinetni ochish",
+      "close": "Yopish",
+      "verified": "Tasdiqlangan",
+      "unverified": "Tasdiqlanmagan",
+      "login_label": "Login",
+      "email_label": "Email",
+      "current_password": "Joriy parol",
+      "current_password_hint": "Xavfsizlik uchun joriy parolingizni kiriting.",
+      "tabs": {
+        "phone": "Login",
+        "password": "Parol",
+        "email": "Email"
+      },
+      "phone": {
+        "title": "Loginni o‘zgartirish",
+        "hint": "Login — telefon raqamingiz. Tizimga kirishda yangi raqamdan foydalanasiz.",
+        "new": "Yangi telefon raqam",
+        "same": "Bu raqam allaqachon sizning loginingiz.",
+        "save": "Loginni saqlash",
+        "success": "Login muvaffaqiyatli yangilandi."
+      },
+      "password": {
+        "title": "Parolni o‘zgartirish",
+        "hint": "Kamida 8 belgi, 1 harf va 1 raqam.",
+        "new": "Yangi parol",
+        "confirm": "Yangi parolni takrorlang",
+        "save": "Parolni saqlash",
+        "success": "Parol yangilandi. Boshqa qurilmalardagi sessiyalar yakunlandi."
+      },
+      "email": {
+        "title": "Email manzilni o‘zgartirish",
+        "hint": "Yangi emailga tasdiqlash kodi yuboriladi. Kod tasdiqlanmaguncha email o‘zgarmaydi.",
+        "new": "Yangi email",
+        "send_code": "Kod yuborish",
+        "code_sent": "{{email}} manziliga 6 xonali tasdiqlash kodi yubordik.",
+        "confirm": "Tasdiqlash va saqlash",
+        "resend": "Kodni qayta yuborish",
+        "resend_in": "Qayta yuborish: {{time}}",
+        "change_address": "Boshqa email kiritish",
+        "success": "Email muvaffaqiyatli o‘zgartirildi va tasdiqlandi."
+      }
+    },
+    "force_password": {
+      "title": "Parolni almashtiring",
+      "subtitle": "Klinika bergan vaqtinchalik parol bilan kirdingiz.",
+      "hint": "Xavfsizlik uchun davom etishdan oldin o‘zingizning parolingizni o‘rnating.",
+      "current": "Vaqtinchalik parol",
+      "save": "Parolni saqlash va davom etish",
+      "logout": "Chiqish"
     }
   },
   "legal": {
@@ -1427,5 +2430,35 @@
     "whitening": "Oqartirish",
     "orthodontic_consult": "Ortodontik konsultatsiya",
     "implant_consult": "Implant konsultatsiyasi"
+  },
+  "doctorApp": {
+    "clinicFinance": {
+      "title": "Klinika bilan hisob-kitob",
+      "not_configured": "Klinika bilan moliyaviy kelishuv hali sozlanmagan",
+      "debt": "Joriy qarz",
+      "overdue": "Muddati o'tgan",
+      "next_due": "Keyingi to'lov",
+      "advance": "Avans",
+      "agreement": "Kelishuv",
+      "history": "So'nggi yozuvlar",
+      "empty": "Hozircha yozuvlar yo'q",
+      "paid": "To'lov",
+      "rent": "Arenda",
+      "opening": "Boshlang'ich qarz",
+      "pending": "Tasdiq kutilmoqda",
+      "read_only": "Bu ma'lumotlar klinika tomonidan yuritiladi. Savollar bo'lsa, klinika administratoriga murojaat qiling.",
+      "error": "Ma'lumotni yuklab bo'lmadi",
+      "models": {
+        "CLINIC_REVENUE": "Daromad klinikada",
+        "DOCTOR_REVENUE_PLUS_RENT": "Arenda asosida",
+        "REVENUE_SHARE": "Daromad ulushi",
+        "CUSTOM": "Aralash kelishuv"
+      },
+      "share": "Klinika ulushi {{percent}}%",
+      "since": "{{date}} dan",
+      "voided": "Bekor qilingan",
+      "rejected": "Rad etilgan",
+      "overdue_days": "{{count}} kun kechikkan"
+    }
   }
 }

@@ -15,13 +15,19 @@ import {
   getAuthService,
   isAuthMockMode,
   type AuthService,
+  type ChangePasswordInput,
+  type ChangePhoneInput,
   type ClinicAuthUser,
+  type ConfirmEmailChangeInput,
   type LoginResult,
   type RegisterClinicInput,
+  type RequestEmailChangeInput,
   type ResetPasswordInput,
   type SubscriptionStatusDto,
   type VerifyEmailInput,
 } from '@/lib/auth';
+import { SESSION_EXPIRED_EVENT } from '@/lib/auth/token-refresh';
+import i18n, { resolveLocaleCode } from '@/lib/i18n';
 
 interface AuthContextValue {
   user: ClinicAuthUser | null;
@@ -40,6 +46,12 @@ interface AuthContextValue {
   forgotPassword: (email: string) => Promise<{ resendAvailableIn: number }>;
   resetPassword: (input: ResetPasswordInput) => Promise<void>;
   updateOnboarding: (step: number, completed?: boolean) => Promise<void>;
+  changePassword: (input: ChangePasswordInput) => Promise<void>;
+  changePhone: (input: ChangePhoneInput) => Promise<void>;
+  requestEmailChange: (
+    input: RequestEmailChangeInput,
+  ) => Promise<{ email: string; resendAvailableIn: number }>;
+  confirmEmailChange: (input: ConfirmEmailChangeInput) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = await service.getCurrentUser();
       setUser(me);
       if (me) {
-        const sub = await service.getSubscriptionStatus();
-        setSubscription(sub);
+        const sub = await service.getSubscriptionStatus().catch(() => undefined);
+        if (sub !== undefined) setSubscription(sub);
       } else {
         setSubscription(null);
       }
@@ -84,6 +96,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [refresh]);
+
+  useEffect(() => {
+    const onExpired = () => {
+      setUser(null);
+      setSubscription(null);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, []);
+
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId || !service.updateLocale) return;
+    const sync = (lng: string) => {
+      void service.updateLocale?.(resolveLocaleCode(lng)).catch(() => undefined);
+    };
+    sync(i18n.resolvedLanguage ?? i18n.language);
+    i18n.on('languageChanged', sync);
+    return () => {
+      i18n.off('languageChanged', sync);
+    };
+  }, [userId, service]);
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -142,6 +176,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const next = await service.updateOnboarding(step, completed);
         setUser(next);
       },
+      async changePassword(input) {
+        setUser(await service.changePassword(input));
+      },
+      async changePhone(input) {
+        setUser(await service.changePhone(input));
+      },
+      async requestEmailChange(input) {
+        return service.requestEmailChange(input);
+      },
+      async confirmEmailChange(input) {
+        setUser(await service.confirmEmailChange(input));
+      },
     }),
     [user, subscription, loading, ready, service, refresh],
   );
@@ -196,6 +242,16 @@ export function mapAuthError(
         return t('clinicAuth.errors.rate_limited');
       case 'NOT_FOUND':
         return t('clinicAuth.errors.not_found');
+      case 'NOT_CLINIC_ACCOUNT':
+        return t('clinicAuth.errors.not_clinic_account');
+      case 'WRONG_PASSWORD':
+        return t('clinicAuth.errors.wrong_password');
+      case 'SAME_PASSWORD':
+        return t('clinicAuth.errors.same_password');
+      case 'SAME_EMAIL':
+        return t('clinicAuth.errors.same_email');
+      case 'UNAUTHORIZED':
+        return t('clinicAuth.errors.unauthorized');
       case 'NETWORK':
         return t('clinicAuth.errors.network');
       default:

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  AppointmentStatus,
   InvitationStatus,
   PermissionEffect,
   UserRole,
@@ -10,6 +11,7 @@ import { createHash, randomBytes, randomUUID } from 'crypto';
 import { AuditService } from '../common/audit/audit.service';
 import { AppError } from '../common/filters/global-exception.filter';
 import {
+  ALL_MANAGEABLE_PERMISSIONS,
   ASSIGNABLE_STAFF_ROLES,
   expandEffectivePermissions,
 } from '../common/permissions/permissions';
@@ -19,6 +21,7 @@ import {
   normalizeEmail,
   normalizePhone,
 } from '../common/utils/phone.util';
+import { DEFAULT_SLOT_MINUTES, type ScheduleDay } from '../doctors/schedule.util';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
@@ -37,6 +40,69 @@ const DEFAULT_SCHEDULE = [
   { dayOfWeek: 4, startTime: '09:00', endTime: '18:00', breakStart: '13:00', breakEnd: '14:00', slotDuration: 30 },
   { dayOfWeek: 5, startTime: '09:00', endTime: '18:00', breakStart: '13:00', breakEnd: '14:00', slotDuration: 30 },
 ];
+
+/** Initial password for doctors created by the clinic; they must change it in the doctor app. */
+export const DEFAULT_DOCTOR_PASSWORD = '123456';
+
+/** Doctor-specific settings applied when linking a doctor to a clinic. */
+type DoctorLinkOptions = {
+  experienceYears?: number;
+  schedule?: ScheduleDay[];
+  slotDuration?: number;
+};
+
+export type CreateDoctorAccountInput = {
+  firstName: string;
+  lastName: string;
+  /** Either a phone number or an existing user picked from a lookup. */
+  phone?: string;
+  existingUserId?: string;
+  email?: string;
+  specialty: string;
+  experienceYears?: number;
+  serviceIds?: string[];
+  schedule?: ScheduleDay[];
+  slotDuration?: number;
+};
+
+export type UpdateDoctorAccountInput = {
+  firstName?: string;
+  lastName?: string;
+  specialty?: string;
+  experienceYears?: number;
+  priceFrom?: number;
+  schedule?: ScheduleDay[];
+  slotDuration?: number;
+};
+
+export type DoctorLookupMatch = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  phoneMasked: string;
+  isDoctor: boolean;
+  photoUrl: string | null;
+  specialty: string | null;
+  experienceYears: number;
+  /** Active member of the requesting clinic already. */
+  alreadyHere: boolean;
+  clinics: {
+    clinicId: string;
+    clinicName: string;
+    isThisClinic: boolean;
+    current: boolean;
+    startedAt: string;
+    endedAt: string | null;
+    schedule: ScheduleDay[];
+  }[];
+};
+
+function maskPhone(phone: string | null): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 7) return phone;
+  return `+${digits.slice(0, 3)} ${digits.slice(3, 5)} *** ** ${digits.slice(-2)}`;
+}
 
 function maskName(firstName: string, lastName: string): string {
   const last = lastName.trim();
@@ -108,6 +174,7 @@ export class MembersService {
     if (dto.role === UserRole.DOCTOR && !dto.specialty?.trim()) {
       throw new AppError('VALIDATION_ERROR', 'specialty required for doctors', 400);
     }
+    await this.assertGrantable(clinicId, actorUserId, dto.permissions, dto.role);
 
     const existing = await this.prisma.user.findFirst({
       where: {
@@ -120,6 +187,7 @@ export class MembersService {
     });
 
     if (existing) {
+      await this.assertNotActiveMember(clinicId, existing.id);
       // Email present → confirmation invite (never reset password).
       // Phone-only → attach membership immediately.
       if (email) {
@@ -149,6 +217,425 @@ export class MembersService {
     });
   }
 
+  /**
+   * Doctors log into the mobile app with their phone number. New accounts get
+   * DEFAULT_DOCTOR_PASSWORD and must change it; existing users keep their password.
+   */
+  async createDoctorAccount(
+    clinicId: string,
+    actorUserId: string,
+    input: CreateDoctorAccountInput,
+  ) {
+    const linkOptions: DoctorLinkOptions = {
+      experienceYears: input.experienceYears,
+      schedule: input.schedule,
+      slotDuration: input.slotDuration,
+    };
+
+    if (input.existingUserId) {
+      const picked = await this.prisma.user.findUnique({
+        where: { id: input.existingUserId },
+        include: { doctorProfile: true },
+      });
+      if (!picked) throw new AppError('NOT_FOUND', 'User not found', 404);
+      await this.assertNotActiveMember(clinicId, picked.id);
+      const result = await this.attachExistingUser(
+        clinicId,
+        actorUserId,
+        picked,
+        {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          phone: picked.phone ?? '',
+          role: UserRole.DOCTOR,
+          specialty: input.specialty.trim(),
+          serviceIds: input.serviceIds,
+        },
+        linkOptions,
+      );
+      return { ...result, login: picked.phone ?? '' };
+    }
+
+    const phone = normalizePhone(input.phone ?? '');
+    if (!phone) throw new AppError('INVALID_PHONE', 'Invalid phone', 400);
+    const email = input.email?.trim() ? normalizeEmail(input.email) : null;
+    if (email && !isValidEmail(email)) {
+      throw new AppError('INVALID_EMAIL', 'Invalid email', 400);
+    }
+    const specialty = input.specialty.trim();
+    if (!specialty) {
+      throw new AppError('VALIDATION_ERROR', 'specialty required for doctors', 400);
+    }
+
+    const dto: CreateMemberDto = {
+      firstName: input.firstName,
+      lastName: input.lastName,
+      phone,
+      email: email ?? undefined,
+      role: UserRole.DOCTOR,
+      specialty,
+      serviceIds: input.serviceIds,
+    };
+
+    const existing = await this.prisma.user.findUnique({
+      where: { phone },
+      include: { doctorProfile: true },
+    });
+
+    if (existing) {
+      await this.assertNotActiveMember(clinicId, existing.id);
+      const result = await this.attachExistingUser(
+        clinicId,
+        actorUserId,
+        existing,
+        dto,
+        linkOptions,
+      );
+      return { ...result, login: phone };
+    }
+
+    if (email) {
+      const emailOwner = await this.prisma.user.findUnique({ where: { email } });
+      if (emailOwner) throw new AppError('EMAIL_TAKEN', 'Email already registered', 409);
+    }
+
+    const created = await this.createNewUserWithTempPassword(
+      clinicId,
+      actorUserId,
+      { ...dto, phone },
+      { password: DEFAULT_DOCTOR_PASSWORD, ...linkOptions },
+    );
+    return { ...created, login: phone };
+  }
+
+  private async assertNotActiveMember(clinicId: string, userId: string) {
+    const membership = await this.prisma.clinicMember.findUnique({
+      where: { clinicId_userId: { clinicId, userId } },
+    });
+    if (membership?.isActive) {
+      throw new AppError('ALREADY_MEMBER', 'User is already a clinic member', 409);
+    }
+  }
+
+  /**
+   * Overrides must name known permissions, and a non-owner may only hand out
+   * access (or the admin role) they hold themselves.
+   */
+  private async assertGrantable(
+    clinicId: string,
+    actorUserId: string,
+    overrides: { permission: string; effect: PermissionEffect }[] = [],
+    role?: UserRole,
+  ) {
+    const known = new Set<string>(ALL_MANAGEABLE_PERMISSIONS);
+    const unknown = overrides.find((o) => !known.has(o.permission));
+    if (unknown) {
+      throw new AppError('INVALID_PERMISSION', `Unknown permission: ${unknown.permission}`, 400, {
+        permission: unknown.permission,
+      });
+    }
+
+    const actor = await this.prisma.clinicMember.findUnique({
+      where: { clinicId_userId: { clinicId, userId: actorUserId } },
+      include: { permissions: true },
+    });
+    if (!actor || actor.role === UserRole.CLINIC_OWNER) return;
+    if (role === UserRole.CLINIC_ADMIN) {
+      throw new AppError('FORBIDDEN', 'Only the clinic owner can assign administrators', 403);
+    }
+    const held = expandEffectivePermissions([actor.role], actor.permissions);
+    const missing = overrides.find((o) => o.effect === PermissionEffect.ALLOW && !held.has(o.permission));
+    if (missing) {
+      throw new AppError('PERMISSION_NOT_GRANTABLE', 'Cannot grant a permission you do not have', 403, {
+        permission: missing.permission,
+      });
+    }
+  }
+
+  /** Owner access is fixed, and nobody may change their own role, access or status. */
+  private assertManageable(
+    member: { role: UserRole; userId: string },
+    actorUserId: string,
+  ) {
+    if (member.role === UserRole.CLINIC_OWNER) {
+      throw new AppError('FORBIDDEN', 'Cannot change the clinic owner', 403);
+    }
+    if (member.userId === actorUserId) {
+      throw new AppError('SELF_MODIFY', 'Cannot change your own membership', 403);
+    }
+  }
+
+  /**
+   * Finds people a clinic may be about to add as a doctor: by phone (any account) or by
+   * exact first + last name (doctors only). Returns their clinic history and current schedules.
+   */
+  async lookupDoctor(
+    clinicId: string,
+    query: { phone?: string; firstName?: string; lastName?: string },
+  ): Promise<DoctorLookupMatch[]> {
+    const phone = query.phone ? normalizePhone(query.phone) : null;
+    const firstName = query.firstName?.trim();
+    const lastName = query.lastName?.trim();
+
+    const include = {
+      doctorProfile: {
+        include: {
+          clinics: {
+            include: {
+              clinic: { select: { id: true, name: true } },
+              schedules: { where: { isActive: true }, orderBy: { dayOfWeek: 'asc' as const } },
+            },
+            orderBy: { startedAt: 'desc' as const },
+          },
+        },
+      },
+      clinicMemberships: { where: { clinicId }, take: 1 },
+    };
+
+    let users;
+    if (phone) {
+      const user = await this.prisma.user.findUnique({ where: { phone }, include });
+      users = user ? [user] : [];
+    } else if (firstName && lastName && firstName.length >= 2 && lastName.length >= 2) {
+      users = await this.prisma.user.findMany({
+        where: {
+          firstName: { equals: firstName, mode: 'insensitive' },
+          lastName: { equals: lastName, mode: 'insensitive' },
+          doctorProfile: { isNot: null },
+        },
+        include,
+        take: 5,
+      });
+    } else {
+      return [];
+    }
+
+    return users.map((u) => {
+      const profile = u.doctorProfile;
+      const byClinic = new Map<string, DoctorLookupMatch['clinics'][number]>();
+      for (const link of profile?.clinics ?? []) {
+        const prev = byClinic.get(link.clinicId);
+        const entry = {
+          clinicId: link.clinicId,
+          clinicName: link.clinic.name,
+          isThisClinic: link.clinicId === clinicId,
+          current: link.isActive,
+          startedAt: link.startedAt.toISOString(),
+          endedAt: link.endedAt?.toISOString() ?? null,
+          schedule: link.isActive
+            ? link.schedules.map((s) => ({
+                dayOfWeek: s.dayOfWeek,
+                startTime: s.startTime,
+                endTime: s.endTime,
+                breakStart: s.breakStart,
+                breakEnd: s.breakEnd,
+              }))
+            : [],
+        };
+        if (!prev || (entry.current && !prev.current)) byClinic.set(link.clinicId, entry);
+      }
+      const membership = u.clinicMemberships[0];
+      return {
+        userId: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        phoneMasked: maskPhone(u.phone),
+        isDoctor: Boolean(profile),
+        photoUrl: profile?.avatarUrl ?? null,
+        specialty: profile?.specialty ?? null,
+        experienceYears: profile?.experienceYears ?? 0,
+        alreadyHere: Boolean(membership?.isActive),
+        clinics: [...byClinic.values()].sort(
+          (a, b) => Number(b.current) - Number(a.current) || b.startedAt.localeCompare(a.startedAt),
+        ),
+      };
+    });
+  }
+
+  /**
+   * Removes the doctor from this clinic only; the account, profile and history stay so
+   * another clinic (or this one later) can add them again.
+   */
+  async removeDoctorFromClinic(
+    clinicId: string,
+    actorUserId: string,
+    doctorId: string,
+    force: boolean,
+  ) {
+    const doctor = await this.requireClinicDoctor(clinicId, doctorId);
+    const membership = doctor.user.clinicMemberships[0];
+    if (!membership) throw new AppError('NOT_FOUND', 'Doctor membership not found', 404);
+    if (membership.role === UserRole.CLINIC_OWNER) {
+      throw new AppError('FORBIDDEN', 'Cannot remove the clinic owner', 403);
+    }
+
+    const upcoming = await this.prisma.appointment.count({
+      where: {
+        clinicId,
+        doctorId: doctor.id,
+        startsAt: { gte: new Date() },
+        status: { in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+      },
+    });
+    if (upcoming > 0 && !force) {
+      throw new AppError('DOCTOR_HAS_UPCOMING', 'Doctor has upcoming appointments', 409, {
+        upcoming,
+      });
+    }
+
+    await this.deactivate(clinicId, actorUserId, membership.id);
+    return { ok: true as const, upcoming };
+  }
+
+  async updateDoctorAccount(
+    clinicId: string,
+    actorUserId: string,
+    doctorId: string,
+    input: UpdateDoctorAccountInput,
+  ) {
+    const doctor = await this.requireClinicDoctor(clinicId, doctorId);
+    const firstName = input.firstName?.trim();
+    const lastName = input.lastName?.trim();
+
+    await this.prisma.$transaction(async (tx) => {
+      if (firstName || lastName) {
+        await tx.user.update({
+          where: { id: doctor.userId },
+          data: {
+            ...(firstName ? { firstName } : {}),
+            ...(lastName ? { lastName } : {}),
+          },
+        });
+      }
+      await tx.doctorProfile.update({
+        where: { id: doctor.id },
+        data: {
+          ...(input.specialty ? { specialty: input.specialty } : {}),
+          ...(input.experienceYears !== undefined ? { experienceYears: input.experienceYears } : {}),
+          ...(input.priceFrom !== undefined ? { priceFromUzs: input.priceFrom || null } : {}),
+        },
+      });
+      if (input.schedule) {
+        const links = await tx.doctorClinic.findMany({
+          where: { doctorId: doctor.id, clinicId, isActive: true },
+          select: { id: true },
+        });
+        await this.writeClinicSchedule(
+          tx,
+          doctor.id,
+          links.map((l) => l.id),
+          input.schedule,
+          input.slotDuration,
+        );
+      }
+    });
+
+    await this.audit.log({
+      userId: actorUserId,
+      clinicId,
+      action: 'doctor.updated',
+      entity: 'DoctorProfile',
+      entityId: doctor.id,
+      before: {
+        firstName: doctor.user.firstName,
+        lastName: doctor.user.lastName,
+        specialty: doctor.specialty,
+        experienceYears: doctor.experienceYears,
+        priceFromUzs: doctor.priceFromUzs,
+      },
+      after: { ...input },
+    });
+    return { ok: true as const };
+  }
+
+  /**
+   * Resets the doctor's password to DEFAULT_DOCTOR_PASSWORD and signs them out everywhere.
+   * Refused for accounts active in other clinics, since the password is global to the user.
+   */
+  async resetDoctorPassword(clinicId: string, actorUserId: string, doctorId: string) {
+    const doctor = await this.requireClinicDoctor(clinicId, doctorId);
+    const membership = doctor.user.clinicMemberships[0];
+    if (!membership) throw new AppError('NOT_FOUND', 'Doctor membership not found', 404);
+    if (membership.role !== UserRole.DOCTOR) {
+      throw new AppError('PASSWORD_RESET_FORBIDDEN', 'Only doctor accounts can be reset', 403);
+    }
+
+    const otherClinics = await this.prisma.clinicMember.count({
+      where: { userId: doctor.userId, isActive: true, clinicId: { not: clinicId } },
+    });
+    if (otherClinics > 0) {
+      throw new AppError(
+        'PASSWORD_RESET_FORBIDDEN',
+        'Doctor account is shared with another clinic',
+        403,
+      );
+    }
+
+    const passwordHash = await argon2.hash(DEFAULT_DOCTOR_PASSWORD);
+    const now = new Date();
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: doctor.userId }, data: { passwordHash } }),
+      this.prisma.clinicMember.update({
+        where: { id: membership.id },
+        data: { mustChangePassword: true },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: doctor.userId, revokedAt: null },
+        data: { revokedAt: now },
+      }),
+    ]);
+
+    await this.audit.log({
+      userId: actorUserId,
+      clinicId,
+      action: 'doctor.password_reset',
+      entity: 'DoctorProfile',
+      entityId: doctor.id,
+    });
+    return {
+      ok: true as const,
+      login: doctor.user.phone ?? '',
+      temporaryPassword: DEFAULT_DOCTOR_PASSWORD,
+    };
+  }
+
+  private async writeClinicSchedule(
+    tx: Prisma.TransactionClient,
+    doctorId: string,
+    linkIds: string[],
+    schedule: ScheduleDay[],
+    slotDuration = DEFAULT_SLOT_MINUTES,
+  ) {
+    if (!linkIds.length) return;
+    await tx.doctorSchedule.deleteMany({ where: { doctorClinicId: { in: linkIds } } });
+    if (!schedule.length) return;
+    await tx.doctorSchedule.createMany({
+      data: linkIds.flatMap((linkId) =>
+        schedule.map((s) => ({
+          doctorId,
+          doctorClinicId: linkId,
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          breakStart: s.breakStart,
+          breakEnd: s.breakEnd,
+          slotDuration,
+        })),
+      ),
+    });
+  }
+
+  private async requireClinicDoctor(clinicId: string, doctorId: string) {
+    const doctor = await this.prisma.doctorProfile.findFirst({
+      where: { id: doctorId, clinics: { some: { clinicId, isActive: true } } },
+      include: {
+        user: { include: { clinicMemberships: { where: { clinicId }, take: 1 } } },
+      },
+    });
+    if (!doctor) throw new AppError('NOT_FOUND', 'Doctor not found', 404);
+    return doctor;
+  }
+
   private async attachExistingUser(
     clinicId: string,
     actorUserId: string,
@@ -161,6 +648,7 @@ export class MembersService {
       doctorProfile: { id: string } | null;
     },
     dto: CreateMemberDto,
+    doctorProfile?: DoctorLinkOptions,
   ) {
     const now = new Date();
     const existingMember = await this.prisma.clinicMember.findUnique({
@@ -207,7 +695,7 @@ export class MembersService {
         update: {},
       });
 
-      if (dto.permissions?.length) {
+      if (dto.permissions) {
         await tx.clinicMemberPermission.deleteMany({ where: { clinicMemberId: m.id } });
         await tx.clinicMemberPermission.createMany({
           data: dto.permissions.map((p) => ({
@@ -227,9 +715,23 @@ export class MembersService {
           userId: user.id,
           clinicId,
           specialty: dto.specialty ?? 'Stomatolog',
+          experienceYears: doctorProfile?.experienceYears,
+          schedule: doctorProfile?.schedule,
+          slotDuration: doctorProfile?.slotDuration,
           existingDoctorId: user.doctorProfile?.id,
           serviceIds: dto.serviceIds,
         });
+        if (doctorProfile && user.doctorProfile && dto.specialty) {
+          await tx.doctorProfile.update({
+            where: { id: user.doctorProfile.id },
+            data: {
+              specialty: dto.specialty,
+              ...(doctorProfile.experienceYears !== undefined
+                ? { experienceYears: doctorProfile.experienceYears }
+                : {}),
+            },
+          });
+        }
       }
 
       return m;
@@ -301,14 +803,22 @@ export class MembersService {
       this.config.get<string>('app.appWebUrl') ?? 'http://localhost:3000';
     const acceptUrl = `${base.replace(/\/$/, '')}/invite/${token}`;
 
-    await this.mail.sendClinicInvitation({
-      to: dto.email,
-      clinicName: clinic.name,
-      inviteeName: `${dto.firstName} ${dto.lastName}`.trim(),
-      role: dto.role,
-      acceptUrl,
-      expiresAt,
-    });
+    try {
+      await this.mail.sendClinicInvitation({
+        to: dto.email,
+        clinicName: clinic.name,
+        inviteeName: `${dto.firstName} ${dto.lastName}`.trim(),
+        role: dto.role,
+        acceptUrl,
+        expiresAt,
+      });
+    } catch {
+      await this.prisma.clinicInvitation.update({
+        where: { id: invitation.id },
+        data: { status: InvitationStatus.REVOKED },
+      });
+      throw new AppError('MAIL_SEND_FAILED', 'Invitation email could not be sent', 502);
+    }
 
     await this.audit.log({
       userId: actorUserId,
@@ -391,8 +901,9 @@ export class MembersService {
     clinicId: string,
     actorUserId: string,
     dto: CreateMemberDto & { phone: string; email?: string },
+    options: { password?: string } & DoctorLinkOptions = {},
   ) {
-    const tempPassword = `Tmp${randomBytes(4).toString('hex')}9a`;
+    const tempPassword = options.password ?? `Tmp${randomBytes(4).toString('hex')}9a`;
     const passwordHash = await argon2.hash(tempPassword);
     const now = new Date();
 
@@ -441,6 +952,9 @@ export class MembersService {
           userId: user.id,
           clinicId,
           specialty: dto.specialty ?? 'Stomatolog',
+          experienceYears: options.experienceYears,
+          schedule: options.schedule,
+          slotDuration: options.slotDuration,
           serviceIds: dto.serviceIds,
         });
       }
@@ -476,12 +990,28 @@ export class MembersService {
     dto: UpdateMemberDto,
   ) {
     const member = await this.requireMember(clinicId, membershipId);
-    if (dto.role) this.assertAssignableRole(dto.role);
     if (member.role === UserRole.CLINIC_OWNER) {
       throw new AppError('FORBIDDEN', 'Cannot change clinic owner membership this way', 403);
     }
+    if (dto.role && dto.role !== member.role) {
+      this.assertAssignableRole(dto.role);
+      this.assertManageable(member, actorUserId);
+      await this.assertGrantable(clinicId, actorUserId, [], dto.role);
+    }
+
+    const firstName = dto.firstName?.trim();
+    const lastName = dto.lastName?.trim();
 
     const updated = await this.prisma.$transaction(async (tx) => {
+      if (firstName || lastName) {
+        await tx.user.update({
+          where: { id: member.userId },
+          data: {
+            ...(firstName ? { firstName } : {}),
+            ...(lastName ? { lastName } : {}),
+          },
+        });
+      }
       const m = await tx.clinicMember.update({
         where: { id: membershipId },
         data: { role: dto.role ?? member.role },
@@ -508,6 +1038,14 @@ export class MembersService {
             clinicId,
             specialty: dto.specialty ?? 'Stomatolog',
           });
+        } else if (member.role === UserRole.DOCTOR) {
+          const doctor = await tx.doctorProfile.findUnique({ where: { userId: member.userId } });
+          if (doctor) {
+            await tx.doctorClinic.updateMany({
+              where: { doctorId: doctor.id, clinicId, isActive: true },
+              data: { isActive: false, endedAt: new Date() },
+            });
+          }
         }
       }
       return m;
@@ -516,11 +1054,19 @@ export class MembersService {
     await this.audit.log({
       userId: actorUserId,
       clinicId,
-      action: 'member.role_changed',
+      action: 'member.updated',
       entity: 'ClinicMember',
       entityId: membershipId,
-      before: { role: member.role },
-      after: { role: updated.role },
+      before: {
+        role: member.role,
+        firstName: member.user.firstName,
+        lastName: member.user.lastName,
+      },
+      after: {
+        role: updated.role,
+        firstName: updated.user.firstName,
+        lastName: updated.user.lastName,
+      },
     });
 
     return this.toMemberDto(updated);
@@ -532,7 +1078,10 @@ export class MembersService {
     membershipId: string,
     dto: UpdateMemberPermissionsDto,
   ) {
-    await this.requireMember(clinicId, membershipId);
+    const member = await this.requireMember(clinicId, membershipId);
+    this.assertManageable(member, actorUserId);
+    await this.assertGrantable(clinicId, actorUserId, dto.permissions);
+    const before = member.permissions.map((p) => ({ permission: p.permission, effect: p.effect }));
     await this.prisma.$transaction(async (tx) => {
       await tx.clinicMemberPermission.deleteMany({ where: { clinicMemberId: membershipId } });
       if (dto.permissions.length) {
@@ -551,6 +1100,7 @@ export class MembersService {
       action: 'member.permissions_changed',
       entity: 'ClinicMember',
       entityId: membershipId,
+      before: { permissions: before },
       after: { permissions: dto.permissions },
     });
     return this.getOne(clinicId, membershipId);
@@ -558,9 +1108,7 @@ export class MembersService {
 
   async deactivate(clinicId: string, actorUserId: string, membershipId: string) {
     const member = await this.requireMember(clinicId, membershipId);
-    if (member.role === UserRole.CLINIC_OWNER) {
-      throw new AppError('FORBIDDEN', 'Cannot deactivate clinic owner', 403);
-    }
+    this.assertManageable(member, actorUserId);
     const now = new Date();
     await this.prisma.$transaction(async (tx) => {
       await tx.clinicMember.update({
@@ -615,49 +1163,81 @@ export class MembersService {
 
   async peekInvitation(token: string) {
     const invitation = await this.findInvitationByToken(token);
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id: invitation.clinicId },
+      select: { name: true },
+    });
+    const existingUser = await this.findInvitedUser(invitation);
     return {
       clinicId: invitation.clinicId,
+      clinicName: clinic?.name ?? '',
       firstName: invitation.firstName,
       lastName: invitation.lastName,
       role: invitation.role,
       email: invitation.email,
+      phone: invitation.phone,
+      existingUser: Boolean(existingUser),
       expiresAt: invitation.expiresAt.toISOString(),
     };
   }
 
+  private findInvitedUser(invitation: { email: string | null; phone: string | null }) {
+    const phone = invitation.phone ? normalizePhone(invitation.phone) : null;
+    if (!invitation.email && !phone) return Promise.resolve(null);
+    return this.prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(invitation.email ? [{ email: invitation.email }] : []),
+          ...(phone ? [{ phone }] : []),
+        ],
+      },
+    });
+  }
+
+  /**
+   * New people choose their password here. Existing accounts keep theirs and must
+   * confirm it, so a leaked link cannot attach someone else's account.
+   */
   async acceptInvitation(token: string, dto: AcceptInvitationDto) {
-    if (!isValidPassword(dto.password)) {
+    const invitation = await this.findInvitationByToken(token);
+    const existingUser = await this.findInvitedUser(invitation);
+    if (existingUser) {
+      const ok = existingUser.passwordHash
+        ? await argon2.verify(existingUser.passwordHash, dto.password).catch(() => false)
+        : false;
+      if (!ok) throw new AppError('INVALID_CREDENTIALS', 'Wrong password', 401);
+      const membership = await this.prisma.clinicMember.findUnique({
+        where: { clinicId_userId: { clinicId: invitation.clinicId, userId: existingUser.id } },
+      });
+      if (membership?.isActive) {
+        throw new AppError('ALREADY_MEMBER', 'User is already a clinic member', 409);
+      }
+    } else if (!isValidPassword(dto.password)) {
       throw new AppError('INVALID_PASSWORD', 'Weak password', 400);
     }
-    const invitation = await this.findInvitationByToken(token);
-    const passwordHash = await argon2.hash(dto.password);
     const now = new Date();
     const phone = invitation.phone ? normalizePhone(invitation.phone) : null;
 
     const member = await this.prisma.$transaction(async (tx) => {
-      let user = await tx.user.findFirst({
-        where: {
-          OR: [
-            ...(invitation.email ? [{ email: invitation.email }] : []),
-            ...(phone ? [{ phone }] : []),
-          ],
-        },
-      });
+      let user = existingUser;
 
       if (!user) {
         user = await tx.user.create({
           data: {
             email: invitation.email,
             phone,
-            passwordHash,
+            passwordHash: await argon2.hash(dto.password),
             firstName: invitation.firstName,
             lastName: invitation.lastName,
             emailVerifiedAt: invitation.email ? now : null,
             phoneVerifiedAt: phone ? now : null,
           },
         });
-      } else {
-        // Existing user accepting invite — do not overwrite password
+      } else if (invitation.email && user.email === invitation.email && !user.emailVerifiedAt) {
+        user = await tx.user.update({
+          where: { id: user.id },
+          data: { emailVerifiedAt: now },
+        });
       }
 
       const m = await tx.clinicMember.upsert({
@@ -675,8 +1255,10 @@ export class MembersService {
         update: {
           role: invitation.role,
           isActive: true,
+          startedAt: now,
           endedAt: null,
           joinedAt: now,
+          mustChangePassword: false,
         },
         include: { user: true, permissions: true },
       });
@@ -697,8 +1279,8 @@ export class MembersService {
         update: {},
       });
 
-      const overrides = (invitation.permissions as { permission: string; effect: PermissionEffect }[] | null) ?? [];
-      if (overrides.length) {
+      const overrides = invitation.permissions as { permission: string; effect: PermissionEffect }[] | null;
+      if (overrides) {
         await tx.clinicMemberPermission.deleteMany({ where: { clinicMemberId: m.id } });
         await tx.clinicMemberPermission.createMany({
           data: overrides.map((p) => ({
@@ -744,8 +1326,12 @@ export class MembersService {
       userId: string;
       clinicId: string;
       specialty: string;
+      experienceYears?: number;
       existingDoctorId?: string;
       serviceIds?: string[];
+      /** Replaces this clinic's schedule; otherwise a default is created only if none exists. */
+      schedule?: ScheduleDay[];
+      slotDuration?: number;
     },
   ) {
     let doctorId = input.existingDoctorId;
@@ -757,6 +1343,7 @@ export class MembersService {
           data: {
             userId: input.userId,
             specialty: input.specialty,
+            experienceYears: input.experienceYears ?? 0,
           },
         });
         doctorId = created.id;
@@ -805,10 +1392,9 @@ export class MembersService {
       });
     }
 
-    const scheduleCount = await tx.doctorSchedule.count({
-      where: { doctorClinicId: link.id },
-    });
-    if (scheduleCount === 0) {
+    if (input.schedule) {
+      await this.writeClinicSchedule(tx, doctorId, [link.id], input.schedule, input.slotDuration);
+    } else if ((await tx.doctorSchedule.count({ where: { doctorClinicId: link.id } })) === 0) {
       await tx.doctorSchedule.createMany({
         data: DEFAULT_SCHEDULE.map((s) => ({
           doctorId,

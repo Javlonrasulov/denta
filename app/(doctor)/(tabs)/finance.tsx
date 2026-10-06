@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useLoginTheme } from '@/components/auth/loginTheme';
 import {
   AddPaymentSheet,
+  ClinicSettlementCard,
   FinanceEmpty,
   FinanceFilterSheet,
   FinanceHeader,
@@ -20,7 +21,7 @@ import {
   TransactionsList,
 } from '@/components/doctor/finance';
 import { ErrorState } from '@/components/states/EmptyState';
-import { queryKeys, useFinance, usePatients } from '@/hooks/queries';
+import { queryKeys, useFinance, useMyClinicFinance, usePatients } from '@/hooks/queries';
 import { useDoctorMe } from '@/hooks/useDoctorMe';
 import {
   createFinanceRecord,
@@ -50,6 +51,7 @@ export default function DoctorFinanceScreen() {
   const queryClient = useQueryClient();
   const showToast = useToastStore((s) => s.showToast);
   const finance = useFinance();
+  const clinicFinance = useMyClinicFinance();
   const patients = usePatients();
   const doctor = useDoctorMe();
 
@@ -147,7 +149,10 @@ export default function DoctorFinanceScreen() {
         refreshControl={
           <RefreshControl
             refreshing={finance.isFetching && !finance.isLoading}
-            onRefresh={() => void finance.refetch()}
+            onRefresh={() => {
+              void finance.refetch();
+              void clinicFinance.refetch();
+            }}
             tintColor="#4338CA"
           />
         }
@@ -186,6 +191,7 @@ export default function DoctorFinanceScreen() {
         <RevenueChartCard period={period} points={model.trend} />
         <ServicesBreakdown items={model.services} />
         <FinanceInsightCard insights={model.insights} />
+        {clinicFinance.data ? <ClinicSettlementCard data={clinicFinance.data} /> : null}
         {visible.length === 0 ? (
           <FinanceEmpty
             period={period}

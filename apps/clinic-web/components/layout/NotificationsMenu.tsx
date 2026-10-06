@@ -11,9 +11,9 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/cn';
+import { useCrmI18n } from '@/lib/i18n/useCrmI18n';
 import {
   clinicApi,
   clinicApiEnabled,
@@ -72,57 +72,124 @@ function hrefFor(n: ClinicNotification): string {
   return '/overview';
 }
 
-function formatTime(iso: string): string {
-  const date = new Date(iso);
-  if (!Number.isFinite(date.getTime())) return '';
-  const diffMs = Date.now() - date.getTime();
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
+type Formatters = Pick<ReturnType<typeof useCrmI18n>, 't' | 'money' | 'date'>;
+
+const TITLE_KEY_BY_TYPE: Record<string, string> = {
+  APPOINTMENT_CREATED: 'appointment_created',
+  APPOINTMENT_CANCELLED: 'appointment_cancelled',
+  APPOINTMENT_RESCHEDULED: 'appointment_rescheduled',
+  PAYMENT_RECEIVED: 'payment_received',
+  LOW_INVENTORY: 'low_inventory',
+  TRIAL_EXPIRING: 'trial_expiring',
+};
+
+function formatTime(iso: string, { t, date }: Formatters): string {
+  const created = new Date(iso);
+  if (!Number.isFinite(created.getTime())) return '';
+  const mins = Math.floor((Date.now() - created.getTime()) / 60_000);
+  if (mins < 1) return t('notifications.time.now');
+  if (mins < 60) return t('notifications.time.minutes', { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return t('notifications.time.hours', { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
-  return date.toLocaleDateString();
+  if (days < 7) return t('notifications.time.days', { count: days });
+  return date(iso);
 }
 
-function mapNotification(n: ClinicNotification): AppNotification {
+/**
+ * Builds title/body in the active UI language from `type` + structured `data`.
+ * Falls back to the stored text (written in the recipient's saved locale) for older rows.
+ */
+function localizeText(n: ClinicNotification, { t, money, date }: Formatters) {
+  const data = (n.data ?? {}) as Record<string, unknown>;
+  const str = (key: string) => (typeof data[key] === 'string' ? (data[key] as string) : undefined);
+  const num = (key: string) => (typeof data[key] === 'number' ? (data[key] as number) : undefined);
+  const type = n.type.toUpperCase();
+  const doctor = str('doctorName');
+  const amount = num('amountUzs');
+
+  if (type === 'DOCTOR_RENT_REMINDER' && doctor && amount !== undefined) {
+    const kind = str('kind');
+    if (kind === 'DUE' || kind === 'OVERDUE') {
+      const key = kind === 'DUE' ? 'rent_due' : 'rent_overdue';
+      return {
+        title: t(`notifications.types.${key}.title`),
+        body: t(`notifications.types.${key}.body`, {
+          doctor,
+          amount: money(amount),
+          days: num('daysOverdue') ?? 0,
+        }),
+      };
+    }
+  }
+
+  const day = str('date');
+  if (type === 'DOCTOR_RENT_PAYMENT_SUBMITTED' && doctor && amount !== undefined && day) {
+    return {
+      title: t('notifications.types.rent_payment_submitted.title'),
+      body: t('notifications.types.rent_payment_submitted.body', {
+        doctor,
+        amount: money(amount),
+        date: date(day),
+      }),
+    };
+  }
+
+  const titleKey = TITLE_KEY_BY_TYPE[type];
+  const title = titleKey ? t(`notifications.types.${titleKey}.title`) : n.title;
+
+  const patient = str('patientName');
+  if (type === 'APPOINTMENT_CREATED' && patient && day) {
+    const time = str('time');
+    const when = time ? `${date(day)} ${time}` : date(day);
+    return {
+      title,
+      body: [patient, when, str('serviceName')].filter(Boolean).join(' · '),
+    };
+  }
+
+  return { title, body: n.body };
+}
+
+function mapNotification(n: ClinicNotification, fmt: Formatters): AppNotification {
   return {
     id: n.id,
     type: mapApiType(n.type),
-    title: n.title,
-    body: n.body,
-    time: formatTime(n.createdAt),
+    ...localizeText(n, fmt),
+    time: formatTime(n.createdAt, fmt),
     href: hrefFor(n),
     read: Boolean(n.read),
   };
 }
 
 export function NotificationsMenu() {
-  const { t } = useTranslation();
+  const { t, money, date } = useCrmI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<AppNotification[]>([]);
+  const [rows, setRows] = useState<ClinicNotification[]>([]);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
 
+  const items = useMemo(
+    () => rows.map((n) => mapNotification(n, { t, money, date })),
+    [rows, t, money, date],
+  );
   const unread = useMemo(() => items.filter((n) => !n.read).length, [items]);
 
   const load = useCallback(async () => {
     if (!clinicApiEnabled()) {
-      setItems([]);
+      setRows([]);
       return;
     }
     const token = readPersistedSession()?.accessToken;
     if (!token) {
-      setItems([]);
+      setRows([]);
       return;
     }
     try {
-      const rows = await clinicApi.notifications(token);
-      setItems(rows.map(mapNotification));
+      setRows(await clinicApi.notifications(token));
     } catch {
-      setItems([]);
+      setRows([]);
     }
   }, []);
 
@@ -156,7 +223,7 @@ export function NotificationsMenu() {
   }, [open]);
 
   async function markAllRead() {
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+    setRows((prev) => prev.map((n) => ({ ...n, read: true })));
     const token = readPersistedSession()?.accessToken;
     if (!token || !clinicApiEnabled()) return;
     try {
@@ -167,7 +234,7 @@ export function NotificationsMenu() {
   }
 
   async function openItem(item: AppNotification) {
-    setItems((prev) =>
+    setRows((prev) =>
       prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)),
     );
     setOpen(false);

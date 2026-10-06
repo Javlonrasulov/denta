@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   AppointmentSource,
   AppointmentStatus,
@@ -9,10 +9,12 @@ import { addMinutes, parseISO } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { AppError } from '../common/filters/global-exception.filter';
 import type { AuthUser } from '../common/guards/auth.guards';
+import { appointmentCreatedMessage } from '../notifications/messages';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.module';
 import { RealtimeService } from '../realtime/realtime.service';
+import { checkIntervalAgainstClinic, clinicDayRule } from '../slots/clinic-hours';
 import { generateTimeSlots } from '../slots/slot-generator';
 import {
   CancelAppointmentDto,
@@ -21,6 +23,20 @@ import {
   ListAppointmentsQueryDto,
   RescheduleAppointmentDto,
 } from './dto/appointments.dto';
+
+const logger = new Logger('AppointmentsService');
+
+function localHHmm(at: Date, tz: string): string {
+  const local = toZonedTime(at, tz);
+  return `${String(local.getHours()).padStart(2, '0')}:${String(local.getMinutes()).padStart(2, '0')}`;
+}
+
+/** End clipped to 24:00 when an appointment runs past local midnight. */
+function localEndHHmm(startsAt: Date, endsAt: Date, tz: string): string {
+  const start = toZonedTime(startsAt, tz);
+  const end = toZonedTime(endsAt, tz);
+  return start.toDateString() === end.toDateString() ? localHHmm(endsAt, tz) : '24:00';
+}
 
 /** Frontend AppointmentStatus mapping */
 export type FrontendAppointmentStatus =
@@ -40,37 +56,71 @@ export class AppointmentsService {
   async getSlots(query: GetSlotsQueryDto) {
     const doctor = await this.prisma.doctorProfile.findUnique({
       where: { id: query.doctorId },
-      include: { schedules: true },
+      include: {
+        schedules: { include: { doctorClinic: { select: { clinicId: true, isActive: true } } } },
+      },
     });
     if (!doctor) throw new AppError('NOT_FOUND', 'Doctor not found', 404);
 
     const date = parseISO(query.date);
     const dayOfWeek = date.getUTCDay(); // will adjust with clinic TZ below
 
+    const clinicInclude = {
+      branches: {
+        where: { isActive: true },
+        orderBy: [{ isPrimary: 'desc' as const }, { createdAt: 'asc' as const }],
+        take: 1,
+      },
+    };
     const clinic = query.clinicId
-      ? await this.prisma.clinic.findUnique({ where: { id: query.clinicId } })
+      ? await this.prisma.clinic.findUnique({
+          where: { id: query.clinicId },
+          include: clinicInclude,
+        })
       : await this.prisma.doctorClinic
           .findFirst({
             where: { doctorId: doctor.id, isActive: true },
-            include: { clinic: true },
+            include: { clinic: { include: clinicInclude } },
           })
           .then((l) => l?.clinic ?? null);
 
-    const tz = clinic?.timezone ?? 'Asia/Tashkent';
-    const localDay = toZonedTime(parseISO(`${query.date}T12:00:00`), tz).getDay();
+    if (query.clinicId) {
+      if (!clinic) return [];
+      const link = await this.prisma.doctorClinic.findFirst({
+        where: { doctorId: doctor.id, clinicId: clinic.id, isActive: true },
+        select: { id: true },
+      });
+      if (!link) return [];
+    }
 
+    const branch = clinic?.branches[0] ?? null;
+    const tz = branch?.timezone ?? clinic?.timezone ?? 'Asia/Tashkent';
+    const localDay = toZonedTime(parseISO(`${query.date}T12:00:00`), tz).getDay();
+    const clinicDay = clinicDayRule(branch?.workingHours, localDay);
+    if (clinicDay.kind === 'closed') return [];
+
+    // Each clinic sets its own hours for the doctor; legacy rows have no clinic link.
+    const clinicSchedules = clinic
+      ? doctor.schedules.filter(
+          (s) =>
+            !s.doctorClinic ||
+            (s.doctorClinic.clinicId === clinic.id && s.doctorClinic.isActive),
+        )
+      : doctor.schedules;
     const schedule =
-      doctor.schedules.find((s) => s.dayOfWeek === localDay && s.isActive) ??
-      null;
+      clinicSchedules.find((s) => s.dayOfWeek === localDay && s.isActive) ?? null;
 
     const workingHours = schedule
       ? { start: schedule.startTime, end: schedule.endTime }
       : { start: '09:00', end: '18:00' };
-    const breakTime =
-      schedule?.breakStart && schedule?.breakEnd
+    const breakTime = schedule
+      ? schedule.breakStart && schedule.breakEnd
         ? { start: schedule.breakStart, end: schedule.breakEnd }
-        : { start: '13:00', end: '14:00' };
+        : null
+      : { start: '13:00', end: '14:00' };
+    // The clinic sets how long this doctor spends per patient; service length is the fallback.
     const duration =
+      schedule?.slotDuration ??
       (query.serviceId
         ? (
             await this.prisma.clinicService.findFirst({
@@ -85,11 +135,10 @@ export class AppointmentsService {
             })
           )?.durationMinutes
         : undefined) ??
-      schedule?.slotDuration ??
       doctor.appointmentDurationMinutes ??
       30;
 
-    if (schedule === null && doctor.schedules.length > 0) {
+    if (schedule === null && clinicSchedules.length > 0) {
       // Explicit closed day
       return [];
     }
@@ -105,23 +154,47 @@ export class AppointmentsService {
       },
     });
 
-    const bookings = appointments.map((a) => {
-      const local = toZonedTime(a.startsAt, tz);
-      const hh = String(local.getHours()).padStart(2, '0');
-      const mm = String(local.getMinutes()).padStart(2, '0');
-      return {
-        date: query.date,
-        time: `${hh}:${mm}`,
-        status: a.status,
-      };
-    });
+    const bookings = appointments.map((a) => ({
+      date: query.date,
+      time: localHHmm(a.startsAt, tz),
+      endTime: localEndHHmm(a.startsAt, a.endsAt, tz),
+      status: a.status,
+    }));
 
     return generateTimeSlots({
       workingHours,
       breakTime,
+      clinicHours: clinicDay.kind === 'open' ? clinicDay.hours : null,
+      clinicLunch: clinicDay.kind === 'open' ? clinicDay.lunch : null,
       durationMinutes: duration,
       date: query.date,
       bookings,
+    });
+  }
+
+  /** Server-side guard: booking interval must respect clinic hours and lunch. */
+  private assertWithinClinicHours(
+    workingHours: unknown,
+    tz: string,
+    startsAt: Date,
+    endsAt: Date,
+  ) {
+    const local = toZonedTime(startsAt, tz);
+    const startMin = local.getHours() * 60 + local.getMinutes();
+    const endMin = startMin + Math.round((endsAt.getTime() - startsAt.getTime()) / 60_000);
+    const verdict = checkIntervalAgainstClinic(
+      clinicDayRule(workingHours, local.getDay()),
+      startMin,
+      endMin,
+    );
+    if (verdict === 'ok') return;
+    const messages = {
+      closed: 'Clinic is closed on this day',
+      outside_hours: 'Selected time is outside clinic working hours',
+      lunch: 'Selected time overlaps the clinic lunch break',
+    } as const;
+    throw new AppError('SLOT_UNAVAILABLE', messages[verdict], 409, {
+      reason: verdict,
     });
   }
 
@@ -254,12 +327,21 @@ export class AppointmentsService {
       );
     }
 
-    const duration = clinicService.durationMinutes;
+    const doctorDay = await this.prisma.doctorSchedule.findFirst({
+      where: {
+        doctorClinicId: doctorAtClinic.id,
+        dayOfWeek: toZonedTime(startsAt, tz).getDay(),
+        isActive: true,
+      },
+      select: { slotDuration: true },
+    });
+    const duration = doctorDay?.slotDuration ?? clinicService.durationMinutes;
     const priceUzs = clinicService.priceUzs;
     const serviceName =
       clinicService.customName?.trim() || clinicService.service.name;
 
     const endsAt = addMinutes(startsAt, duration);
+    this.assertWithinClinicHours(branch?.workingHours, tz, startsAt, endsAt);
 
     // Resolve patient
     let patientId = dto.patientId;
@@ -368,20 +450,29 @@ export class AppointmentsService {
         doctorId: doctor.id,
         date: dto.date,
       });
-      void this.notifications?.notifyClinicStaff(clinic.id, {
-        type: 'APPOINTMENT_CREATED',
-        title: 'New appointment',
-        body: `${patientName} · ${dto.date} ${dto.time} · ${serviceName}`,
-        data: { appointmentId: appointment.id, clinicId: clinic.id },
-      });
-      if (doctor.userId) {
-        void this.notifications?.create({
-          userId: doctor.userId,
+      const notifyVars = { patientName, date: dto.date, time: dto.time };
+      this.notifications
+        ?.notifyClinicStaff(clinic.id, {
           type: 'APPOINTMENT_CREATED',
-          title: 'New appointment',
-          body: `${patientName} · ${dto.date} ${dto.time}`,
-          data: { appointmentId: appointment.id },
-        });
+          render: (locale) =>
+            appointmentCreatedMessage(locale, { ...notifyVars, serviceName }),
+          data: {
+            appointmentId: appointment.id,
+            clinicId: clinic.id,
+            ...notifyVars,
+            serviceName,
+          },
+        })
+        .catch((e: unknown) => logger.warn(`Staff notification failed: ${String(e)}`));
+      if (doctor.userId) {
+        this.notifications
+          ?.create({
+            userId: doctor.userId,
+            type: 'APPOINTMENT_CREATED',
+            ...appointmentCreatedMessage(doctor.user.locale, notifyVars),
+            data: { appointmentId: appointment.id, ...notifyVars },
+          })
+          .catch((e: unknown) => logger.warn(`Doctor notification failed: ${String(e)}`));
       }
       return frontend;
     } catch (err) {
@@ -680,6 +771,7 @@ export class AppointmentsService {
       const startsAt = fromZonedTime(`${dto.date}T${dto.time}:00`, tz);
       const durationMs = row.endsAt.getTime() - row.startsAt.getTime();
       const endsAt = new Date(startsAt.getTime() + Math.max(durationMs, 15 * 60_000));
+      this.assertWithinClinicHours(branch?.workingHours, tz, startsAt, endsAt);
 
       try {
         await this.prisma.$transaction(async (tx) => {

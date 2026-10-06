@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   ChargeStatus,
+  FinanceType,
   PaymentMethod,
   PaymentStatus,
 } from '@prisma/client';
@@ -15,18 +16,26 @@ import {
   startOfWeek,
   startOfYear,
 } from 'date-fns';
+import { AuditService } from '../common/audit/audit.service';
 import { AppError } from '../common/filters/global-exception.filter';
 import {
   mapPaymentMethod,
   mapPaymentStatus,
 } from '../common/utils/enum-map.util';
+import { RevenueShareService } from '../doctor-finance/revenue-share.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateFinanceRecordDto,
+  EXPENSE_CATEGORIES,
   FinancePeriod,
   PatchFinanceRecordDto,
   RecordChargePaymentDto,
+  RefundPaymentDto,
 } from './dto/finance.dto';
+
+const logger = new Logger('FinanceService');
+
+export type ExpenseCategoryDto = { id: string; name: string };
 
 export type FinanceRecordDto = {
   id: string;
@@ -42,8 +51,10 @@ export type FinanceRecordDto = {
   paymentStatus: ReturnType<typeof mapPaymentStatus>;
   paymentMethod?: ReturnType<typeof mapPaymentMethod> | 'other';
   notes?: string;
+  category?: string;
   chargeId?: string;
   appointmentId?: string;
+  refundOfId?: string;
 };
 
 export type ChargeDto = {
@@ -75,7 +86,90 @@ export type FinanceSummaryDto = {
 
 @Injectable()
 export class FinanceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly share?: RevenueShareService,
+    @Optional() private readonly audit?: AuditService,
+  ) {}
+
+  /** Revenue share follows real money; failures are logged and healed by the next sync. */
+  private async syncShare(paymentId: string) {
+    await this.share
+      ?.syncPayment(paymentId)
+      .catch((e: unknown) => logger.warn(`share sync ${paymentId}: ${e instanceof Error ? e.message : e}`));
+  }
+
+  /**
+   * Refund (full or partial) as a negative PAID payment linked to the original.
+   * Reduces revenue, reopens the charge balance and reverses the doctor share.
+   */
+  async refundPayment(clinicId: string, actorUserId: string, paymentId: string, dto: RefundPaymentDto) {
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`refund:${paymentId}`}))`;
+      const original = await tx.payment.findFirst({ where: { id: paymentId, clinicId } });
+      if (!original) throw new AppError('NOT_FOUND', 'Payment not found', 404);
+      if (original.refundOfId || original.amountUzs <= 0) {
+        throw new AppError('VALIDATION_ERROR', 'A refund cannot be refunded', 400);
+      }
+      if (original.status !== PaymentStatus.PAID) {
+        throw new AppError('VALIDATION_ERROR', 'Only paid payments can be refunded', 400);
+      }
+      const refunded = await tx.payment.aggregate({
+        where: { refundOfId: original.id, status: PaymentStatus.PAID },
+        _sum: { amountUzs: true },
+      });
+      const left = original.amountUzs + (refunded._sum.amountUzs ?? 0);
+      if (dto.amount > left) {
+        throw new AppError('VALIDATION_ERROR', 'Refund exceeds the refundable amount', 400, { refundable: left });
+      }
+      const refund = await tx.payment.create({
+        data: {
+          clinicId,
+          patientId: original.patientId,
+          appointmentId: original.appointmentId,
+          chargeId: original.chargeId,
+          serviceId: original.serviceId,
+          doctorId: original.doctorId,
+          amountUzs: -dto.amount,
+          method: original.method,
+          status: PaymentStatus.PAID,
+          paidAt: new Date(),
+          notes: dto.reason.trim(),
+          collectedBy: original.collectedBy,
+          refundOfId: original.id,
+          patientName: original.patientName,
+          doctorName: original.doctorName,
+          serviceName: original.serviceName,
+        },
+      });
+      if (original.chargeId) {
+        const charge = await tx.appointmentCharge.findUnique({ where: { id: original.chargeId } });
+        if (charge && charge.status !== ChargeStatus.CANCELLED) {
+          const paid = Math.max(0, charge.paidAmountUzs - dto.amount);
+          await tx.appointmentCharge.update({
+            where: { id: charge.id },
+            data: {
+              paidAmountUzs: paid,
+              remainingUzs: charge.amountUzs - paid,
+              status: paid <= 0 ? ChargeStatus.UNPAID : ChargeStatus.PARTIALLY_PAID,
+            },
+          });
+        }
+      }
+      return { original, refund, left: left - dto.amount };
+    });
+    await this.audit?.log({
+      userId: actorUserId,
+      clinicId,
+      action: 'finance.payment.refunded',
+      entity: 'Payment',
+      entityId: result.refund.id,
+      before: { paymentId, refundable: result.left + dto.amount },
+      after: { amountUzs: -dto.amount, reason: dto.reason.trim(), refundable: result.left },
+    });
+    await this.syncShare(result.refund.id);
+    return this.paymentToRecord(result.refund);
+  }
 
   private periodRange(period: FinancePeriod): { from: Date; to: Date } {
     const now = new Date();
@@ -325,6 +419,7 @@ export class FinanceService {
 
       return { charge: updated, payment };
     });
+    await this.syncShare(result.payment.id);
 
     return {
       charge: this.toChargeDto(result.charge),
@@ -351,7 +446,8 @@ export class FinanceService {
       }),
       this.prisma.expense.findMany({
         where: { clinicId, date: { gte: from, lte: to } },
-        orderBy: { date: 'desc' },
+        include: { category: { select: { name: true } } },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
         take: 500,
       }),
     ]);
@@ -446,18 +542,96 @@ export class FinanceService {
               : null,
         },
       });
+      await this.syncShare(payment.id);
       return this.paymentToRecord(payment);
+    }
+
+    let category: { id: string } | null = null;
+    if (dto.categoryId) {
+      category = await this.prisma.financeCategory.findFirst({
+        where: { id: dto.categoryId, clinicId, type: FinanceType.EXPENSE },
+        select: { id: true },
+      });
+      if (!category) {
+        throw new AppError('NOT_FOUND', 'Expense category not found', 404);
+      }
+    } else if (dto.category) {
+      category = await this.prisma.financeCategory.upsert({
+        where: {
+          clinicId_name_type: {
+            clinicId,
+            name: dto.category,
+            type: FinanceType.EXPENSE,
+          },
+        },
+        create: { clinicId, name: dto.category, type: FinanceType.EXPENSE },
+        update: {},
+        select: { id: true },
+      });
+    }
+
+    const date = dto.date ? new Date(dto.date) : new Date();
+    if (Number.isNaN(date.getTime())) {
+      throw new AppError('VALIDATION_ERROR', 'Invalid date', 400);
     }
 
     const expense = await this.prisma.expense.create({
       data: {
         clinicId,
+        categoryId: category?.id,
         amountUzs: dto.amount,
-        description: dto.serviceName,
-        date: dto.date ? new Date(dto.date) : new Date(),
+        description: dto.serviceName?.trim() || null,
+        method: this.toPaymentMethod(dto.paymentMethod),
+        notes: dto.notes?.trim() || null,
+        date,
       },
+      include: { category: { select: { name: true } } },
     });
     return this.expenseToRecord(expense);
+  }
+
+  /** Custom expense categories; built-in ones (EXPENSE_CATEGORIES keys) are excluded. */
+  async listExpenseCategories(
+    clinicId: string,
+  ): Promise<ExpenseCategoryDto[]> {
+    const rows = await this.prisma.financeCategory.findMany({
+      where: {
+        clinicId,
+        type: FinanceType.EXPENSE,
+        name: { notIn: [...EXPENSE_CATEGORIES] },
+      },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    });
+    return rows;
+  }
+
+  async createExpenseCategory(
+    clinicId: string,
+    rawName: string,
+  ): Promise<ExpenseCategoryDto> {
+    const name = rawName.trim().replace(/\s+/g, ' ');
+    if (name.length < 2) {
+      throw new AppError('VALIDATION_ERROR', 'Category name is too short', 400);
+    }
+    if ((EXPENSE_CATEGORIES as readonly string[]).includes(name.toLowerCase())) {
+      throw new AppError('CONFLICT', 'Category already exists', 409);
+    }
+
+    const existing = await this.prisma.financeCategory.findFirst({
+      where: {
+        clinicId,
+        type: FinanceType.EXPENSE,
+        name: { equals: name, mode: 'insensitive' },
+      },
+      select: { id: true, name: true },
+    });
+    if (existing) return existing;
+
+    return this.prisma.financeCategory.create({
+      data: { clinicId, name, type: FinanceType.EXPENSE },
+      select: { id: true, name: true },
+    });
   }
 
   async patch(clinicId: string, id: string, dto: PatchFinanceRecordDto) {
@@ -465,6 +639,23 @@ export class FinanceService {
       where: { id, clinicId },
     });
     if (payment) {
+      if (payment.refundOfId && (dto.amount !== undefined || dto.paymentStatus !== undefined)) {
+        throw new AppError('VALIDATION_ERROR', 'Refunds cannot be edited', 400);
+      }
+      const lowersAmount = dto.amount !== undefined && dto.amount < payment.amountUzs;
+      const leavesPaid = dto.paymentStatus !== undefined && dto.paymentStatus !== 'paid';
+      if (!payment.refundOfId && (lowersAmount || leavesPaid)) {
+        const refunded = await this.prisma.payment.aggregate({
+          where: { refundOfId: payment.id, status: PaymentStatus.PAID },
+          _sum: { amountUzs: true },
+        });
+        const refundedUzs = -(refunded._sum.amountUzs ?? 0);
+        if (refundedUzs > 0 && (leavesPaid || (dto.amount ?? 0) < refundedUzs)) {
+          throw new AppError('VALIDATION_ERROR', 'Payment has refunds and cannot be reduced below them', 400, {
+            refundedUzs,
+          });
+        }
+      }
       const updated = await this.prisma.payment.update({
         where: { id },
         data: {
@@ -484,6 +675,7 @@ export class FinanceService {
             : {}),
         },
       });
+      await this.syncShare(updated.id);
       return this.paymentToRecord(updated);
     }
 
@@ -499,7 +691,12 @@ export class FinanceService {
         ...(dto.serviceName !== undefined
           ? { description: dto.serviceName }
           : {}),
+        ...(dto.paymentMethod !== undefined
+          ? { method: this.toPaymentMethod(dto.paymentMethod) }
+          : {}),
+        ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
       },
+      include: { category: { select: { name: true } } },
     });
     return this.expenseToRecord(updated);
   }
@@ -519,6 +716,7 @@ export class FinanceService {
     createdAt: Date;
     chargeId?: string | null;
     appointmentId?: string | null;
+    refundOfId?: string | null;
   }): FinanceRecordDto {
     const when = p.paidAt ?? p.createdAt;
     return {
@@ -537,6 +735,7 @@ export class FinanceService {
       notes: p.notes ?? undefined,
       chargeId: p.chargeId ?? undefined,
       appointmentId: p.appointmentId ?? undefined,
+      refundOfId: p.refundOfId ?? undefined,
     };
   }
 
@@ -544,15 +743,23 @@ export class FinanceService {
     id: string;
     amountUzs: number;
     description: string | null;
+    method: PaymentMethod | null;
+    notes: string | null;
     date: Date;
+    createdAt: Date;
+    category: { name: string } | null;
   }): FinanceRecordDto {
     return {
       id: e.id,
       date: format(e.date, 'yyyy-MM-dd'),
-      serviceName: e.description ?? 'Expense',
+      time: format(e.createdAt, 'HH:mm'),
+      serviceName: e.description ?? '',
       amount: e.amountUzs,
       type: 'expense',
       paymentStatus: 'paid',
+      paymentMethod: e.method ? mapPaymentMethod(e.method) : undefined,
+      notes: e.notes ?? undefined,
+      category: e.category?.name,
     };
   }
 

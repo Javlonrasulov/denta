@@ -8,10 +8,13 @@ import {
 
 export function formatMoney(amount: number, locale: string = DEFAULT_LOCALE): string {
   const code: LocaleCode = isLocaleCode(locale) ? locale : DEFAULT_LOCALE;
-  const formatted = new Intl.NumberFormat(toIntlLocale(code), {
-    style: 'decimal',
-    maximumFractionDigits: 0,
-  }).format(amount);
+  // Uzbek groups thousands with spaces; runtimes without uz ICU data fall back to commas.
+  const formatted = code.startsWith('uz')
+    ? `${amount < 0 ? '-' : ''}${String(Math.round(Math.abs(amount))).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')}`
+    : new Intl.NumberFormat(toIntlLocale(code), {
+        style: 'decimal',
+        maximumFractionDigits: 0,
+      }).format(amount);
   return `${formatted} ${currencySuffix(code)}`;
 }
 
@@ -28,12 +31,18 @@ export function formatDate(
 ): string {
   const d = new Date(iso.length <= 10 ? `${iso}T12:00:00` : iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(toIntlLocale(locale), {
+  const formatted = d.toLocaleDateString(toIntlLocale(locale), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
     ...options,
   });
+  // Runtimes without full ICU data for uz-Latn render months as "M10".
+  if (/\bM\d{1,2}\b/.test(formatted)) {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+  }
+  return formatted;
 }
 
 export function formatTime(isoOrTime: string, locale: string = DEFAULT_LOCALE): string {

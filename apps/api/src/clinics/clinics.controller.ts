@@ -6,8 +6,12 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { memoryStorage } from 'multer';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/guards/auth.guards';
 import {
@@ -22,6 +26,7 @@ import {
   PublishClinicDto,
   SearchClinicsQueryDto,
   UpdateClinicProfileDto,
+  WorkingHoursPreviewDto,
 } from './dto/clinics.dto';
 
 @ApiTags('clinics')
@@ -52,7 +57,7 @@ export class ClinicsController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('settings:manage')
   @Patch('me')
   updateMe(
     @CurrentUser() user: AuthUser,
@@ -65,7 +70,51 @@ export class ClinicsController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('settings:manage')
+  @Post('me/working-hours/conflicts')
+  scheduleConflicts(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: WorkingHoursPreviewDto,
+  ) {
+    if (!user.clinicId) {
+      throw new AppError('UNAUTHORIZED', 'No clinic context', 401);
+    }
+    return this.clinics.previewScheduleConflicts(user.clinicId, dto.workingHours);
+  }
+
+  @ApiBearerAuth()
+  @RequirePermissions('settings:manage')
+  @Post('me/media/:kind')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5_242_880 },
+    }),
+  )
+  uploadMedia(
+    @CurrentUser() user: AuthUser,
+    @Param('kind') kind: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!user.clinicId) {
+      throw new AppError('UNAUTHORIZED', 'No clinic context', 401);
+    }
+    if (kind !== 'logo' && kind !== 'cover') {
+      throw new AppError('VALIDATION_ERROR', 'kind must be logo or cover', 400);
+    }
+    if (!file) {
+      throw new AppError('INVALID_FILE', 'file is required', 400);
+    }
+    return this.clinics.uploadMedia(user.clinicId, kind, {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      size: file.size,
+      originalname: file.originalname,
+    });
+  }
+
+  @ApiBearerAuth()
+  @RequirePermissions('settings:manage')
   @Post('me/publish')
   publish(@CurrentUser() user: AuthUser, @Body() dto: PublishClinicDto) {
     if (!user.clinicId) {
@@ -75,7 +124,7 @@ export class ClinicsController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('settings:manage')
   @Get('me/branches')
   myBranches(@CurrentUser() user: AuthUser) {
     if (!user.clinicId) {
@@ -85,7 +134,7 @@ export class ClinicsController {
   }
 
   @ApiBearerAuth()
-  @RequirePermissions('clinic:update')
+  @RequirePermissions('settings:manage')
   @Post('me/branches')
   addBranch(
     @CurrentUser() user: AuthUser,

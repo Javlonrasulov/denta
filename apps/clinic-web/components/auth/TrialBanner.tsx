@@ -19,7 +19,8 @@ function formatDate(iso: string | null | undefined, locale: string): string {
   }
 }
 
-export function TrialBanner() {
+/** `compact` shows only the day count (narrow headers); the full text stays as the accessible name. */
+export function TrialBanner({ compact = false }: { compact?: boolean }) {
   const { t, i18n } = useTranslation();
   const { subscription } = useAuth();
   const [open, setOpen] = useState(false);
@@ -39,15 +40,18 @@ export function TrialBanner() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-label={compact ? label : undefined}
+        title={compact ? label : undefined}
         className={cn(
-          'inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition',
+          'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border text-xs font-semibold tabular-nums transition',
+          compact ? 'px-2.5' : 'px-3',
           days !== null && days <= 3
             ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
             : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10',
         )}
       >
         <span className="h-1.5 w-1.5 rounded-full bg-current" />
-        {label}
+        {compact ? days : label}
       </button>
 
       {open ? (
@@ -58,7 +62,12 @@ export function TrialBanner() {
             aria-label="Close"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-50 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10">
+          <div
+            className={cn(
+              'z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10',
+              compact ? 'fixed inset-x-4 top-[4.5rem]' : 'absolute right-0 mt-2 w-72',
+            )}
+          >
             <p className="text-sm font-semibold text-slate-900">{t('clinicAuth.trial.details_title')}</p>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between gap-3">

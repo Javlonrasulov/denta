@@ -6,6 +6,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 // Geo: latitude/longitude Decimal on ClinicBranch.
 // Nearby search uses Haversine SQL (works without PostGIS).
 // Optional: enable PostGIS later for ST_DWithin without changing the API contract.
@@ -117,6 +118,7 @@ enum Gender {
 enum OtpPurpose {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+  EMAIL_CHANGE
 }
 
 enum TreatmentItemStatus {
@@ -144,6 +146,82 @@ enum InvitationStatus {
   EXPIRED
 }
 
+enum DoctorFinanceModel {
+  CLINIC_REVENUE
+  DOCTOR_REVENUE_PLUS_RENT
+  REVENUE_SHARE
+  CUSTOM
+}
+
+enum DoctorAgreementStatus {
+  ACTIVE
+  SUPERSEDED
+  ENDED
+}
+
+enum RentRecurrence {
+  DAILY
+  WEEKLY
+  MONTHLY
+  INTERVAL
+  CUSTOM_SCHEDULE
+  ONE_TIME
+}
+
+enum RentIntervalUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+enum RentDailyBasis {
+  CALENDAR_DAYS
+  WORKING_DAYS
+}
+
+enum RentObligationKind {
+  RENT
+  OPENING_BALANCE
+}
+
+enum RentObligationStatus {
+  UPCOMING
+  DUE
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum DoctorRentPaymentKind {
+  PAYMENT
+  PRIOR
+}
+
+enum DoctorRentPaymentStatus {
+  SUBMITTED
+  CONFIRMED
+  REJECTED
+  VOIDED
+}
+
+enum RevenueCollector {
+  CLINIC
+  DOCTOR
+}
+
+enum RevenueShareEntryKind {
+  ACCRUAL
+  REVERSAL
+}
+
+enum OverdueReminderFrequency {
+  DAILY
+  EVERY_3_DAYS
+  WEEKLY
+  CUSTOM
+}
+
 // ─── Auth / Users ────────────────────────────────────────────────────────────
 
 model User {
@@ -160,22 +238,22 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  roles              UserRoleAssignment[]
-  patientProfile     PatientProfile?
-  doctorProfile      DoctorProfile?
-  clinicMemberships  ClinicMember[]
-  invitedMembers     ClinicMember[]      @relation("ClinicMemberInviter")
-  clinicInvitations  ClinicInvitation[]  @relation("ClinicInviter")
-  refreshTokens      RefreshToken[]
-  otpCodes           OtpCode[]
-  notifications      Notification[]
-  deviceTokens       DeviceToken[]
-  favoriteClinics    FavoriteClinic[]
-  favoriteDoctors    FavoriteDoctor[]
-  reviews            Review[]
-  auditLogs          AuditLog[]
-  fileAssets         FileAsset[]
-  legalConsents      LegalConsent[]
+  roles             UserRoleAssignment[]
+  patientProfile    PatientProfile?
+  doctorProfile     DoctorProfile?
+  clinicMemberships ClinicMember[]
+  invitedMembers    ClinicMember[]       @relation("ClinicMemberInviter")
+  clinicInvitations ClinicInvitation[]   @relation("ClinicInviter")
+  refreshTokens     RefreshToken[]
+  otpCodes          OtpCode[]
+  notifications     Notification[]
+  deviceTokens      DeviceToken[]
+  favoriteClinics   FavoriteClinic[]
+  favoriteDoctors   FavoriteDoctor[]
+  reviews           Review[]
+  auditLogs         AuditLog[]
+  fileAssets        FileAsset[]
+  legalConsents     LegalConsent[]
 
   @@index([email])
   @@index([phone])
@@ -218,19 +296,19 @@ model UserRoleAssignment {
 }
 
 model RefreshToken {
-  id                  String    @id @default(cuid())
-  userId              String
-  tokenHash           String    @unique
-  expiresAt           DateTime
-  revokedAt           DateTime?
-  activeClinicId      String?
-  activeMembershipId  String?
-  userAgent           String?
-  ip                  String?
-  deviceName          String?
-  platform            String?
-  lastUsedAt          DateTime  @default(now())
-  createdAt           DateTime  @default(now())
+  id                 String    @id @default(cuid())
+  userId             String
+  tokenHash          String    @unique
+  expiresAt          DateTime
+  revokedAt          DateTime?
+  activeClinicId     String?
+  activeMembershipId String?
+  userAgent          String?
+  ip                 String?
+  deviceName         String?
+  platform           String?
+  lastUsedAt         DateTime  @default(now())
+  createdAt          DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -271,43 +349,43 @@ model PatientProfile {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clinicLinks     PatientClinic[]
-  appointments    Appointment[]
-  dentalRecords   DentalRecord[]
-  treatmentPlans  TreatmentPlan[]
-  payments        Payment[]
-  charges         AppointmentCharge[]
-  reviews         Review[]
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicLinks    PatientClinic[]
+  appointments   Appointment[]
+  dentalRecords  DentalRecord[]
+  treatmentPlans TreatmentPlan[]
+  payments       Payment[]
+  charges        AppointmentCharge[]
+  reviews        Review[]
 
   @@index([displayId])
 }
 
 model DoctorProfile {
-  id                        String   @id @default(cuid())
-  userId                    String   @unique
-  specialty                 String?
-  experienceYears           Int      @default(0)
-  bio                       String?
-  avatarUrl                 String?
-  languages                 String[] @default([])
-  appointmentDurationMinutes Int     @default(30)
-  ratingAvg                 Float    @default(0)
-  reviewCount               Int      @default(0)
-  gender                    Gender?
-  isActive                  Boolean  @default(true)
-  priceFromUzs              Int?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  id                         String   @id @default(cuid())
+  userId                     String   @unique
+  specialty                  String?
+  experienceYears            Int      @default(0)
+  bio                        String?
+  avatarUrl                  String?
+  languages                  String[] @default([])
+  appointmentDurationMinutes Int      @default(30)
+  ratingAvg                  Float    @default(0)
+  reviewCount                Int      @default(0)
+  gender                     Gender?
+  isActive                   Boolean  @default(true)
+  priceFromUzs               Int?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 
-  user             User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clinics          DoctorClinic[]
-  schedules        DoctorSchedule[]
-  exceptions       DoctorScheduleException[]
-  services         DoctorService[]
-  appointments     Appointment[]
-  reviews          Review[]
-  favoriteBy       FavoriteDoctor[]
+  user         User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinics      DoctorClinic[]
+  schedules    DoctorSchedule[]
+  exceptions   DoctorScheduleException[]
+  services     DoctorService[]
+  appointments Appointment[]
+  reviews      Review[]
+  favoriteBy   FavoriteDoctor[]
 
   @@index([specialty])
   @@index([isActive])
@@ -316,27 +394,27 @@ model DoctorProfile {
 // ─── Clinic / Branch / Membership ────────────────────────────────────────────
 
 model Clinic {
-  id                      String              @id @default(cuid())
-  name                    String
-  slug                    String              @unique
-  logoUrl                 String?
-  coverUrl                String?
-  phone                   String?
-  email                   String?
-  about                   String?
-  specializations         String[]            @default([])
-  photos                  String[]            @default([])
-  ratingAvg               Float               @default(0)
-  reviewCount             Int                 @default(0)
-  priceFromUzs            Int?
-  accountStatus           ClinicAccountStatus @default(PENDING_VERIFICATION)
-  isMarketplaceVisible    Boolean             @default(false)
-  bookingEnabled          Boolean             @default(false)
-  onboardingCompleted     Boolean             @default(false)
-  onboardingStep          Int                 @default(0)
-  timezone                String              @default("Asia/Tashkent")
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
+  id                   String              @id @default(cuid())
+  name                 String
+  slug                 String              @unique
+  logoUrl              String?
+  coverUrl             String?
+  phone                String?
+  email                String?
+  about                String?
+  specializations      String[]            @default([])
+  photos               String[]            @default([])
+  ratingAvg            Float               @default(0)
+  reviewCount          Int                 @default(0)
+  priceFromUzs         Int?
+  accountStatus        ClinicAccountStatus @default(PENDING_VERIFICATION)
+  isMarketplaceVisible Boolean             @default(false)
+  bookingEnabled       Boolean             @default(false)
+  onboardingCompleted  Boolean             @default(false)
+  onboardingStep       Int                 @default(0)
+  timezone             String              @default("Asia/Tashkent")
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
   branches            ClinicBranch[]
   members             ClinicMember[]
@@ -361,6 +439,13 @@ model Clinic {
   dentalRecords       DentalRecord[]
   treatmentPlans      TreatmentPlan[]
   legalConsents       LegalConsent[]
+  doctorSpecialties   DoctorSpecialty[]
+
+  doctorFinancialAgreements  DoctorFinancialAgreement[]
+  doctorRentObligations      DoctorRentObligation[]
+  doctorRentPayments         DoctorRentPayment[]
+  doctorRevenueShareEntries  DoctorRevenueShareEntry[]
+  doctorRentReminderSettings DoctorRentReminderSettings?
 
   @@index([slug])
   @@index([accountStatus])
@@ -368,25 +453,25 @@ model Clinic {
 }
 
 model ClinicBranch {
-  id          String   @id @default(cuid())
-  clinicId    String
-  name        String
-  phone       String?
-  email       String?
-  address     String
-  city        String
-  region      String?
-  latitude    Decimal  @db.Decimal(10, 7)
-  longitude   Decimal  @db.Decimal(10, 7)
-  timezone    String   @default("Asia/Tashkent")
+  id           String   @id @default(cuid())
+  clinicId     String
+  name         String
+  phone        String?
+  email        String?
+  address      String
+  city         String
+  region       String?
+  latitude     Decimal  @db.Decimal(10, 7)
+  longitude    Decimal  @db.Decimal(10, 7)
+  timezone     String   @default("Asia/Tashkent")
   workingHours Json?
-  photos      String[] @default([])
-  coverUrl    String?
-  description String?
-  isPrimary   Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  photos       String[] @default([])
+  coverUrl     String?
+  description  String?
+  isPrimary    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   clinic       Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   doctorLinks  DoctorClinic[]
@@ -410,6 +495,9 @@ model ClinicMember {
   endedAt            DateTime?
   invitedByUserId    String?
   mustChangePassword Boolean   @default(false)
+  /// Last authenticated request from the mobile app in this clinic workspace.
+  lastAppSeenAt      DateTime?
+  lastAppPlatform    String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -438,22 +526,22 @@ model ClinicMemberPermission {
 }
 
 model ClinicInvitation {
-  id            String           @id @default(cuid())
-  clinicId      String
-  invitedById   String
-  email         String?
-  phone         String?
-  firstName     String
-  lastName      String
-  role          UserRole
-  specialty     String?
-  tokenHash     String           @unique
-  status        InvitationStatus @default(PENDING)
-  expiresAt     DateTime
-  acceptedAt    DateTime?
-  permissions   Json?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id          String           @id @default(cuid())
+  clinicId    String
+  invitedById String
+  email       String?
+  phone       String?
+  firstName   String
+  lastName    String
+  role        UserRole
+  specialty   String?
+  tokenHash   String           @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  permissions Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   clinic    Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   invitedBy User   @relation("ClinicInviter", fields: [invitedById], references: [id], onDelete: Cascade)
@@ -464,23 +552,28 @@ model ClinicInvitation {
 }
 
 model DoctorClinic {
-  id                 String    @id @default(cuid())
-  doctorId           String
-  clinicId           String
-  branchId           String?
-  roomId             String?
-  commissionPercent  Decimal?  @db.Decimal(5, 2)
-  isActive           Boolean   @default(true)
-  startedAt          DateTime  @default(now())
-  endedAt            DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  doctorId          String
+  clinicId          String
+  branchId          String?
+  roomId            String?
+  commissionPercent Decimal?  @db.Decimal(5, 2)
+  isActive          Boolean   @default(true)
+  startedAt         DateTime  @default(now())
+  endedAt           DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   doctor    DoctorProfile    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   clinic    Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   branch    ClinicBranch?    @relation(fields: [branchId], references: [id], onDelete: SetNull)
   room      Room?            @relation(fields: [roomId], references: [id], onDelete: SetNull)
   schedules DoctorSchedule[]
+
+  financialAgreements DoctorFinancialAgreement[]
+  rentObligations     DoctorRentObligation[]
+  rentPayments        DoctorRentPayment[]
+  revenueShareEntries DoctorRevenueShareEntry[]
 
   @@unique([doctorId, clinicId, branchId])
   @@index([clinicId])
@@ -625,12 +718,12 @@ model Appointment {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
-  clinic   Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  branch   ClinicBranch?   @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  doctor   DoctorProfile   @relation(fields: [doctorId], references: [id], onDelete: Restrict)
-  patient  PatientProfile  @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  service  Service?        @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  room     Room?           @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  clinic   Clinic                     @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  branch   ClinicBranch?              @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  doctor   DoctorProfile              @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  patient  PatientProfile             @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  service  Service?                   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  room     Room?                      @relation(fields: [roomId], references: [id], onDelete: SetNull)
   history  AppointmentStatusHistory[]
   payments Payment[]
   charge   AppointmentCharge?
@@ -645,11 +738,11 @@ model Appointment {
 
 /// Hard lock preventing double-booking the same doctor slot.
 model BookingSlotLock {
-  id         String   @id @default(cuid())
-  doctorId   String
-  startsAt   DateTime
-  appointmentId String @unique
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  doctorId      String
+  startsAt      DateTime
+  appointmentId String   @unique
+  createdAt     DateTime @default(now())
 
   @@unique([doctorId, startsAt])
   @@index([doctorId])
@@ -670,17 +763,17 @@ model AppointmentStatusHistory {
 }
 
 model PatientClinic {
-  id             String                 @id @default(cuid())
+  id             String                @id @default(cuid())
   clinicId       String
   patientId      String
-  clinicalStatus PatientClinicalStatus  @default(NEW)
-  balanceUzs     Int                    @default(0)
-  visitCount     Int                    @default(0)
+  clinicalStatus PatientClinicalStatus @default(NEW)
+  balanceUzs     Int                   @default(0)
+  visitCount     Int                   @default(0)
   lastVisitAt    DateTime?
   notes          String?
-  isActive       Boolean                @default(true)
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
+  isActive       Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   clinic  Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
@@ -701,8 +794,8 @@ model DentalRecord {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  clinic  Clinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  patient PatientProfile     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  clinic  Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient PatientProfile      @relation(fields: [patientId], references: [id], onDelete: Cascade)
   teeth   DentalToothRecord[]
 
   @@unique([clinicId, patientId])
@@ -711,15 +804,15 @@ model DentalRecord {
 }
 
 model DentalToothRecord {
-  id            String         @id @default(cuid())
+  id             String         @id @default(cuid())
   dentalRecordId String
-  toothNumber   Int // FDI 11-48
-  condition     ToothCondition @default(HEALTHY)
-  surface       String?
-  treatment     String?
-  status        String?
-  notes         String?
-  updatedAt     DateTime       @updatedAt
+  toothNumber    Int // FDI 11-48
+  condition      ToothCondition @default(HEALTHY)
+  surface        String?
+  treatment      String?
+  status         String?
+  notes          String?
+  updatedAt      DateTime       @updatedAt
 
   dentalRecord DentalRecord @relation(fields: [dentalRecordId], references: [id], onDelete: Cascade)
 
@@ -762,6 +855,20 @@ model TreatmentItem {
 
 // ─── Finance ─────────────────────────────────────────────────────────────────
 
+/// Clinic-defined doctor specialty catalog. DoctorProfile.specialty stores the
+/// selected names joined with ", ", so names must not contain commas.
+model DoctorSpecialty {
+  id        String   @id @default(cuid())
+  clinicId  String
+  name      String
+  createdAt DateTime @default(now())
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
+}
+
 model FinanceCategory {
   id       String      @id @default(cuid())
   clinicId String
@@ -777,22 +884,22 @@ model FinanceCategory {
 
 /// Receivable created when an appointment is COMPLETED (not auto-paid).
 model AppointmentCharge {
-  id             String       @id @default(cuid())
-  clinicId       String
-  patientId      String
-  appointmentId  String       @unique
-  serviceId      String?
-  doctorId       String?
-  amountUzs      Int
-  paidAmountUzs  Int          @default(0)
-  remainingUzs   Int
-  status         ChargeStatus @default(UNPAID)
+  id            String       @id @default(cuid())
+  clinicId      String
+  patientId     String
+  appointmentId String       @unique
+  serviceId     String?
+  doctorId      String?
+  amountUzs     Int
+  paidAmountUzs Int          @default(0)
+  remainingUzs  Int
+  status        ChargeStatus @default(UNPAID)
   // Display snapshots
-  patientName    String?
-  doctorName     String?
-  serviceName    String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  patientName   String?
+  doctorName    String?
+  serviceName   String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   clinic      Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   patient     PatientProfile @relation(fields: [patientId], references: [id], onDelete: Restrict)
@@ -806,7 +913,7 @@ model AppointmentCharge {
 }
 
 model Payment {
-  id            String         @id @default(cuid())
+  id            String           @id @default(cuid())
   clinicId      String
   patientId     String?
   appointmentId String?
@@ -814,24 +921,32 @@ model Payment {
   serviceId     String?
   doctorId      String?
   amountUzs     Int
-  currency      String         @default("UZS")
+  currency      String           @default("UZS")
   method        PaymentMethod?
-  status        PaymentStatus  @default(PENDING)
+  status        PaymentStatus    @default(PENDING)
   paidAt        DateTime?
   notes         String?
+  /// Who physically received the money (economic owner comes from the doctor's agreement).
+  collectedBy   RevenueCollector @default(CLINIC)
+  /// Set on refund rows (negative amountUzs) pointing at the original payment.
+  refundOfId    String?
   // Display snapshots
   patientName   String?
   doctorName    String?
   serviceName   String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
-  clinic      Clinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  patient     PatientProfile?    @relation(fields: [patientId], references: [id], onDelete: SetNull)
-  appointment Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  charge      AppointmentCharge? @relation(fields: [chargeId], references: [id], onDelete: SetNull)
-  service     Service?           @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  clinic       Clinic                    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient      PatientProfile?           @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  appointment  Appointment?              @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  charge       AppointmentCharge?        @relation(fields: [chargeId], references: [id], onDelete: SetNull)
+  service      Service?                  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  refundOf     Payment?                  @relation("PaymentRefunds", fields: [refundOfId], references: [id], onDelete: Restrict)
+  refunds      Payment[]                 @relation("PaymentRefunds")
+  shareEntries DoctorRevenueShareEntry[]
 
+  @@index([refundOfId])
   @@index([clinicId, paidAt])
   @@index([patientId])
   @@index([doctorId])
@@ -840,19 +955,240 @@ model Payment {
 }
 
 model Expense {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   clinicId    String
   categoryId  String?
   amountUzs   Int
   description String?
-  date        DateTime @db.Date
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  method      PaymentMethod?
+  notes       String?
+  date        DateTime       @db.Date
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   clinic   Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   category FinanceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@index([clinicId, date])
+}
+
+// ─── Doctor financial agreements / rent / revenue share ─────────────────────
+// Always scoped to a DoctorClinic (never global per user). Money is integer UZS.
+// Records are never hard-deleted: agreements are versioned, obligations cancelled,
+// payments voided, share entries reversed.
+
+/// One version of a doctor↔clinic financial agreement. Edits create a new version.
+model DoctorFinancialAgreement {
+  id                 String                @id @default(cuid())
+  clinicId           String
+  doctorClinicId     String
+  version            Int
+  model              DoctorFinanceModel
+  status             DoctorAgreementStatus @default(ACTIVE)
+  effectiveFrom      DateTime              @db.Date
+  /// Inclusive last day; null while open-ended.
+  effectiveTo        DateTime?             @db.Date
+  /// Clinic share of real patient payments in basis points (0..10000); doctor gets the rest.
+  clinicShareBp      Int
+  rentEnabled        Boolean               @default(false)
+  rentAmountUzs      Int?
+  recurrence         RentRecurrence?
+  intervalValue      Int?
+  intervalUnit       RentIntervalUnit?
+  /// 0=Sun … 6=Sat (WEEKLY)
+  dueDayOfWeek       Int?
+  /// 1..31 (MONTHLY); clamped to the month's last day.
+  dueDayOfMonth      Int?
+  dailyBasis         RentDailyBasis?
+  oneTimeDueDate     DateTime?             @db.Date
+  graceDays          Int                   @default(0)
+  prorateFirstPeriod Boolean               @default(true)
+  notes              String?
+  createdByUserId    String?
+  supersededAt       DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  clinic        Clinic                        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  doctorClinic  DoctorClinic                  @relation(fields: [doctorClinicId], references: [id], onDelete: Restrict)
+  scheduleItems DoctorAgreementScheduleItem[]
+  serviceRules  DoctorServiceShareRule[]
+  obligations   DoctorRentObligation[]
+  shareEntries  DoctorRevenueShareEntry[]
+
+  @@unique([doctorClinicId, version])
+  @@index([clinicId, status])
+  @@index([doctorClinicId, effectiveFrom])
+}
+
+/// Explicit dates + amounts for RentRecurrence.CUSTOM_SCHEDULE.
+model DoctorAgreementScheduleItem {
+  id          String   @id @default(cuid())
+  agreementId String
+  dueDate     DateTime @db.Date
+  amountUzs   Int
+  note        String?
+
+  agreement DoctorFinancialAgreement @relation(fields: [agreementId], references: [id], onDelete: Restrict)
+
+  @@index([agreementId])
+}
+
+/// Per-service override of the agreement's share (architecture-ready).
+model DoctorServiceShareRule {
+  id            String @id @default(cuid())
+  agreementId   String
+  serviceId     String
+  clinicShareBp Int
+
+  agreement DoctorFinancialAgreement @relation(fields: [agreementId], references: [id], onDelete: Restrict)
+
+  @@unique([agreementId, serviceId])
+}
+
+/// A liability of the doctor towards the clinic for one period (or an opening balance).
+model DoctorRentObligation {
+  id                String               @id @default(cuid())
+  clinicId          String
+  doctorClinicId    String
+  agreementId       String?
+  kind              RentObligationKind   @default(RENT)
+  /// Idempotency key, unique per DoctorClinic (e.g. "<agreementId>:2026-10-01").
+  periodKey         String
+  periodStart       DateTime             @db.Date
+  periodEnd         DateTime             @db.Date
+  dueDate           DateTime             @db.Date
+  amountUzs         Int
+  paidUzs           Int                  @default(0)
+  status            RentObligationStatus @default(UPCOMING)
+  note              String?
+  createdByUserId   String?
+  cancelledAt       DateTime?
+  cancelledByUserId String?
+  cancelReason      String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  clinic       Clinic                    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  doctorClinic DoctorClinic              @relation(fields: [doctorClinicId], references: [id], onDelete: Restrict)
+  agreement    DoctorFinancialAgreement? @relation(fields: [agreementId], references: [id], onDelete: Restrict)
+  allocations  DoctorRentAllocation[]
+  reminders    DoctorRentReminderLog[]
+
+  @@unique([doctorClinicId, periodKey])
+  @@index([clinicId, status, dueDate])
+  @@index([doctorClinicId, dueDate])
+  @@index([agreementId])
+}
+
+/// Money the doctor paid to the clinic (or a historical PRIOR payment recorded at setup).
+model DoctorRentPayment {
+  id                String                  @id @default(cuid())
+  clinicId          String
+  doctorClinicId    String
+  kind              DoctorRentPaymentKind   @default(PAYMENT)
+  status            DoctorRentPaymentStatus @default(CONFIRMED)
+  amountUzs         Int
+  paidAt            DateTime
+  method            PaymentMethod
+  note              String?
+  attachmentUrl     String?
+  coveredFrom       DateTime?               @db.Date
+  coveredTo         DateTime?               @db.Date
+  createdByUserId   String?
+  confirmedByUserId String?
+  confirmedAt       DateTime?
+  voidedAt          DateTime?
+  voidedByUserId    String?
+  voidReason        String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  clinic       Clinic                 @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  doctorClinic DoctorClinic           @relation(fields: [doctorClinicId], references: [id], onDelete: Restrict)
+  allocations  DoctorRentAllocation[]
+
+  @@index([clinicId, paidAt])
+  @@index([doctorClinicId, status])
+}
+
+/// Portion of a payment applied to an obligation. Reversed (never deleted) on void/cancel.
+model DoctorRentAllocation {
+  id           String    @id @default(cuid())
+  paymentId    String
+  obligationId String
+  amountUzs    Int
+  createdAt    DateTime  @default(now())
+  reversedAt   DateTime?
+
+  payment    DoctorRentPayment    @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  obligation DoctorRentObligation @relation(fields: [obligationId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId])
+  @@index([obligationId])
+}
+
+/// Append-only split of a real patient payment between clinic and doctor.
+model DoctorRevenueShareEntry {
+  id             String                @id @default(cuid())
+  clinicId       String
+  doctorClinicId String
+  agreementId    String?
+  paymentId      String
+  kind           RevenueShareEntryKind
+  /// Signed: negative for refunds and reversals.
+  amountUzs      Int
+  clinicShareUzs Int
+  doctorShareUzs Int
+  clinicShareBp  Int
+  collectedBy    RevenueCollector
+  reason         String?
+  occurredAt     DateTime
+  createdAt      DateTime              @default(now())
+
+  clinic       Clinic                    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  doctorClinic DoctorClinic              @relation(fields: [doctorClinicId], references: [id], onDelete: Restrict)
+  agreement    DoctorFinancialAgreement? @relation(fields: [agreementId], references: [id], onDelete: Restrict)
+  payment      Payment                   @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, occurredAt])
+  @@index([doctorClinicId, occurredAt])
+  @@index([paymentId])
+}
+
+model DoctorRentReminderSettings {
+  id                String                   @id @default(cuid())
+  clinicId          String                   @unique
+  remind3Days       Boolean                  @default(true)
+  remind1Day        Boolean                  @default(true)
+  remindDueDay      Boolean                  @default(true)
+  remindOverdue     Boolean                  @default(true)
+  overdueFrequency  OverdueReminderFrequency @default(EVERY_3_DAYS)
+  overdueCustomDays Int?
+  notifyDoctor      Boolean                  @default(true)
+  notifyStaff       Boolean                  @default(true)
+  /// Local clinic hour (0..23) from which reminders may be sent.
+  sendHour          Int                      @default(9)
+  updatedByUserId   String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+}
+
+/// Dedupe ledger: one row per (obligation, recipient, reminder occurrence).
+model DoctorRentReminderLog {
+  id           String   @id @default(cuid())
+  clinicId     String
+  obligationId String
+  userId       String
+  reminderKey  String
+  sentAt       DateTime @default(now())
+
+  obligation DoctorRentObligation @relation(fields: [obligationId], references: [id], onDelete: Restrict)
+
+  @@unique([obligationId, userId, reminderKey])
+  @@index([clinicId, sentAt])
 }
 
 // ─── Inventory ───────────────────────────────────────────────────────────────
@@ -1012,12 +1348,12 @@ model Subscription {
 }
 
 model SubscriptionHistory {
-  id        String             @id @default(cuid())
-  clinicId  String
+  id         String              @id @default(cuid())
+  clinicId   String
   fromStatus SubscriptionStatus?
-  toStatus  SubscriptionStatus
-  note      String?
-  createdAt DateTime           @default(now())
+  toStatus   SubscriptionStatus
+  note       String?
+  createdAt  DateTime            @default(now())
 
   clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
@@ -1038,22 +1374,22 @@ model FileAsset {
 
   uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
-  @@index([uploadedById])
   @@unique([bucket, key])
+  @@index([uploadedById])
 }
 
 model AuditLog {
-  id         String   @id @default(cuid())
-  userId     String?
-  clinicId   String?
-  action     String
-  entity     String
-  entityId   String?
-  before     Json?
-  after      Json?
-  ip         String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String?
+  clinicId  String?
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   clinic Clinic? @relation(fields: [clinicId], references: [id], onDelete: SetNull)
