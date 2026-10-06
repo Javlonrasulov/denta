@@ -19,6 +19,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY apps/clinic-web ./apps/clinic-web
+# npm nests clinic-web's own @types/react(-dom) and typescript here (root versions belong to Expo)
+COPY --from=deps /app/apps/clinic-web/node_modules ./apps/clinic-web/node_modules
 COPY packages ./packages
 COPY locales ./locales
 COPY apps/api/package.json apps/api/
