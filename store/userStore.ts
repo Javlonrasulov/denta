@@ -83,18 +83,43 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   isDoctorFavorite: (id) => get().doctorIds.includes(id),
 }));
 
+export type PatientGender = 'MALE' | 'FEMALE';
+
 interface UserState {
   id: string;
   fullName: string;
+  firstName: string;
+  lastName: string;
   phone: string;
+  email: string;
+  emailVerified: boolean;
   avatarUrl: string;
+  gender: PatientGender | null;
+  /** ISO date, YYYY-MM-DD. */
+  birthDate: string;
   setProfile: (patch: Partial<Omit<UserState, 'setProfile'>>) => void;
 }
 
 export const useUserStore = create<UserState>((set) => ({
   id: '',
   fullName: '',
+  firstName: '',
+  lastName: '',
   phone: '',
+  email: '',
+  emailVerified: false,
   avatarUrl: '',
-  setProfile: (patch) => set(patch),
+  gender: null,
+  birthDate: '',
+  setProfile: (patch) =>
+    set((state) => {
+      const next = { ...state, ...patch };
+      if (
+        (patch.firstName !== undefined || patch.lastName !== undefined) &&
+        patch.fullName === undefined
+      ) {
+        next.fullName = `${next.firstName} ${next.lastName}`.trim();
+      }
+      return next;
+    }),
 }));

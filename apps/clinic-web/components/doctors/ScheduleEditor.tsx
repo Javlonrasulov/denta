@@ -108,7 +108,7 @@ export function ScheduleEditor({
                 >
                   <span
                     className={cn(
-                      'absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
+                      'absolute left-0 top-0.5 h-4 w-4 rounded-full bg-frost shadow-sm transition-transform',
                       day.enabled ? 'translate-x-[18px]' : 'translate-x-0.5',
                     )}
                   />

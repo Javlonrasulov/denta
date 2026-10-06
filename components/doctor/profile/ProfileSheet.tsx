@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
+  Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -34,7 +36,23 @@ export function ProfileSheet({
 }) {
   const insets = useSafeAreaInsets();
   const { colors, authSurface, hairline } = useLoginTheme();
-  const bottomPad = Math.max(insets.bottom, 12) + 20;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const bottomPad = keyboardHeight > 0 ? 16 : Math.max(insets.bottom, 12) + 20;
+
+  /** The edge-to-edge Android dialog is never resized for the IME, so lift the sheet manually. */
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !visible) return;
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      const overlap = Dimensions.get('screen').height - e.endCoordinates.screenY;
+      setKeyboardHeight(Math.max(e.endCoordinates.height, overlap));
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+      setKeyboardHeight(0);
+    };
+  }, [visible]);
 
   return (
     <Modal
@@ -71,7 +89,11 @@ export function ProfileSheet({
             paddingHorizontal: 20,
             paddingTop: 10,
             paddingBottom: bottomPad,
-            maxHeight,
+            marginBottom: keyboardHeight,
+            maxHeight:
+              keyboardHeight > 0
+                ? Dimensions.get('screen').height - keyboardHeight - insets.top - 12
+                : maxHeight,
           }}
         >
           <View style={{ alignItems: 'center', paddingBottom: 8 }}>

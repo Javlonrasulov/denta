@@ -52,18 +52,6 @@ export const MASTER_SERVICE_CATALOG: MasterServiceTemplate[] = [
     },
   },
   {
-    nameKey: 'service.root_canal',
-    category: 'endodontics',
-    defaultDuration: 90,
-    defaultPriceUzs: 800_000,
-    translations: {
-      uz: 'Kanal davolash',
-      'uz-Cyrl': 'Канал даволаш',
-      ru: 'Лечение каналов',
-      en: 'Root canal treatment',
-    },
-  },
-  {
     nameKey: 'service.whitening',
     category: 'cosmetic',
     defaultDuration: 60,

@@ -232,7 +232,7 @@ export function RentPaymentModal({
           <AuthButton type="submit" loading={loading} className="tablet:w-auto tablet:px-6">
             {t(`${p}.submit`)}
             {value > 0 ? (
-              <span className="rounded-md bg-white/15 px-1.5 py-0.5 tabular-nums">
+              <span className="rounded-md bg-frost/ px-1.5 py-0.5 tabular-nums">
                 {groupDigits(value)} {t('crm.doctor_finance.currency')}
               </span>
             ) : null}

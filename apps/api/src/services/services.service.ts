@@ -70,7 +70,10 @@ export class ServicesService {
   async catalog(locale = 'uz'): Promise<CatalogServiceDto[]> {
     await this.ensureMasterCatalog();
     const rows = await this.prisma.service.findMany({
-      where: { isActive: true, nameKey: { not: null } },
+      where: {
+        isActive: true,
+        nameKey: { in: MASTER_SERVICE_CATALOG.map((tpl) => tpl.nameKey) },
+      },
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
 

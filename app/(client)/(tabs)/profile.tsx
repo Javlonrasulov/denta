@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import {
+  ChangeEmailSheet,
+  ChangePhoneSheet,
   ClientLanguageSection,
   ClientLogoutBlock,
   ClientProfileHeader,
   ClientProfileHero,
   ClientProfileSummary,
+  EditClientProfileSheet,
 } from '@/components/client/profile';
 import {
+  ChangePasswordSheet,
   LogoutConfirmSheet,
   PremiumToggle,
   ProfileSettingsRow,
@@ -20,8 +24,10 @@ import {
 import {
   Bell,
   CircleHelp,
+  KeyRound,
   Mail,
   Moon,
+  Phone,
   Shield,
   UserRound,
 } from '@/components/icons';
@@ -52,12 +58,36 @@ export default function ProfileScreen() {
     logout: clearSession,
   } = useSettingsStore();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [sheet, setSheet] = useState<'edit' | 'phone' | 'email' | 'password' | null>(null);
+  const sheetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (sheetTimer.current) clearTimeout(sheetTimer.current);
+  }, []);
 
   const isDark = themeMode === 'dark';
-  const email = (adminLogin.includes('@') ? adminLogin : '').trim().toLowerCase();
-  const emailPending = Boolean(email);
+  const email = (
+    user.email || (adminLogin.includes('@') ? adminLogin : '')
+  ).trim().toLowerCase();
+  const emailPending = Boolean(email) && !user.emailVerified;
   const favoritesCount = clinicIds.length + doctorIds.length;
   const bottomPad = tabBarBottomInset(insets.bottom) + 120;
+  const closeSheet = () => setSheet(null);
+
+  /** Android drops a Modal opened while another is still animating out. */
+  const switchSheet = (next: 'phone' | 'email') => {
+    setSheet(null);
+    if (sheetTimer.current) clearTimeout(sheetTimer.current);
+    sheetTimer.current = setTimeout(() => setSheet(next), 320);
+  };
+
+  const openEmail = () => {
+    if (emailPending) {
+      router.push({ pathname: '/verify-email', params: { email, cooldown: '0' } });
+    } else {
+      setSheet('email');
+    }
+  };
 
   const doLogout = () => {
     setLogoutOpen(false);
@@ -82,7 +112,7 @@ export default function ProfileScreen() {
         email={email || undefined}
         avatarUrl={user.avatarUrl || undefined}
         emailPending={emailPending}
-        onEdit={() => undefined}
+        onEdit={() => setSheet('edit')}
       />
 
       <ClientProfileSummary
@@ -100,33 +130,34 @@ export default function ProfileScreen() {
           label={t('profile.personal_info')}
           value={
             user.fullName.trim()
-              ? undefined
+              ? t('profile.personal_info_hint')
               : t('profile.profile_incomplete')
           }
-          onPress={() => undefined}
+          onPress={() => setSheet('edit')}
         />
-        {email ? (
-          <ProfileSettingsRow
-            icon={Mail}
-            label={t('profile.verify_email')}
-            value={t('profile.email_unverified_hint')}
-            onPress={() =>
-              router.push({
-                pathname: '/verify-email',
-                params: { email, cooldown: '0' },
-              })
-            }
-            last
-          />
-        ) : (
-          <ProfileSettingsRow
-            icon={Mail}
-            label={t('profile.verify_email')}
-            value={t('profile.email_missing')}
-            onPress={() => undefined}
-            last
-          />
-        )}
+        <ProfileSettingsRow
+          icon={Phone}
+          label={t('profile.phone')}
+          value={user.phone.trim() || t('profile.phone_missing')}
+          onPress={() => setSheet('phone')}
+        />
+        <ProfileSettingsRow
+          icon={Mail}
+          label={emailPending ? t('profile.verify_email') : t('profile.email_label')}
+          value={
+            emailPending
+              ? t('profile.email_unverified_hint')
+              : email || t('profile.email_missing')
+          }
+          onPress={openEmail}
+        />
+        <ProfileSettingsRow
+          icon={KeyRound}
+          label={t('profile.change_password')}
+          value={t('profile.change_password_hint')}
+          onPress={() => setSheet('password')}
+          last
+        />
       </ProfileSettingsSection>
 
       <ProfileSettingsSection title={t('profile.section_preferences')}>
@@ -204,6 +235,15 @@ export default function ProfileScreen() {
         onClose={() => setLogoutOpen(false)}
         onConfirm={doLogout}
       />
+      <EditClientProfileSheet
+        visible={sheet === 'edit'}
+        onClose={closeSheet}
+        onChangePhone={() => switchSheet('phone')}
+        onChangeEmail={() => switchSheet('email')}
+      />
+      <ChangePhoneSheet visible={sheet === 'phone'} onClose={closeSheet} />
+      <ChangeEmailSheet visible={sheet === 'email'} onClose={closeSheet} />
+      <ChangePasswordSheet visible={sheet === 'password'} onClose={closeSheet} />
     </MobileScreen>
   );
 }

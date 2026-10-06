@@ -21,8 +21,26 @@ export default registerAs('app', () => {
     trialDays: parseInt(process.env.TRIAL_DAYS ?? '30', 10),
     /** Must match NEXT_PUBLIC_LEGAL_TERMS_VERSION / NEXT_PUBLIC_LEGAL_PRIVACY_VERSION in clinic-web. */
     legal: {
-      termsVersion: process.env.LEGAL_TERMS_VERSION ?? '2026-09-27',
-      privacyVersion: process.env.LEGAL_PRIVACY_VERSION ?? '2026-09-27',
+      /**
+       * Authoritative document versions. Clinic-web reads the same values via
+       * NEXT_PUBLIC_LEGAL_* build args (see docker-compose.prod.yml); the
+       * defaults must match `apps/clinic-web/lib/legal/constants.ts`.
+       */
+      termsVersion: process.env.LEGAL_TERMS_VERSION?.trim() || '2026-09-27',
+      privacyVersion: process.env.LEGAL_PRIVACY_VERSION?.trim() || '2026-09-27',
+      effectiveDate: process.env.LEGAL_EFFECTIVE_DATE?.trim() || '2026-09-27',
+      updatedDate:
+        process.env.LEGAL_UPDATED_DATE?.trim() ||
+        process.env.LEGAL_EFFECTIVE_DATE?.trim() ||
+        '2026-09-27',
+      /** Same values as NEXT_PUBLIC_LEGAL_OPERATOR_* in clinic-web; unset → neutral wording. */
+      operatorName: process.env.LEGAL_OPERATOR_NAME?.trim() || null,
+      supportEmail: process.env.LEGAL_SUPPORT_EMAIL?.trim() || null,
+      privacyEmail:
+        process.env.LEGAL_PRIVACY_EMAIL?.trim() ||
+        process.env.LEGAL_SUPPORT_EMAIL?.trim() ||
+        null,
+      supportPhone: process.env.LEGAL_SUPPORT_PHONE?.trim() || null,
     },
     otp: {
       ttlMinutes: parseInt(process.env.OTP_TTL_MINUTES ?? '10', 10),

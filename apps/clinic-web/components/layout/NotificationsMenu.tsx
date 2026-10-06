@@ -3,8 +3,10 @@
 import {
   AlertTriangle,
   Bell,
+  BellOff,
   CalendarDays,
   Check,
+  CheckCheck,
   Coins,
   Package,
   UserPlus,
@@ -14,6 +16,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import { cn } from '@/lib/cn';
 import { useCrmI18n } from '@/lib/i18n/useCrmI18n';
+import { useDismiss } from '@/lib/use-dismiss';
 import {
   clinicApi,
   clinicApiEnabled,
@@ -48,6 +51,16 @@ const ICON_BY_TYPE: Record<NotifKind, typeof Bell> = {
   booking_confirmed: Check,
   schedule_changed: CalendarDays,
   system: Bell,
+};
+
+const TONE_BY_TYPE: Record<NotifKind, string> = {
+  appointment_reminder: 'bg-indigo-50 text-indigo-600 ring-indigo-100',
+  new_patient: 'bg-sky-50 text-sky-600 ring-sky-100',
+  low_inventory: 'bg-amber-50 text-amber-600 ring-amber-100',
+  payment: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
+  booking_confirmed: 'bg-indigo-50 text-indigo-600 ring-indigo-100',
+  schedule_changed: 'bg-violet-50 text-violet-600 ring-violet-100',
+  system: 'bg-slate-100 text-slate-600 ring-slate-200',
 };
 
 function mapApiType(type: string): NotifKind {
@@ -168,6 +181,7 @@ export function NotificationsMenu() {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<ClinicNotification[]>([]);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
   const items = useMemo(
@@ -201,26 +215,8 @@ export function NotificationsMenu() {
     if (open) void load();
   }, [open, load]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(open, rootRef, close, triggerRef);
 
   async function markAllRead() {
     setRows((prev) => prev.map((n) => ({ ...n, read: true })));
@@ -252,22 +248,28 @@ export function NotificationsMenu() {
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-controls={panelId}
-        aria-label={t('crm.header.notifications')}
+        aria-controls={open ? panelId : undefined}
+        aria-label={
+          unread > 0
+            ? `${t('crm.header.notifications')} — ${t('notifications.unread_count', { count: unread })}`
+            : t('crm.header.notifications')
+        }
+        title={t('crm.header.notifications')}
         onClick={() => setOpen((v) => !v)}
-        className={cn(
-          'relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition',
-          open
-            ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20'
-            : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50',
-        )}
+        className="nav-icon-btn"
       >
-        <Bell className="h-4 w-4" />
+        <Bell aria-hidden className="h-[18px] w-[18px]" strokeWidth={1.9} />
         {unread > 0 ? (
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
+          <span
+            aria-hidden
+            className="absolute -right-1.5 -top-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white tabular-nums ring-2 ring-canvas"
+          >
+            {unread > 9 ? '9+' : unread}
+          </span>
         ) : null}
       </button>
 
@@ -276,35 +278,32 @@ export function NotificationsMenu() {
           id={panelId}
           role="dialog"
           aria-label={t('crm.header.notifications')}
-          className="absolute right-0 z-50 mt-2 flex w-[min(22rem,calc(100vw-1.5rem))] max-h-[min(28rem,70vh)] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-black/5"
+          className="popover-panel absolute right-0 mt-2 flex max-h-[min(30rem,72vh)] w-[min(24rem,calc(100vw-1.5rem))] origin-top-right flex-col"
         >
-          <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900">
-                {t('profile.notifications')}
-              </p>
-              <p className="mt-0.5 text-xs text-slate-500">
-                {unread > 0
-                  ? t('notifications.unread_count', { count: unread })
-                  : t('notifications.all_read')}
-              </p>
-            </div>
-            {unread > 0 ? (
-              <button
-                type="button"
-                onClick={() => void markAllRead()}
-                className="shrink-0 text-xs font-semibold text-primary hover:underline"
-              >
-                {t('notifications.mark_all_read')}
-              </button>
-            ) : null}
+          <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+            <p className="whitespace-nowrap text-sm font-semibold text-fg">{t('profile.notifications')}</p>
+            <span
+              className={cn(
+                'min-w-0 truncate rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset',
+                unread > 0
+                  ? 'bg-primary/10 text-primary ring-primary/15'
+                  : 'bg-sunken text-fg-muted ring-line',
+              )}
+            >
+              {unread > 0
+                ? t('notifications.unread_count', { count: unread })
+                : t('notifications.all_read')}
+            </span>
           </div>
 
-          <div className="overflow-y-auto p-1.5">
+          <div className="scrollbar-subtle overflow-y-auto p-1.5">
             {items.length === 0 ? (
-              <p className="px-3 py-8 text-center text-sm text-slate-500">
-                {t('notifications.empty')}
-              </p>
+              <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sunken text-fg-subtle ring-1 ring-inset ring-line">
+                  <BellOff aria-hidden className="h-5 w-5" strokeWidth={1.8} />
+                </span>
+                <p className="text-sm font-medium text-fg-muted">{t('notifications.empty')}</p>
+              </div>
             ) : (
               items.map((item) => {
                 const Icon =
@@ -317,37 +316,39 @@ export function NotificationsMenu() {
                     type="button"
                     onClick={() => void openItem(item)}
                     className={cn(
-                      'flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition',
-                      item.read
-                        ? 'hover:bg-slate-50'
-                        : 'bg-primary/[0.06] hover:bg-primary/10',
+                      'group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-colors',
+                      'focus-visible:ring-2 focus-visible:ring-focus/40',
+                      item.read ? 'hover:bg-hover' : 'bg-primary/[0.05] hover:bg-primary/10',
                     )}
                   >
                     <span
                       className={cn(
-                        'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
-                        item.type === 'low_inventory'
-                          ? 'bg-amber-50 text-amber-600'
-                          : 'bg-slate-100 text-primary',
+                        'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset',
+                        TONE_BY_TYPE[item.type],
                       )}
                     >
-                      <Icon className="h-4 w-4" strokeWidth={2.2} />
+                      <Icon aria-hidden className="h-4 w-4" strokeWidth={2.1} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm font-semibold text-slate-900">
+                        <span
+                          className={cn(
+                            'truncate text-sm text-fg',
+                            item.read ? 'font-medium' : 'font-semibold',
+                          )}
+                        >
                           {item.title}
                         </span>
-                        <span className="shrink-0 text-[11px] text-slate-400">
+                        <span className="shrink-0 text-[11px] tabular-nums text-fg-subtle">
                           {item.time}
                         </span>
                       </span>
-                      <span className="mt-0.5 line-clamp-2 text-xs text-slate-500">
+                      <span className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-fg-muted">
                         {item.body}
                       </span>
                     </span>
                     {!item.read ? (
-                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-teal-500" />
+                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary ring-4 ring-primary/15" />
                     ) : (
                       <span className="w-2 shrink-0" />
                     )}
@@ -356,6 +357,19 @@ export function NotificationsMenu() {
               })
             )}
           </div>
+
+          {unread > 0 ? (
+            <div className="border-t border-line p-1.5">
+              <button
+                type="button"
+                onClick={() => void markAllRead()}
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-focus/40"
+              >
+                <CheckCheck aria-hidden className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />
+                <span className="truncate">{t('notifications.mark_all_read')}</span>
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

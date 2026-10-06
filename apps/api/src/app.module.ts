@@ -29,6 +29,7 @@ import {
 import configuration from './config/configuration';
 import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
+import { LegalModule } from './legal/legal.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule, RedisService } from './redis/redis.module';
 import { StorageModule } from './storage/storage.module';
@@ -84,6 +85,7 @@ class RedisBootstrap implements OnModuleInit {
     SearchModule,
     HealthModule,
     GeoModule,
+    LegalModule,
   ],
   providers: [
     RedisBootstrap,

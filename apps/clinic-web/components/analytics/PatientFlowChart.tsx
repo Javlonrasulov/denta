@@ -54,7 +54,7 @@ export function PatientFlowChart({
           <CartesianGrid
             strokeDasharray="3 8"
             vertical={false}
-            stroke="#E2E8F0"
+            stroke="rgb(var(--chart-grid))"
             strokeOpacity={0.85}
           />
           <XAxis
@@ -62,7 +62,7 @@ export function PatientFlowChart({
             axisLine={false}
             tickLine={false}
             tickMargin={10}
-            tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 500 }}
+            tick={{ fill: 'rgb(var(--fg-subtle))', fontSize: 12, fontWeight: 500 }}
             interval="preserveStartEnd"
             minTickGap={18}
           />
@@ -71,12 +71,12 @@ export function PatientFlowChart({
             tickLine={false}
             tickMargin={6}
             width={36}
-            tick={{ fill: '#94A3B8', fontSize: 12, fontWeight: 500 }}
+            tick={{ fill: 'rgb(var(--fg-subtle))', fontSize: 12, fontWeight: 500 }}
             allowDecimals={false}
           />
           <Tooltip
             cursor={{
-              stroke: '#A5B4FC',
+              stroke: 'rgb(var(--chart-cursor))',
               strokeWidth: 1,
               strokeDasharray: '4 4',
             }}
@@ -91,7 +91,7 @@ export function PatientFlowChart({
             activeDot={{
               r: 5,
               strokeWidth: 2,
-              stroke: '#fff',
+              stroke: 'rgb(var(--card))',
               fill: '#4F46E5',
               filter: 'url(#patientFlowGlow)',
             }}

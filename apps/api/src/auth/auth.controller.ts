@@ -9,8 +9,12 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { memoryStorage } from 'multer';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -122,6 +126,29 @@ export class AuthController {
     @Body() dto: UpdatePatientProfileDto,
   ) {
     return this.auth.updatePatientProfile(user.id, dto);
+  }
+
+  @ApiBearerAuth()
+  @Post('patient/avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5_242_880 },
+    }),
+  )
+  uploadPatientAvatar(
+    @CurrentUser() user: AuthUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new AppError('INVALID_FILE', 'file is required', 400);
+    }
+    return this.auth.uploadPatientAvatar(user.id, {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      size: file.size,
+      originalname: file.originalname,
+    });
   }
 
   @Public()

@@ -185,6 +185,7 @@ const pReg = await j('/auth/patient/register', {
     email: pEmail,
     phone: '+99893' + String(suffix).slice(-7),
     password: pass,
+    acceptTerms: true,
   }),
 });
 ok('patient.register', pReg.status === 200 || pReg.status === 201, String(pReg.status));
@@ -243,6 +244,7 @@ await j('/auth/patient/register', {
     email: p2Email,
     phone: '+99894' + String(suffix).slice(-7),
     password: pass,
+    acceptTerms: true,
   }),
 });
 const p2Login = await j('/auth/login', {

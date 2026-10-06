@@ -39,7 +39,11 @@ export class RegisterClinicDto {
   @MinLength(8)
   password!: string;
 
-  /** Only a literal JSON `true` counts as consent; anything else → LEGAL_CONSENT_REQUIRED. */
+  /**
+   * Consent to both the Terms of Use and the Privacy Policy (one checkbox). The
+   * name is kept for wire compatibility with clinic-web. Only a literal JSON
+   * `true` counts; anything else → LEGAL_CONSENT_REQUIRED.
+   */
   @IsOptional()
   @Transform(({ obj }) => (obj as { acceptTerms?: unknown }).acceptTerms === true)
   @IsBoolean()
@@ -148,9 +152,45 @@ export class RegisterPatientDto {
   @IsString()
   @MinLength(6)
   password!: string;
+
+  /**
+   * Consent to both the Terms of Use and the Privacy Policy (one checkbox). The
+   * name is kept for wire compatibility with clinic-web. Only a literal JSON
+   * `true` counts; anything else → LEGAL_CONSENT_REQUIRED.
+   */
+  @IsOptional()
+  @Transform(({ obj }) => (obj as { acceptTerms?: unknown }).acceptTerms === true)
+  @IsBoolean()
+  acceptTerms?: boolean;
+
+  /** Version the client displayed; only compared, never stored. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  termsVersion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  privacyVersion?: string;
+
+  @IsOptional()
+  @IsIn(['uz', 'uz-Cyrl', 'ru', 'en'])
+  locale?: string;
 }
 
 export class UpdatePatientProfileDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  lastName?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(500)

@@ -38,7 +38,7 @@ export function AppShell({
   const desktopWidth = collapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W;
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-canvas">
       <div
         className="sticky top-0 z-40 hidden h-screen shrink-0 overflow-visible transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] laptop:block"
         style={{ width: desktopWidth }}
@@ -50,7 +50,7 @@ export function AppShell({
         <div className="fixed inset-0 z-40 laptop:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-slate-900/45"
+            className="absolute inset-0 bg-overlay/50 backdrop-blur-[2px]"
             aria-label={t('crm.header.close_menu')}
             onClick={() => setOpen(false)}
           />

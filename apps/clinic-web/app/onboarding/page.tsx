@@ -1,12 +1,19 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AuthButton } from '@/components/auth/AuthFields';
+import { AuthButton, AuthField } from '@/components/auth/AuthFields';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { LanguageSelector } from '@/components/i18n/LanguageSelector';
+import type { GeoPoint, ResolvedAddress } from '@/components/settings/LocationPicker';
+import {
+  scheduleFromWorkingHours,
+  scheduleToWorkingHours,
+} from '@/components/settings/WeeklySchedule';
+import { TimePicker, fromMinutes, toMinutes } from '@/components/ui/TimePicker';
 import {
   CatalogServiceItem,
   clinicApi,
@@ -14,7 +21,18 @@ import {
 import { readPersistedSession } from '@/lib/auth/session';
 import { cn } from '@/lib/cn';
 
+const LocationPicker = dynamic(
+  () => import('@/components/settings/LocationPicker').then((m) => m.LocationPicker),
+  {
+    ssr: false,
+    loading: () => <div className="h-[360px] animate-pulse rounded-xl bg-slate-100" />,
+  },
+);
+
 const STEPS = 6;
+const LAST_SLOT_MINUTES = 23 * 60 + 45;
+
+type LocationErrors = Partial<Record<'point' | 'city' | 'address', string>>;
 
 type SelectedService = {
   serviceId: string;
@@ -26,11 +44,16 @@ export default function OnboardingPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user, updateOnboarding, ready } = useAuth();
-  const [step, setStep] = useState(Math.max(1, (user?.onboardingStep ?? 0) + 1));
+  const [step, setStep] = useState(
+    Math.min(STEPS, Math.max(1, (user?.onboardingStep ?? 0) + 1)),
+  );
   const [saving, setSaving] = useState(false);
 
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
+  const [region, setRegion] = useState('');
+  const [point, setPoint] = useState<GeoPoint | null>(null);
+  const [locationErrors, setLocationErrors] = useState<LocationErrors>({});
   const [openTime, setOpenTime] = useState('09:00');
   const [closeTime, setCloseTime] = useState('18:00');
   const [doctorsNote, setDoctorsNote] = useState('');
@@ -74,8 +97,45 @@ export default function OnboardingPage() {
     }
   }, [step, catalog.length, loadCatalog]);
 
+  useEffect(() => {
+    const token = readPersistedSession()?.accessToken;
+    if (!token) return;
+    let cancelled = false;
+    clinicApi
+      .clinicMe(token)
+      .then((clinic) => {
+        const branch = clinic.branches?.find((b) => b.isPrimary) ?? clinic.branches?.[0];
+        if (cancelled || !branch) return;
+        setCity(branch.city ?? '');
+        setAddress(branch.address ?? '');
+        setRegion(branch.region ?? '');
+        const latitude = Number(branch.latitude);
+        const longitude = Number(branch.longitude);
+        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+          setPoint({ latitude, longitude });
+        }
+        const firstOpen = branch.workingHours?.find((d) => !d.closed);
+        if (firstOpen) {
+          setOpenTime(firstOpen.open);
+          setCloseTime(firstOpen.close);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (!ready) {
     return <div className="min-h-screen bg-slate-50" />;
+  }
+
+  function changeOpenTime(next: string) {
+    setOpenTime(next);
+    const open = toMinutes(next);
+    if (toMinutes(closeTime) <= open) {
+      setCloseTime(fromMinutes(Math.min(open + 60, LAST_SLOT_MINUTES)));
+    }
   }
 
   function serviceLabel(row: CatalogServiceItem): string {
@@ -118,22 +178,81 @@ export default function OnboardingPage() {
     const token = readPersistedSession()?.accessToken;
     if (!token) return;
     const items = Object.values(selected);
-    if (!items.length) {
-      throw new Error(t('clinicAuth.onboarding.services_required'));
-    }
+    if (!items.length) return;
     await clinicApi.setupServices(token, items);
+  }
+
+  function locationBody() {
+    if (!point) return undefined;
+    return {
+      address: address.trim(),
+      city: city.trim(),
+      region: region.trim(),
+      latitude: Number(point.latitude.toFixed(7)),
+      longitude: Number(point.longitude.toFixed(7)),
+    };
+  }
+
+  async function persistLocation() {
+    const required = t('crm.settings.required');
+    const errs: LocationErrors = {};
+    if (!point) errs.point = t('crm.settings.pin_required');
+    if (!city.trim()) errs.city = required;
+    if (!address.trim()) errs.address = required;
+    setLocationErrors(errs);
+    if (Object.keys(errs).length) {
+      throw new Error(t('crm.settings.fix_errors'));
+    }
+    const token = readPersistedSession()?.accessToken;
+    if (!token) return;
+    await clinicApi.updateClinic(token, { location: locationBody() });
+  }
+
+  async function persistHours() {
+    const token = readPersistedSession()?.accessToken;
+    if (!token) return;
+    const workingHours = scheduleToWorkingHours(
+      scheduleFromWorkingHours(null).map((d) => ({ ...d, openTime, closeTime })),
+    );
+    await clinicApi.updateClinic(token, { workingHours, location: locationBody() });
+  }
+
+  function clearLocationErrors(...fields: Array<keyof LocationErrors>) {
+    setLocationErrors((prev) => {
+      const next = { ...prev };
+      for (const f of fields) delete next[f];
+      return next;
+    });
+    setCatalogError(null);
+  }
+
+  function onAddressResolved(resolved: ResolvedAddress) {
+    const moved = Boolean(resolved.address || resolved.city);
+    if (moved) setAddress(resolved.address);
+    if (resolved.city) setCity(resolved.city);
+    if (moved) setRegion(resolved.region);
+    clearLocationErrors(
+      ...(resolved.address ? (['address'] as const) : []),
+      ...(resolved.city ? (['city'] as const) : []),
+    );
   }
 
   async function goNext(completed = false) {
     setSaving(true);
     setCatalogError(null);
     try {
+      if (step === 2) {
+        await persistLocation();
+      }
+      if (step === 3) {
+        await persistHours();
+      }
       if (step === 4) {
         await persistServices();
       }
-      const nextStep = completed ? 6 : step;
-      await updateOnboarding(nextStep, completed);
-      if (completed || step >= STEPS) {
+      const done = completed || step >= STEPS;
+      await updateOnboarding(done ? STEPS : step, done);
+      if (done) {
         router.replace('/overview');
       } else {
         setStep((s) => s + 1);
@@ -146,11 +265,6 @@ export default function OnboardingPage() {
   }
 
   async function skip() {
-    if (step === 4) {
-      // Services are required for marketplace — do not skip empty
-      setCatalogError(t('clinicAuth.onboarding.services_required'));
-      return;
-    }
     await goNext(false);
   }
 
@@ -211,53 +325,78 @@ export default function OnboardingPage() {
 
             {step === 2 ? (
               <>
-                <label className="block space-y-1.5 text-sm">
-                  <span className="font-medium text-slate-700">
-                    {t('clinicAuth.onboarding.city')}
-                  </span>
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </label>
-                <label className="block space-y-1.5 text-sm">
-                  <span className="font-medium text-slate-700">
-                    {t('clinicAuth.onboarding.address')}
-                  </span>
-                  <input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </label>
+                <LocationPicker
+                  value={point}
+                  onChange={(p) => {
+                    setPoint(p);
+                    clearLocationErrors('point');
+                  }}
+                  onAddressResolved={onAddressResolved}
+                  lang={locale.startsWith('uz') ? 'uz' : locale}
+                  labels={{
+                    searchPlaceholder: t('crm.settings.map_search_placeholder'),
+                    search: t('crm.settings.map_search'),
+                    myLocation: t('crm.settings.map_my_location'),
+                    noResults: t('crm.settings.map_no_results'),
+                    searchFailed: t('crm.settings.map_search_failed'),
+                    geoFailed: t('crm.settings.map_geo_failed'),
+                    hint: t('crm.settings.map_hint'),
+                  }}
+                />
+                {locationErrors.point ? (
+                  <p className="text-xs font-medium text-red-600">{locationErrors.point}</p>
+                ) : null}
+                <AuthField
+                  label={t('clinicAuth.onboarding.city')}
+                  value={city}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    clearLocationErrors('city');
+                  }}
+                  error={locationErrors.city}
+                />
+                <AuthField
+                  label={t('clinicAuth.onboarding.address')}
+                  value={address}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    clearLocationErrors('address');
+                  }}
+                  error={locationErrors.address}
+                  placeholder={t('crm.settings.address_placeholder')}
+                />
               </>
             ) : null}
 
             {step === 3 ? (
               <div className="grid grid-cols-2 gap-4">
-                <label className="block space-y-1.5 text-sm">
-                  <span className="font-medium text-slate-700">
+                <div className="space-y-1.5 text-sm">
+                  <span className="block font-medium text-slate-700">
                     {t('clinicAuth.onboarding.open')}
                   </span>
-                  <input
-                    type="time"
+                  <TimePicker
                     value={openTime}
-                    onChange={(e) => setOpenTime(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    onChange={changeOpenTime}
+                    label={t('clinicAuth.onboarding.open')}
+                    isOptionDisabled={(time) => toMinutes(time) >= LAST_SLOT_MINUTES}
+                    className="w-full"
                   />
-                </label>
-                <label className="block space-y-1.5 text-sm">
-                  <span className="font-medium text-slate-700">
+                </div>
+                <div className="space-y-1.5 text-sm">
+                  <span className="block font-medium text-slate-700">
                     {t('clinicAuth.onboarding.close')}
                   </span>
-                  <input
-                    type="time"
+                  <TimePicker
                     value={closeTime}
-                    onChange={(e) => setCloseTime(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    onChange={setCloseTime}
+                    label={t('clinicAuth.onboarding.close')}
+                    isOptionDisabled={(time) => toMinutes(time) <= toMinutes(openTime)}
+                    className="w-full"
                   />
-                </label>
+                </div>
+                <p className="col-span-2 text-xs text-slate-500">
+                  {t('clinicAuth.onboarding.hours_hint')}
+                </p>
               </div>
             ) : null}
 
@@ -333,9 +472,6 @@ export default function OnboardingPage() {
                     </div>
                   );
                 })}
-                {catalogError ? (
-                  <p className="text-sm text-rose-600">{catalogError}</p>
-                ) : null}
               </div>
             ) : null}
 
@@ -354,6 +490,8 @@ export default function OnboardingPage() {
                 {t('clinicAuth.onboarding.photos_hint')}
               </div>
             ) : null}
+
+            {catalogError ? <p className="text-sm text-rose-600">{catalogError}</p> : null}
           </div>
 
           <div className="mt-8 flex flex-col gap-3 tablet:flex-row">

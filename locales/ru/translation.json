@@ -351,7 +351,54 @@
     "logout_confirm": "Выйти",
     "edit_profile": "Редактировать профиль",
     "version": "Версия {{version}}",
-    "version_brand": "ORADENT Client · v{{version}}"
+    "version_brand": "ORADENT Client · v{{version}}",
+    "edit_title": "Редактировать профиль",
+    "edit_subtitle": "Обновите личные данные",
+    "personal_info_hint": "Имя, пол, дата рождения",
+    "first_name": "Имя",
+    "last_name": "Фамилия",
+    "first_name_required": "Введите имя",
+    "gender": "Пол",
+    "gender_male": "Мужской",
+    "gender_female": "Женский",
+    "birth_date": "Дата рождения",
+    "birth_date_placeholder": "ДД.ММ.ГГГГ",
+    "birth_date_invalid": "Введите дату в формате ДД.ММ.ГГГГ",
+    "avatar_title": "Фото профиля",
+    "avatar_camera": "Камера",
+    "avatar_gallery": "Галерея",
+    "avatar_remove": "Удалить",
+    "avatar_updated": "Фото профиля обновлено",
+    "avatar_removed": "Фото профиля удалено",
+    "avatar_error": "Не удалось загрузить фото",
+    "permission_denied": "Доступ запрещён. Разрешите его в настройках.",
+    "contacts": "Контакты",
+    "change": "Изменить",
+    "email_label": "Email",
+    "saved": "Сохранено",
+    "profile_saved": "Данные профиля обновлены",
+    "phone_change_title": "Изменить номер телефона",
+    "phone_change_subtitle": "Для безопасности введите текущий пароль",
+    "phone_new": "Новый номер",
+    "phone_invalid": "Неверный номер телефона",
+    "phone_saved": "Номер телефона обновлён",
+    "email_change_title": "Изменить email",
+    "email_change_subtitle": "На новый адрес придёт код подтверждения",
+    "email_new": "Новый email",
+    "email_invalid": "Неверный email",
+    "email_same": "Это ваш текущий email",
+    "email_code_sent": "Мы отправили 6-значный код на {{email}}",
+    "email_code": "Код подтверждения",
+    "send_code": "Отправить код",
+    "confirm_code": "Подтвердить",
+    "resend_code": "Отправить снова",
+    "resend_in": "Повторно через {{seconds}} с",
+    "change_email_address": "Ввести другой email",
+    "email_saved": "Email обновлён и подтверждён",
+    "change_password": "Сменить пароль",
+    "change_password_hint": "Защитите свой аккаунт",
+    "not_set": "Не указано",
+    "logout_cta": "Выйти из аккаунта"
   },
   "map": {
     "title": "Карта",
@@ -968,11 +1015,8 @@
       "fill_required": "Заполните все поля",
       "submit": "Зарегистрироваться",
       "have_account": "Уже есть аккаунт?",
-      "consent_prefix": "Регистрируясь, вы соглашаетесь с",
-      "terms": "Условиями использования",
-      "consent_and": "и",
-      "privacy": "Политикой конфиденциальности",
-      "consent_suffix": "."
+      "legal_consent": "Я ознакомился(-ась) с <terms>Условиями использования</terms> и <privacy>Политикой конфиденциальности</privacy> и принимаю их.",
+      "legal_consent_a11y": "Я ознакомился(-ась) с Условиями использования и Политикой конфиденциальности и принимаю их"
     },
     "email_check": {
       "valid": "Email корректный",
@@ -1017,7 +1061,9 @@
       "resend_cooldown": "Повторите через {{seconds}} сек.",
       "rate_limited": "Слишком много попыток. Попробуйте позже",
       "network": "Нет сети. Попробуйте снова",
-      "generic": "Произошла ошибка. Попробуйте снова"
+      "generic": "Произошла ошибка. Попробуйте снова",
+      "legal_consent_required": "Чтобы зарегистрироваться, примите Условия использования и Политику конфиденциальности.",
+      "legal_outdated": "Документы обновлены. Пожалуйста, ознакомьтесь с ними снова и подтвердите согласие."
     }
   },
   "crm": {
@@ -1639,7 +1685,16 @@
       "admin": "Админ",
       "role_manager": "Менеджер клиники",
       "clinic_short": "Smile Dental",
-      "language": "Язык"
+      "language": "Язык",
+      "search_label": "Поиск",
+      "open_search": "Открыть поиск",
+      "clear_search": "Очистить поиск",
+      "profile_menu": "Меню профиля",
+      "account": "Личный кабинет",
+      "account_hint": "Логин, пароль и email",
+      "switch_workspace": "Сменить клинику",
+      "breadcrumb": "Навигационная цепочка",
+      "search_placeholder": "Пациент: имя или телефон…"
     },
     "columns": {
       "time": "Время",
@@ -2214,6 +2269,14 @@
         "ALREADY_MEMBER": "Вы уже сотрудник этой клиники",
         "UNKNOWN": "Произошла ошибка. Попробуйте снова"
       }
+    },
+    "theme": {
+      "label": "Тема",
+      "light": "Светлая",
+      "dark": "Тёмная",
+      "system": "Системная",
+      "switch_to_dark": "Включить тёмную тему",
+      "switch_to_light": "Включить светлую тему"
     }
   },
   "clinicAuth": {
@@ -2297,6 +2360,7 @@
       "address": "Адрес",
       "open": "Открытие",
       "close": "Закрытие",
+      "hours_hint": "Применяется с понедельника по субботу, воскресенье — выходной. Каждый день можно отдельно изменить позже в Настройках.",
       "services_placeholder": "Например: терапия, импланты, ортодонтия…",
       "doctors_placeholder": "Например: 3 стоматолога, 1 ортодонт…",
       "photos_hint": "Логотип и фото клиники добавите в Настройках.",
@@ -2314,7 +2378,10 @@
       "ends": "Окончание",
       "status": "Статус",
       "status_trial": "Trial",
-      "payment_note": "Оплата пока ручная. Свяжитесь с ORADENT после окончания."
+      "payment_note": "Оплата пока ручная. Свяжитесь с ORADENT после окончания.",
+      "days_short": "{{days}} дн.",
+      "remaining": "Осталось {{days}} дн.",
+      "progress": "Пробный период"
     },
     "expired": {
       "title": "Пробный период закончился",
@@ -2420,7 +2487,8 @@
     "version": "Версия",
     "print": "Печать",
     "back": "Назад",
-    "fallback_notice": "Официальный текст этого документа пока доступен на узбекском языке (латиница)."
+    "fallback_notice": "Официальный текст этого документа пока доступен на узбекском языке (латиница).",
+    "load_error": "Не удалось загрузить документ. Проверьте подключение к интернету и попробуйте снова."
   },
   "service": {
     "consultation": "Консультация",

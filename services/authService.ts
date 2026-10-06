@@ -8,6 +8,7 @@ import {
   apiPost,
   apiGet,
   apiPatch,
+  appClientHeaders,
   clearTokens,
   setTokens,
   getAccessToken,
@@ -109,6 +110,10 @@ export function authErrorMessage(
         return t('auth.errors.resend_cooldown', { seconds });
       case 'RATE_LIMITED':
         return t('auth.errors.rate_limited');
+      case 'LEGAL_CONSENT_REQUIRED':
+        return (err.details as { outdated?: boolean } | undefined)?.outdated
+          ? t('auth.errors.legal_outdated')
+          : t('auth.errors.legal_consent_required');
       default:
         if (err.status === 0 || err.message.toLowerCase().includes('network')) {
           return t('auth.errors.network');
@@ -204,6 +209,15 @@ export async function registerPatient(input: {
   email: string;
   phone: string;
   password: string;
+  /**
+   * Consent to both Terms of Use and Privacy Policy (API name shared with
+   * clinic-web). Must be a literal `true`; the API rejects registration otherwise.
+   */
+  acceptTerms: true;
+  /** Versions shown to the user; the server records its own current versions. */
+  termsVersion?: string;
+  privacyVersion?: string;
+  locale?: string;
 }): Promise<void> {
   if (useMockApi()) {
     useSettingsStore.getState().setPatientOnboardingDone(false);
@@ -214,8 +228,10 @@ export async function registerPatient(input: {
     });
     if (LOCKED_ROLE) useSettingsStore.getState().setRole(LOCKED_ROLE);
     useUserStore.getState().setProfile({
-      fullName: `${input.firstName} ${input.lastName}`.trim(),
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
       phone: input.phone,
+      email: input.email.trim().toLowerCase(),
     });
     return;
   }
@@ -306,13 +322,119 @@ export async function resendPatientVerification(
   }
 }
 
+type MeEnvelope = AuthMeResponse | { user: AuthMeResponse };
+
+function unwrapMe(raw: MeEnvelope): AuthMeResponse {
+  return raw && typeof raw === 'object' && 'user' in raw && raw.user
+    ? (raw.user as AuthMeResponse)
+    : (raw as AuthMeResponse);
+}
+
+function rethrowMapped(err: unknown): never {
+  if (err instanceof ApiError && err.code) {
+    throw new ApiError(err.message, err.status, mapAuthErrorCode(err.code), err.details);
+  }
+  throw err;
+}
+
 export async function updatePatientProfile(payload: {
+  firstName?: string;
+  lastName?: string;
   avatarUrl?: string;
   gender?: 'MALE' | 'FEMALE';
   birthDate?: string;
 }): Promise<void> {
-  if (useMockApi()) return;
-  await apiPatch('/auth/patient/profile', payload);
+  if (useMockApi()) {
+    useUserStore.getState().setProfile({
+      ...(payload.firstName !== undefined ? { firstName: payload.firstName } : {}),
+      ...(payload.lastName !== undefined ? { lastName: payload.lastName } : {}),
+      ...(payload.avatarUrl !== undefined ? { avatarUrl: payload.avatarUrl } : {}),
+      ...(payload.gender !== undefined ? { gender: payload.gender } : {}),
+      ...(payload.birthDate !== undefined ? { birthDate: payload.birthDate } : {}),
+    });
+    return;
+  }
+  const me = await apiPatch<MeEnvelope>('/auth/patient/profile', payload);
+  if (me) applyMeToStores(unwrapMe(me));
+}
+
+export async function uploadPatientAvatar(localUri: string): Promise<string> {
+  if (useMockApi()) {
+    useUserStore.getState().setProfile({ avatarUrl: localUri });
+    return localUri;
+  }
+  const token = await getAccessToken();
+  const name = localUri.split('/').pop()?.split('?')[0] || 'avatar.jpg';
+  const ext = name.includes('.') ? name.split('.').pop()!.toLowerCase() : 'jpg';
+  const form = new FormData();
+  form.append('file', {
+    uri: localUri,
+    name: name.includes('.') ? name : 'avatar.jpg',
+    type: ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg',
+  } as unknown as Blob);
+
+  const res = await fetch(`${apiBaseUrl()}/auth/patient/avatar`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      ...appClientHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: form,
+  });
+  const text = await res.text();
+  let payload: { avatarUrl?: string; message?: string; code?: string } | null = null;
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch {
+    payload = null;
+  }
+  if (!res.ok || !payload?.avatarUrl) {
+    throw new ApiError(payload?.message ?? `HTTP ${res.status}`, res.status, payload?.code);
+  }
+  useUserStore.getState().setProfile({ avatarUrl: payload.avatarUrl });
+  return payload.avatarUrl;
+}
+
+export async function changeAccountPhone(phone: string, currentPassword: string): Promise<void> {
+  if (useMockApi()) {
+    useUserStore.getState().setProfile({ phone });
+    return;
+  }
+  try {
+    const me = await apiPost<MeEnvelope>('/auth/account/phone', { phone, currentPassword });
+    if (me) applyMeToStores(unwrapMe(me));
+  } catch (err) {
+    rethrowMapped(err);
+  }
+}
+
+export async function requestAccountEmailChange(
+  newEmail: string,
+  currentPassword: string,
+): Promise<{ email: string; resendAvailableIn: number }> {
+  if (useMockApi()) return { email: newEmail, resendAvailableIn: 60 };
+  try {
+    return await apiPost<{ email: string; resendAvailableIn: number }>(
+      '/auth/account/email/request',
+      { newEmail, currentPassword },
+    );
+  } catch (err) {
+    rethrowMapped(err);
+  }
+}
+
+export async function confirmAccountEmailChange(newEmail: string, code: string): Promise<void> {
+  if (useMockApi()) {
+    useUserStore.getState().setProfile({ email: newEmail, emailVerified: true });
+    return;
+  }
+  try {
+    const me = await apiPost<MeEnvelope>('/auth/account/email/confirm', { newEmail, code });
+    if (me) applyMeToStores(unwrapMe(me));
+  } catch (err) {
+    rethrowMapped(err);
+  }
 }
 
 /** Staff password rule enforced by the API: ≥8 chars with a letter and a digit. */
@@ -432,7 +554,7 @@ function applyMeToStores(me: AuthMeResponse, fallbackLogin?: string) {
     (u.email as string) || (me.email as string) || fallbackLogin || '';
   const phone = (u.phone as string) || (me.phone as string) || '';
   const id = (u.id as string) || (me.id as string) || '';
-  const role = me.role;
+  const role = me.role ?? (u.role as AuthMeResponse['role']);
 
   useSettingsStore.getState().login({
     name: `${first} ${last}`.trim(),
@@ -450,11 +572,18 @@ function applyMeToStores(me: AuthMeResponse, fallbackLogin?: string) {
     useSettingsStore.getState().setRole('doctor');
   } else if (role === 'patient') {
     useSettingsStore.getState().setRole('client');
+    const gender = u.gender === 'MALE' || u.gender === 'FEMALE' ? u.gender : null;
     useUserStore.getState().setProfile({
       id,
       fullName: `${first} ${last}`.trim(),
+      firstName: first,
+      lastName: last,
       phone,
-      avatarUrl: (u.avatarUrl as string) || (me.avatarUrl as string) || undefined,
+      email: (u.email as string) || '',
+      emailVerified: Boolean(u.emailVerifiedAt),
+      avatarUrl: (u.avatarUrl as string) || (me.avatarUrl as string) || '',
+      gender,
+      birthDate: typeof u.birthDate === 'string' ? u.birthDate.slice(0, 10) : '',
     });
   } else if (LOCKED_ROLE) {
     useSettingsStore.getState().setRole(LOCKED_ROLE);

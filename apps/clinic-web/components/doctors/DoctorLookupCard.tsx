@@ -84,7 +84,7 @@ export function DoctorLookupCard({
               <li key={c.clinicId} className="relative">
                 <span
                   className={cn(
-                    'absolute -left-5 top-1 h-[11px] w-[11px] rounded-full ring-[3px] ring-white',
+                    'absolute -left-5 top-1 h-[11px] w-[11px] rounded-full ring-[3px] ring-card',
                     c.current ? 'bg-emerald-500' : 'bg-slate-300',
                   )}
                 />

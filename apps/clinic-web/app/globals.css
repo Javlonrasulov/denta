@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
   --text-page-title: 1.75rem;
   --text-section: 1.125rem;
   --text-body: 0.875rem;
@@ -14,6 +13,7 @@
   --leading-body: 1.45;
   --tracking-cyrillic: 0;
   --tracking-section-label: 0.04em;
+  --header-h: 4.5rem;
 }
 
 html,
@@ -29,12 +29,23 @@ html {
 }
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-canvas text-fg;
   font-family: inherit;
   font-size: var(--text-body);
   font-weight: 400;
   line-height: var(--leading-body);
   letter-spacing: var(--tracking-cyrillic);
+}
+
+/* Theme switch must be instant — suppress every transition for the swap frame. */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
+::selection {
+  background-color: rgb(var(--focus) / 0.25);
 }
 
 /* Prevent browser UA fonts on controls — keep Onest everywhere */
@@ -52,9 +63,18 @@ table {
   font: inherit;
 }
 
+/* Dark-mode native controls and autofill keep the themed surface. */
+.dark input:-webkit-autofill,
+.dark textarea:-webkit-autofill,
+.dark select:-webkit-autofill {
+  -webkit-text-fill-color: rgb(var(--fg));
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--sunken)) inset;
+  caret-color: rgb(var(--fg));
+}
+
 .scrollbar-subtle {
   scrollbar-width: thin;
-  scrollbar-color: theme('colors.slate.200') transparent;
+  scrollbar-color: rgb(var(--line-strong)) transparent;
 }
 
 /* Chromium draws arrow buttons for the standard thin scrollbar on Windows. */
@@ -71,10 +91,10 @@ table {
   }
   .scrollbar-subtle::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background: theme('colors.slate.200');
+    background: rgb(var(--line));
   }
   .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.slate.300');
+    background: rgb(var(--line-strong));
   }
   .scrollbar-subtle::-webkit-scrollbar-button {
     display: none;
@@ -83,4 +103,27 @@ table {
 
 * {
   box-sizing: border-box;
+}
+
+@layer components {
+  /* Square icon button used across the top navbar. */
+  .nav-icon-btn {
+    @apply relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-card text-fg-muted shadow-card outline-none transition-[background-color,border-color,color,box-shadow] duration-150;
+    @apply hover:border-line-strong hover:bg-hover hover:text-fg;
+    @apply focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+    @apply active:bg-pressed;
+  }
+  .nav-icon-btn[aria-expanded='true'] {
+    @apply border-primary/40 bg-primary/10 text-primary;
+  }
+
+  /* Floating panels (dropdowns, popovers). */
+  .popover-panel {
+    @apply z-50 overflow-hidden rounded-2xl border border-line bg-popover text-fg shadow-popover animate-pop-in;
+  }
+
+  .menu-item {
+    @apply flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium text-fg outline-none transition-colors duration-100;
+    @apply hover:bg-hover focus-visible:bg-hover focus-visible:ring-2 focus-visible:ring-focus/30;
+  }
 }

@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -18,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthField } from '@/components/auth/AuthField';
 import { DentalBackdrop } from '@/components/auth/DentalBackdrop';
 import { LanguageBottomSheet } from '@/components/auth/LanguageBottomSheet';
+import { LegalConsentCheckbox } from '@/components/auth/LegalConsentCheckbox';
 import { PrimaryButton } from '@/components/auth/PrimaryButton';
 import { ThemeToggle } from '@/components/auth/ThemeToggle';
 import { useLoginTheme } from '@/components/auth/loginTheme';
@@ -40,7 +40,9 @@ import { LOCALE_OPTIONS } from '@/components/ui/LanguageMenu';
 import { BrandLockup } from '@/components/brand/BrandLockup';
 import { APP_VARIANT } from '@/constants/appVariant';
 import { useEmailAvailability } from '@/hooks/useEmailAvailability';
+import { ApiError } from '@/services/apiClient';
 import { authErrorMessage, registerPatient } from '@/services/authService';
+import { useLegalVersions } from '@/services/legalService';
 import { useSettingsStore } from '@/store/settingsStore';
 import {
   isValidPatientPassword,
@@ -48,9 +50,6 @@ import {
   maskUzLocalInput,
   normalizeUzPhone,
 } from '@/utils/phone';
-
-const TERMS_URL = 'https://oradent.uz/terms';
-const PRIVACY_URL = 'https://oradent.uz/privacy';
 
 export function PatientRegisterScreen() {
   const { t } = useTranslation();
@@ -82,9 +81,12 @@ export function PatientRegisterScreen() {
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [legalError, setLegalError] = useState(false);
   const submitting = useRef(false);
 
   const emailCheck = useEmailAvailability(email);
+  const legalVersions = useLegalVersions();
 
   if (isAuthenticated) {
     return <Redirect href="/" />;
@@ -156,6 +158,7 @@ export function PatientRegisterScreen() {
     isValidUzPhone(phone) &&
     isValidPatientPassword(password) &&
     password === confirmPassword &&
+    legalAccepted &&
     !loading &&
     emailCheck.state !== 'checking';
 
@@ -172,8 +175,13 @@ export function PatientRegisterScreen() {
     if (!isValidUzPhone(phone)) return t('auth.errors.invalid_phone');
     if (!isValidPatientPassword(password)) return t('auth.errors.weak_password');
     if (password !== confirmPassword) return t('auth.register.password_mismatch');
+    if (!legalAccepted) return t('auth.errors.legal_consent_required');
     return t('auth.register.fill_required');
   })();
+
+  const openLegal = (kind: 'terms' | 'privacy') => {
+    router.push(`/legal/${kind}`);
+  };
 
   const emailStatusIcon = (() => {
     switch (emailCheck.state) {
@@ -234,7 +242,13 @@ export function PatientRegisterScreen() {
 
   const onSubmit = () => {
     if (submitting.current || loading) return;
-    if (!validate()) return;
+    const fieldsValid = validate();
+    if (!legalAccepted) {
+      setLegalError(true);
+      setFormError(t('auth.errors.legal_consent_required'));
+      return;
+    }
+    if (!fieldsValid) return;
     const normalizedPhone = normalizeUzPhone(phone);
     if (!normalizedPhone) return;
 
@@ -249,9 +263,18 @@ export function PatientRegisterScreen() {
           email: email.trim().toLowerCase(),
           phone: normalizedPhone,
           password,
+          acceptTerms: true,
+          termsVersion: legalVersions.data?.termsVersion,
+          privacyVersion: legalVersions.data?.privacyVersion,
+          locale,
         });
         router.replace('/onboarding');
       } catch (err) {
+        if (err instanceof ApiError && err.code === 'LEGAL_CONSENT_REQUIRED') {
+          setLegalAccepted(false);
+          setLegalError(true);
+          void legalVersions.refetch();
+        }
         setFormError(authErrorMessage(err, t));
       } finally {
         setLoading(false);
@@ -340,7 +363,9 @@ export function PatientRegisterScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Edge-to-edge Android (API 35+) no longer resizes the window for the
+        // keyboard, so the consent checkbox and submit button would stay hidden.
+        behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
         <ScrollView
@@ -545,30 +570,19 @@ export function PatientRegisterScreen() {
               }
             />
 
-            <Text
-              style={{
-                fontFamily: 'GolosText_400Regular',
-                fontSize: 12,
-                lineHeight: 18,
-                color: colors.textMuted,
+            <LegalConsentCheckbox
+              checked={legalAccepted}
+              error={legalError && !legalAccepted}
+              onChange={(next) => {
+                setLegalAccepted(next);
+                if (next) {
+                  setLegalError(false);
+                  clearErrors();
+                }
               }}
-            >
-              {t('auth.register.consent_prefix')}{' '}
-              <Text
-                onPress={() => void Linking.openURL(TERMS_URL)}
-                style={{ color: colors.primary, fontFamily: 'GolosText_500Medium' }}
-              >
-                {t('auth.register.terms')}
-              </Text>{' '}
-              {t('auth.register.consent_and')}{' '}
-              <Text
-                onPress={() => void Linking.openURL(PRIVACY_URL)}
-                style={{ color: colors.primary, fontFamily: 'GolosText_500Medium' }}
-              >
-                {t('auth.register.privacy')}
-              </Text>
-              {t('auth.register.consent_suffix')}
-            </Text>
+              onOpenTerms={() => openLegal('terms')}
+              onOpenPrivacy={() => openLegal('privacy')}
+            />
 
             {formError ? (
               <Text
@@ -598,7 +612,7 @@ export function PatientRegisterScreen() {
               title={t('auth.register.submit')}
               onPress={onSubmit}
               loading={loading}
-              disabled={loading || emailCheck.state === 'checking'}
+              disabled={loading || emailCheck.state === 'checking' || !legalAccepted}
             />
 
             <Pressable

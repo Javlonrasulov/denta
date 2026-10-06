@@ -83,7 +83,7 @@ function NavLink({
           collapsed ? 'justify-center px-0' : 'gap-3 px-3',
           active
             ? 'bg-sidebar-active text-white'
-            : 'text-sidebar-item hover:bg-white/10',
+            : 'text-sidebar-item hover:bg-frost/',
         )}
       >
         {active && !collapsed ? (
@@ -92,7 +92,7 @@ function NavLink({
         <span
           className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors',
-            active ? 'bg-cyan-400/25' : 'bg-white/10',
+            active ? 'bg-cyan-400/25' : 'bg-frost/',
           )}
         >
           <Icon
@@ -119,7 +119,7 @@ function NavLink({
           role="tooltip"
           className={cn(
             'pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-[60] -translate-y-1/2',
-            'whitespace-nowrap rounded-lg border border-white/10 bg-slate-950 px-3 py-1.5 text-[12.5px] font-medium text-white shadow-lg',
+            'whitespace-nowrap rounded-lg border border-white/10 bg-sidebar-tooltip px-3 py-1.5 text-[12.5px] font-medium text-white shadow-lg',
             'opacity-0 transition-opacity duration-150 delay-0',
             'group-hover/nav:opacity-100 group-hover/nav:delay-[180ms]',
             'group-focus-within/nav:opacity-100',
@@ -159,7 +159,7 @@ function NavSection({
         {t(titleKey)}
       </p>
       {collapsed ? (
-        <div className="mx-3 my-1.5 h-px bg-white/10" aria-hidden />
+        <div className="mx-3 my-1.5 h-px bg-frost/" aria-hidden />
       ) : null}
       {items.map((item) => (
         <NavLink key={item.key} item={item} collapsed={collapsed} onNavigate={onNavigate} />
@@ -189,11 +189,11 @@ function SidebarCollapseRow({
         className={cn(
           'relative flex w-full min-h-11 items-center rounded-xl py-2 text-nav-item font-medium transition-all duration-200',
           collapsed ? 'justify-center px-0' : 'gap-3 px-3',
-          'text-sidebar-item hover:bg-white/10 active:scale-[0.98]',
+          'text-sidebar-item hover:bg-frost/ active:scale-[0.98]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/40',
         )}
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 transition-colors">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-frost/ transition-colors">
           <Icon className="h-4 w-4 text-sidebar-item" strokeWidth={1.85} />
         </span>
         <span
@@ -214,7 +214,7 @@ function SidebarCollapseRow({
           role="tooltip"
           className={cn(
             'pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-[60] -translate-y-1/2',
-            'whitespace-nowrap rounded-lg border border-white/10 bg-slate-950 px-3 py-1.5 text-[12.5px] font-medium text-white shadow-lg',
+            'whitespace-nowrap rounded-lg border border-white/10 bg-sidebar-tooltip px-3 py-1.5 text-[12.5px] font-medium text-white shadow-lg',
             'opacity-0 transition-opacity duration-150',
             'group-hover/nav:opacity-100 group-hover/nav:delay-[180ms]',
             'group-focus-within/nav:opacity-100',
@@ -260,7 +260,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'relative flex h-full flex-col border-r border-white/10 bg-sidebar font-sans text-white',
+        'relative flex h-full flex-col border-r border-white/10 bg-sidebar font-sans text-white dark:border-white/[0.06]',
         'transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
         collapsed ? 'w-20' : 'w-[260px]',
       )}

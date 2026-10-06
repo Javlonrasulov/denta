@@ -160,18 +160,22 @@ export function RevenueSeriesCard() {
                       <stop offset="100%" stopColor="#0D9488" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="rgb(var(--chart-grid))"
+                  />
                   <XAxis
                     dataKey="label"
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fill: '#64748B', fontSize: 11 }}
+                    tick={{ fill: 'rgb(var(--fg-muted))', fontSize: 11 }}
                     interval="preserveStartEnd"
                   />
                   <YAxis
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fill: '#94A3B8', fontSize: 11 }}
+                    tick={{ fill: 'rgb(var(--fg-subtle))', fontSize: 11 }}
                     width={48}
                   />
                   <Tooltip
@@ -180,6 +184,15 @@ export function RevenueSeriesCard() {
                       t('crm.dashboard.revenue'),
                     ]}
                     labelFormatter={(label) => String(label)}
+                    cursor={{ stroke: 'rgb(var(--chart-cursor))', strokeDasharray: '4 4' }}
+                    contentStyle={{
+                      background: 'rgb(var(--popover))',
+                      border: '1px solid rgb(var(--line))',
+                      borderRadius: 12,
+                      boxShadow: '0 12px 32px -12px rgb(var(--shadow) / 0.25)',
+                    }}
+                    labelStyle={{ color: 'rgb(var(--fg))', fontWeight: 600 }}
+                    itemStyle={{ color: 'rgb(var(--fg-muted))' }}
                   />
                   <Area
                     type="monotone"

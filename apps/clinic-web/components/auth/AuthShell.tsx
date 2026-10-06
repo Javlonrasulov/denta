@@ -19,7 +19,7 @@ export function AuthShell({
   layout?: 'center' | 'scroll';
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-slate-50">
+    <div className="relative flex min-h-screen flex-col overflow-clip bg-slate-50">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(67,56,202,0.12),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_rgba(8,145,178,0.1),_transparent_50%)]"

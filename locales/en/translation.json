@@ -351,7 +351,54 @@
     "logout_confirm": "Log out",
     "edit_profile": "Edit profile",
     "version": "Version {{version}}",
-    "version_brand": "ORADENT Client · v{{version}}"
+    "version_brand": "ORADENT Client · v{{version}}",
+    "edit_title": "Edit profile",
+    "edit_subtitle": "Update your personal details",
+    "personal_info_hint": "Name, gender, birth date",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "first_name_required": "Enter your first name",
+    "gender": "Gender",
+    "gender_male": "Male",
+    "gender_female": "Female",
+    "birth_date": "Birth date",
+    "birth_date_placeholder": "DD.MM.YYYY",
+    "birth_date_invalid": "Enter the date as DD.MM.YYYY",
+    "avatar_title": "Profile photo",
+    "avatar_camera": "Camera",
+    "avatar_gallery": "Gallery",
+    "avatar_remove": "Remove",
+    "avatar_updated": "Profile photo updated",
+    "avatar_removed": "Profile photo removed",
+    "avatar_error": "Couldn't upload the photo",
+    "permission_denied": "Permission denied. Allow access in Settings.",
+    "contacts": "Contact details",
+    "change": "Change",
+    "email_label": "Email",
+    "saved": "Saved",
+    "profile_saved": "Your profile has been updated",
+    "phone_change_title": "Change phone number",
+    "phone_change_subtitle": "Enter your current password to confirm",
+    "phone_new": "New phone number",
+    "phone_invalid": "Invalid phone number",
+    "phone_saved": "Phone number updated",
+    "email_change_title": "Change email",
+    "email_change_subtitle": "We'll send a confirmation code to the new address",
+    "email_new": "New email",
+    "email_invalid": "Invalid email address",
+    "email_same": "This is already your email",
+    "email_code_sent": "We sent a 6-digit code to {{email}}",
+    "email_code": "Confirmation code",
+    "send_code": "Send code",
+    "confirm_code": "Confirm",
+    "resend_code": "Resend code",
+    "resend_in": "Resend in {{seconds}}s",
+    "change_email_address": "Use a different email",
+    "email_saved": "Email updated and verified",
+    "change_password": "Change password",
+    "change_password_hint": "Keep your account secure",
+    "not_set": "Not set",
+    "logout_cta": "Log out of account"
   },
   "map": {
     "title": "Map",
@@ -968,11 +1015,8 @@
       "fill_required": "Please fill in all fields",
       "submit": "Sign up",
       "have_account": "Already have an account?",
-      "consent_prefix": "By signing up you agree to the",
-      "terms": "Terms of Use",
-      "consent_and": "and",
-      "privacy": "Privacy Policy",
-      "consent_suffix": "."
+      "legal_consent": "I have read and agree to the <terms>Terms of Use</terms> and the <privacy>Privacy Policy</privacy>.",
+      "legal_consent_a11y": "I have read and agree to the Terms of Use and the Privacy Policy"
     },
     "email_check": {
       "valid": "Email looks valid",
@@ -1017,7 +1061,9 @@
       "resend_cooldown": "Resend available in {{seconds}}s",
       "rate_limited": "Too many attempts. Try again later",
       "network": "No connection. Please retry",
-      "generic": "Something went wrong. Please retry"
+      "generic": "Something went wrong. Please retry",
+      "legal_consent_required": "To sign up, please accept the Terms of Use and the Privacy Policy.",
+      "legal_outdated": "The documents have been updated. Please review them again and confirm your consent."
     }
   },
   "crm": {
@@ -1640,7 +1686,16 @@
       "admin": "Admin",
       "role_manager": "Clinic manager",
       "clinic_short": "Smile Dental",
-      "language": "Language"
+      "language": "Language",
+      "search_label": "Search",
+      "open_search": "Open search",
+      "clear_search": "Clear search",
+      "profile_menu": "Profile menu",
+      "account": "My account",
+      "account_hint": "Login, password and email",
+      "switch_workspace": "Switch clinic",
+      "breadcrumb": "Breadcrumb",
+      "search_placeholder": "Patient name or phone…"
     },
     "columns": {
       "time": "Time",
@@ -2215,6 +2270,14 @@
         "ALREADY_MEMBER": "You are already a member of this clinic",
         "UNKNOWN": "Something went wrong. Please try again"
       }
+    },
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "switch_to_dark": "Switch to dark theme",
+      "switch_to_light": "Switch to light theme"
     }
   },
   "clinicAuth": {
@@ -2298,6 +2361,7 @@
       "address": "Address",
       "open": "Opens",
       "close": "Closes",
+      "hours_hint": "Applies Monday to Saturday; Sunday is a day off. You can change each day separately later in Settings.",
       "services_placeholder": "e.g. therapy, implants, orthodontics…",
       "doctors_placeholder": "e.g. 3 dentists, 1 orthodontist…",
       "photos_hint": "Add logo and clinic photos in Settings.",
@@ -2315,7 +2379,10 @@
       "ends": "Ends",
       "status": "Status",
       "status_trial": "Trial",
-      "payment_note": "Payment is manual for now. Contact ORADENT when the trial ends."
+      "payment_note": "Payment is manual for now. Contact ORADENT when the trial ends.",
+      "days_short": "{{days}}d",
+      "remaining": "{{days}} days left",
+      "progress": "Trial period"
     },
     "expired": {
       "title": "Trial ended",
@@ -2421,7 +2488,8 @@
     "version": "Version",
     "print": "Print",
     "back": "Back",
-    "fallback_notice": "The official text of this document is currently available in Uzbek (Latin script)."
+    "fallback_notice": "The official text of this document is currently available in Uzbek (Latin script).",
+    "load_error": "Couldn't load the document. Check your internet connection and try again."
   },
   "service": {
     "consultation": "Consultation",

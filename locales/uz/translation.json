@@ -351,7 +351,54 @@
     "logout_confirm": "Chiqish",
     "edit_profile": "Profilni tahrirlash",
     "version": "Versiya {{version}}",
-    "version_brand": "ORADENT Client · v{{version}}"
+    "version_brand": "ORADENT Client · v{{version}}",
+    "edit_title": "Profilni tahrirlash",
+    "edit_subtitle": "Shaxsiy ma’lumotlaringizni yangilang",
+    "personal_info_hint": "Ism, jins, tug‘ilgan sana",
+    "first_name": "Ism",
+    "last_name": "Familiya",
+    "first_name_required": "Ismni kiriting",
+    "gender": "Jins",
+    "gender_male": "Erkak",
+    "gender_female": "Ayol",
+    "birth_date": "Tug‘ilgan sana",
+    "birth_date_placeholder": "KK.OO.YYYY",
+    "birth_date_invalid": "Sanani KK.OO.YYYY ko‘rinishida kiriting",
+    "avatar_title": "Profil rasmi",
+    "avatar_camera": "Kamera",
+    "avatar_gallery": "Galereya",
+    "avatar_remove": "O‘chirish",
+    "avatar_updated": "Profil rasmi yangilandi",
+    "avatar_removed": "Profil rasmi o‘chirildi",
+    "avatar_error": "Rasmni yuklab bo‘lmadi",
+    "permission_denied": "Ruxsat berilmadi. Sozlamalardan ruxsat bering.",
+    "contacts": "Aloqa ma’lumotlari",
+    "change": "O‘zgartirish",
+    "email_label": "Email",
+    "saved": "Saqlandi",
+    "profile_saved": "Profil ma’lumotlari yangilandi",
+    "phone_change_title": "Telefon raqamni o‘zgartirish",
+    "phone_change_subtitle": "Xavfsizlik uchun joriy parolingizni kiriting",
+    "phone_new": "Yangi telefon raqam",
+    "phone_invalid": "Telefon raqam noto‘g‘ri",
+    "phone_saved": "Telefon raqam yangilandi",
+    "email_change_title": "Emailni o‘zgartirish",
+    "email_change_subtitle": "Yangi manzilga tasdiqlash kodi yuboriladi",
+    "email_new": "Yangi email",
+    "email_invalid": "Email manzil noto‘g‘ri",
+    "email_same": "Bu sizning joriy emailingiz",
+    "email_code_sent": "{{email}} manziliga 6 xonali kod yuborildi",
+    "email_code": "Tasdiqlash kodi",
+    "send_code": "Kod yuborish",
+    "confirm_code": "Tasdiqlash",
+    "resend_code": "Kodni qayta yuborish",
+    "resend_in": "Qayta yuborish: {{seconds}} s",
+    "change_email_address": "Boshqa email kiritish",
+    "email_saved": "Email yangilandi va tasdiqlandi",
+    "change_password": "Parolni o‘zgartirish",
+    "change_password_hint": "Hisobingizni himoyalang",
+    "not_set": "Ko‘rsatilmagan",
+    "logout_cta": "Hisobdan chiqish"
   },
   "map": {
     "title": "Xarita",
@@ -968,11 +1015,8 @@
       "fill_required": "Barcha maydonlarni to‘ldiring",
       "submit": "Ro‘yxatdan o‘tish",
       "have_account": "Akkauntingiz bormi?",
-      "consent_prefix": "Ro‘yxatdan o‘tish orqali",
-      "terms": "Foydalanish shartlari",
-      "consent_and": "va",
-      "privacy": "Maxfiylik siyosati",
-      "consent_suffix": "ga rozilik bildirasiz."
+      "legal_consent": "Men <terms>Foydalanish shartlari</terms> va <privacy>Maxfiylik siyosati</privacy> bilan tanishdim va ularga roziman.",
+      "legal_consent_a11y": "Men Foydalanish shartlari va Maxfiylik siyosati bilan tanishdim va ularga roziman"
     },
     "email_check": {
       "valid": "Email to‘g‘ri",
@@ -1017,7 +1061,9 @@
       "resend_cooldown": "{{seconds}} soniyadan keyin qayta yuboring",
       "rate_limited": "Juda ko‘p urinish. Keyinroq urinib ko‘ring",
       "network": "Internet aloqasi yo‘q. Qayta urinib ko‘ring",
-      "generic": "Xatolik yuz berdi. Qayta urinib ko‘ring"
+      "generic": "Xatolik yuz berdi. Qayta urinib ko‘ring",
+      "legal_consent_required": "Ro‘yxatdan o‘tish uchun Foydalanish shartlari va Maxfiylik siyosatiga rozilik bildiring.",
+      "legal_outdated": "Hujjatlar yangilandi. Iltimos, ularni qayta ko‘rib chiqing va rozilik bildiring."
     }
   },
   "crm": {
@@ -1639,7 +1685,16 @@
       "admin": "Admin",
       "role_manager": "Klinika menejeri",
       "clinic_short": "Smile Dental",
-      "language": "Til"
+      "language": "Til",
+      "search_label": "Qidiruv",
+      "open_search": "Qidiruvni ochish",
+      "clear_search": "Qidiruvni tozalash",
+      "profile_menu": "Profil menyusi",
+      "account": "Shaxsiy kabinet",
+      "account_hint": "Login, parol va email",
+      "switch_workspace": "Klinikani almashtirish",
+      "breadcrumb": "Navigatsiya yo‘li",
+      "search_placeholder": "Bemor: ism yoki telefon…"
     },
     "columns": {
       "time": "Vaqt",
@@ -2214,6 +2269,14 @@
         "ALREADY_MEMBER": "Siz bu klinikada allaqachon xodimsiz",
         "UNKNOWN": "Xatolik yuz berdi. Qayta urinib ko‘ring"
       }
+    },
+    "theme": {
+      "label": "Mavzu",
+      "light": "Yorug‘",
+      "dark": "Qorong‘i",
+      "system": "Tizim",
+      "switch_to_dark": "Qorong‘i mavzuga o‘tish",
+      "switch_to_light": "Yorug‘ mavzuga o‘tish"
     }
   },
   "clinicAuth": {
@@ -2297,6 +2360,7 @@
       "address": "Manzil",
       "open": "Ochilish",
       "close": "Yopilish",
+      "hours_hint": "Dushanbadan shanbagacha qo‘llaniladi, yakshanba — dam olish kuni. Har bir kunni keyinroq Sozlamalarda alohida o‘zgartirishingiz mumkin.",
       "services_placeholder": "Masalan: terapiya, implantologiya, ortodontiya…",
       "doctors_placeholder": "Masalan: 3 stomatolog, 1 ortodont…",
       "photos_hint": "Logo va klinik fotosuratlarini Settings bo‘limida qo‘shasiz.",
@@ -2314,7 +2378,10 @@
       "ends": "Tugaydi",
       "status": "Status",
       "status_trial": "Trial",
-      "payment_note": "To‘lov hozircha qo‘lda. Muddat tugagach ORADENT bilan bog‘laning."
+      "payment_note": "To‘lov hozircha qo‘lda. Muddat tugagach ORADENT bilan bog‘laning.",
+      "days_short": "{{days}} kun",
+      "remaining": "{{days}} kun qoldi",
+      "progress": "Sinov muddati"
     },
     "expired": {
       "title": "Sinov muddati yakunlandi",
@@ -2420,7 +2487,8 @@
     "version": "Versiya",
     "print": "Chop etish",
     "back": "Orqaga",
-    "fallback_notice": "Ushbu hujjatning rasmiy matni hozircha o‘zbek tilida (lotin yozuvida) taqdim etilgan."
+    "fallback_notice": "Ushbu hujjatning rasmiy matni hozircha o‘zbek tilida (lotin yozuvida) taqdim etilgan.",
+    "load_error": "Hujjatni yuklab bo‘lmadi. Internet aloqasini tekshirib, qayta urinib ko‘ring."
   },
   "service": {
     "consultation": "Konsultatsiya",

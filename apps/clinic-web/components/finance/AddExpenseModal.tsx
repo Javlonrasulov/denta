@@ -327,7 +327,7 @@ export function AddExpenseModal({
             {!loading ? <ReceiptText className="h-4 w-4" /> : null}
             {t('crm.finance.expense_modal.submit')}
             {amountValue > 0 ? (
-              <span className="rounded-md bg-white/15 px-1.5 py-0.5 tabular-nums">
+              <span className="rounded-md bg-frost/ px-1.5 py-0.5 tabular-nums">
                 {groupDigits(form.amount)} {t('crm.finance.expense_modal.currency')}
               </span>
             ) : null}

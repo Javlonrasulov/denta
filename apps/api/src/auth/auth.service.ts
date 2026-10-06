@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   ClinicAccountStatus,
   OtpPurpose,
+  Prisma,
   SubscriptionStatus,
   UserRole,
 } from '@prisma/client';
@@ -21,8 +22,11 @@ import {
   normalizeEmail,
   normalizePhone,
 } from '../common/utils/phone.util';
+import { LegalService } from '../legal/legal.service';
+import type { LegalVersions } from '../legal/legal.types';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { STORAGE_SERVICE, StorageService } from '../storage/storage.types';
 import { resolveWorkspaceSelection } from './workspace.util';
 import {
   LoginDto,
@@ -36,6 +40,12 @@ import {
   RequestEmailChangeDto,
   ConfirmEmailChangeDto,
 } from './dto/auth.dto';
+
+/** Must match STEPS in clinic-web's onboarding page. */
+const ONBOARDING_STEPS = 6;
+
+/** Stored in `LegalConsent.context`; existing rows use CLINIC_REGISTRATION. */
+type LegalConsentContext = 'CLINIC_REGISTRATION' | 'PATIENT_REGISTRATION';
 
 export type SessionMeta = {
   userAgent?: string;
@@ -99,6 +109,9 @@ type PatientAuthUserDto = {
   fullName: string;
   email: string | null;
   phone: string;
+  avatarUrl: string | null;
+  gender: 'MALE' | 'FEMALE' | null;
+  birthDate: string | null;
   emailVerifiedAt: string | null;
   phoneVerifiedAt: string | null;
   createdAt: string;
@@ -138,29 +151,12 @@ export class AuthService {
     private readonly mail: MailService,
     private readonly permissions: PermissionsService,
     private readonly audit: AuditService,
+    private readonly legal: LegalService,
+    @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
   ) {}
 
   async registerClinic(dto: RegisterClinicDto, meta: SessionMeta = {}) {
-    const legal = this.currentLegalVersions();
-    if (dto.acceptTerms !== true) {
-      throw new AppError(
-        'LEGAL_CONSENT_REQUIRED',
-        'Terms of Use and Privacy Policy must be accepted',
-        400,
-        legal,
-      );
-    }
-    if (
-      (dto.termsVersion && dto.termsVersion !== legal.termsVersion) ||
-      (dto.privacyVersion && dto.privacyVersion !== legal.privacyVersion)
-    ) {
-      throw new AppError(
-        'LEGAL_CONSENT_REQUIRED',
-        'Accepted legal document version is outdated',
-        400,
-        { ...legal, outdated: true },
-      );
-    }
+    const legal = this.assertLegalConsent(dto);
     if (!isValidPassword(dto.password)) {
       throw new AppError(
         'INVALID_PASSWORD',
@@ -229,37 +225,21 @@ export class AuthService {
         },
       });
 
-      const consent = await tx.legalConsent.create({
-        data: {
-          userId: createdUser.id,
-          clinicId: clinic.id,
-          context: 'CLINIC_REGISTRATION',
-          termsVersion: legal.termsVersion,
-          privacyVersion: legal.privacyVersion,
-          locale: dto.locale ?? null,
-          ip: meta.ip?.slice(0, 64) ?? null,
-          userAgent: meta.userAgent?.slice(0, 512) ?? null,
-        },
-      });
-
-      await tx.auditLog.create({
-        data: {
-          userId: createdUser.id,
-          clinicId: clinic.id,
-          action: 'legal.consent.accepted',
-          entity: 'LegalConsent',
-          entityId: consent.id,
-          ip: consent.ip,
-          userAgent: consent.userAgent,
-          after: {
-            termsVersion: consent.termsVersion,
-            privacyVersion: consent.privacyVersion,
-            acceptedAt: consent.acceptedAt.toISOString(),
-          },
-        },
+      await this.recordLegalConsent(tx, {
+        userId: createdUser.id,
+        clinicId: clinic.id,
+        context: 'CLINIC_REGISTRATION',
+        versions: legal,
+        locale: dto.locale,
+        meta,
       });
 
       return createdUser;
+    }).catch(async (err: unknown) => {
+      throw await this.duplicateUserConflict(err, { email, phone }, [
+        'EMAIL_TAKEN',
+        'PHONE_TAKEN',
+      ]);
     });
 
     const cooldown = await this.issueOtp(
@@ -271,6 +251,7 @@ export class AuthService {
   }
 
   async registerPatient(dto: RegisterPatientDto, meta: SessionMeta = {}) {
+    const legal = this.assertLegalConsent(dto);
     if (!isValidPatientPassword(dto.password)) {
       throw new AppError(
         'WEAK_PASSWORD',
@@ -317,6 +298,7 @@ export class AuthService {
           firstName: dto.firstName.trim(),
           lastName: dto.lastName.trim(),
           phoneVerifiedAt: new Date(),
+          ...(dto.locale ? { locale: dto.locale } : {}),
           // Email verification is optional — done later from profile
         },
       });
@@ -332,7 +314,20 @@ export class AuthService {
         },
       });
 
+      await this.recordLegalConsent(tx, {
+        userId: createdUser.id,
+        context: 'PATIENT_REGISTRATION',
+        versions: legal,
+        locale: dto.locale,
+        meta,
+      });
+
       return createdUser;
+    }).catch(async (err: unknown) => {
+      throw await this.duplicateUserConflict(err, { email, phone }, [
+        'EMAIL_ALREADY_EXISTS',
+        'PHONE_ALREADY_EXISTS',
+      ]);
     });
 
     return this.createSession(user.id, meta);
@@ -480,7 +475,13 @@ export class AuthService {
 
   async updatePatientProfile(
     userId: string,
-    dto: { avatarUrl?: string; gender?: string; birthDate?: string },
+    dto: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
+      gender?: string;
+      birthDate?: string;
+    },
   ) {
     const profile = await this.prisma.patientProfile.findUnique({
       where: { userId },
@@ -493,17 +494,80 @@ export class AuthService {
     if (birthDate && Number.isNaN(birthDate.getTime())) {
       throw new AppError('VALIDATION_ERROR', 'Invalid birth date', 400);
     }
+    if (birthDate && birthDate.getTime() > Date.now()) {
+      throw new AppError('VALIDATION_ERROR', 'Birth date is in the future', 400);
+    }
 
-    await this.prisma.patientProfile.update({
-      where: { userId },
-      data: {
-        ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl || null } : {}),
-        ...(gender !== undefined ? { gender } : {}),
-        ...(birthDate !== undefined ? { birthDate } : {}),
-      },
-    });
+    const firstName = dto.firstName?.trim();
+    const lastName = dto.lastName?.trim();
+    if (dto.firstName !== undefined && !firstName) {
+      throw new AppError('VALIDATION_ERROR', 'First name is required', 400);
+    }
+
+    await this.prisma.$transaction([
+      ...(firstName !== undefined || lastName !== undefined
+        ? [
+            this.prisma.user.update({
+              where: { id: userId },
+              data: {
+                ...(firstName !== undefined ? { firstName } : {}),
+                ...(lastName !== undefined ? { lastName } : {}),
+              },
+            }),
+          ]
+        : []),
+      this.prisma.patientProfile.update({
+        where: { userId },
+        data: {
+          ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl || null } : {}),
+          ...(gender !== undefined ? { gender } : {}),
+          ...(birthDate !== undefined ? { birthDate } : {}),
+        },
+      }),
+    ]);
 
     return this.getCurrentUser(userId);
+  }
+
+  async uploadPatientAvatar(
+    userId: string,
+    file: { buffer: Buffer; mimetype: string; size: number; originalname: string },
+  ) {
+    const allowed = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+    if (!allowed.has(file.mimetype.toLowerCase())) {
+      throw new AppError('INVALID_FILE', 'Only JPEG/PNG/WebP images allowed', 400);
+    }
+    const maxBytes = this.config.get<number>('app.uploadMaxBytes') ?? 5_242_880;
+    if (file.size > maxBytes) {
+      throw new AppError('FILE_TOO_LARGE', `Max upload size is ${maxBytes} bytes`, 400);
+    }
+    const profile = await this.prisma.patientProfile.findUnique({
+      where: { userId },
+    });
+    if (!profile) throw new AppError('NOT_FOUND', 'Patient profile not found', 404);
+
+    const ext = file.mimetype.includes('png')
+      ? '.png'
+      : file.mimetype.includes('webp')
+        ? '.webp'
+        : '.jpg';
+    const uploaded = await this.storage.upload({
+      key: `avatars/patients/${profile.id}/${randomUUID()}${ext}`,
+      buffer: file.buffer,
+      mimeType: file.mimetype,
+      sizeBytes: file.size,
+    });
+
+    await this.prisma.patientProfile.update({
+      where: { id: profile.id },
+      data: { avatarUrl: uploaded.url },
+    });
+    if (profile.avatarUrl?.includes('/uploads/')) {
+      const oldKey = profile.avatarUrl.split('/uploads/')[1];
+      if (oldKey) await this.storage.delete(oldKey).catch(() => undefined);
+    }
+
+    return { uri: uploaded.url, avatarUrl: uploaded.url, pendingUpload: false };
   }
 
   async verifyEmail(dto: VerifyEmailDto): Promise<AuthSessionDto> {
@@ -1085,13 +1149,13 @@ export class AuthService {
         });
     if (!membership) throw new AppError('NOT_FOUND', 'Clinic not found', 404);
 
+    const step = Math.min(dto.step, ONBOARDING_STEPS);
+    const completed = dto.completed || step >= ONBOARDING_STEPS ? true : dto.completed;
     await this.prisma.clinic.update({
       where: { id: membership.clinicId },
       data: {
-        onboardingStep: dto.step,
-        ...(dto.completed !== undefined
-          ? { onboardingCompleted: dto.completed }
-          : {}),
+        onboardingStep: step,
+        ...(completed !== undefined ? { onboardingCompleted: completed } : {}),
       },
     });
     const user = await this.buildAuthUser(userId, {
@@ -1306,6 +1370,12 @@ export class AuthService {
         fullName: `${user.firstName} ${user.lastName}`.trim(),
         email: user.email,
         phone: user.phone ?? '',
+        avatarUrl: user.patientProfile.avatarUrl ?? null,
+        gender:
+          user.patientProfile.gender === 'MALE' || user.patientProfile.gender === 'FEMALE'
+            ? user.patientProfile.gender
+            : null,
+        birthDate: user.patientProfile.birthDate?.toISOString().slice(0, 10) ?? null,
         emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
         phoneVerifiedAt: user.phoneVerifiedAt?.toISOString() ?? null,
         createdAt: user.createdAt.toISOString(),
@@ -1572,13 +1642,105 @@ export class AuthService {
     }
   }
 
-  private currentLegalVersions(): { termsVersion: string; privacyVersion: string } {
-    return {
-      termsVersion:
-        this.config.get<string>('app.legal.termsVersion') ?? '2026-09-27',
-      privacyVersion:
-        this.config.get<string>('app.legal.privacyVersion') ?? '2026-09-27',
-    };
+  /**
+   * Requires explicit consent to the documents currently in force. Versions
+   * sent by the client are only compared — the stored versions always come
+   * from server config.
+   */
+  private assertLegalConsent(dto: {
+    acceptTerms?: boolean;
+    termsVersion?: string;
+    privacyVersion?: string;
+  }): LegalVersions {
+    const legal = this.legal.currentVersions();
+    if (dto.acceptTerms !== true) {
+      throw new AppError(
+        'LEGAL_CONSENT_REQUIRED',
+        'Terms of Use and Privacy Policy must be accepted',
+        400,
+        legal,
+      );
+    }
+    if (
+      (dto.termsVersion && dto.termsVersion !== legal.termsVersion) ||
+      (dto.privacyVersion && dto.privacyVersion !== legal.privacyVersion)
+    ) {
+      throw new AppError(
+        'LEGAL_CONSENT_REQUIRED',
+        'Accepted legal document version is outdated',
+        400,
+        { ...legal, outdated: true },
+      );
+    }
+    return legal;
+  }
+
+  /**
+   * Concurrent sign-ups can both pass the existence pre-check; the unique index
+   * then rejects the loser (P2002, `meta.target` is not reliably populated).
+   * Report it like the pre-check instead of a 500.
+   */
+  private async duplicateUserConflict(
+    err: unknown,
+    identity: { email: string; phone: string },
+    [emailCode, phoneCode]: [string, string],
+  ): Promise<unknown> {
+    if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') {
+      return err;
+    }
+    if (await this.prisma.user.findUnique({ where: { email: identity.email }, select: { id: true } })) {
+      return new AppError(emailCode, 'Email already registered', 409);
+    }
+    if (await this.prisma.user.findUnique({ where: { phone: identity.phone }, select: { id: true } })) {
+      return new AppError(phoneCode, 'Phone already registered', 409);
+    }
+    return err;
+  }
+
+  /** Append-only consent row + audit entry; must run inside the registration transaction. */
+  private async recordLegalConsent(
+    tx: Prisma.TransactionClient,
+    input: {
+      userId: string;
+      clinicId?: string | null;
+      context: LegalConsentContext;
+      versions: LegalVersions;
+      locale?: string | null;
+      meta: SessionMeta;
+    },
+  ) {
+    const consent = await tx.legalConsent.create({
+      data: {
+        userId: input.userId,
+        clinicId: input.clinicId ?? null,
+        context: input.context,
+        termsVersion: input.versions.termsVersion,
+        privacyVersion: input.versions.privacyVersion,
+        locale: input.locale ?? null,
+        ip: input.meta.ip?.slice(0, 64) ?? null,
+        userAgent: input.meta.userAgent?.slice(0, 512) ?? null,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: input.userId,
+        clinicId: input.clinicId ?? null,
+        action: 'legal.consent.accepted',
+        entity: 'LegalConsent',
+        entityId: consent.id,
+        ip: consent.ip,
+        userAgent: consent.userAgent,
+        after: {
+          context: consent.context,
+          termsVersion: consent.termsVersion,
+          privacyVersion: consent.privacyVersion,
+          acceptedAt: consent.acceptedAt.toISOString(),
+        },
+      },
+    });
+
+    return consent;
   }
 
   private async uniqueClinicSlug(base: string): Promise<string> {

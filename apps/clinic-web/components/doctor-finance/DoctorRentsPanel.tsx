@@ -104,7 +104,7 @@ export function DoctorRentsPanel({ access }: { access: DoctorFinanceAccess }) {
               aria-pressed={filter === f}
               className={cn(
                 'inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition',
-                filter === f ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                filter === f ? 'bg-slate-900 text-white dark:bg-primary' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
               )}
             >
               {t(`${P}.rents.filter.${f}`)}

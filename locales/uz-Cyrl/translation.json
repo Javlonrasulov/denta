@@ -351,7 +351,54 @@
     "logout_confirm": "Чиқиш",
     "edit_profile": "Профилни таҳрирлаш",
     "version": "Версия {{version}}",
-    "version_brand": "ORADENT Client · v{{version}}"
+    "version_brand": "ORADENT Client · v{{version}}",
+    "edit_title": "Профилни таҳрирлаш",
+    "edit_subtitle": "Шахсий маълумотларингизни янгиланг",
+    "personal_info_hint": "Исм, жинс, туғилган сана",
+    "first_name": "Исм",
+    "last_name": "Фамилия",
+    "first_name_required": "Исмни киритинг",
+    "gender": "Жинс",
+    "gender_male": "Эркак",
+    "gender_female": "Аёл",
+    "birth_date": "Туғилган сана",
+    "birth_date_placeholder": "КК.ОО.ЙЙЙЙ",
+    "birth_date_invalid": "Санани КК.ОО.ЙЙЙЙ кўринишида киритинг",
+    "avatar_title": "Профил расми",
+    "avatar_camera": "Камера",
+    "avatar_gallery": "Галерея",
+    "avatar_remove": "Ўчириш",
+    "avatar_updated": "Профил расми янгиланди",
+    "avatar_removed": "Профил расми ўчирилди",
+    "avatar_error": "Расмни юклаб бўлмади",
+    "permission_denied": "Рухсат берилмади. Созламалардан рухсат беринг.",
+    "contacts": "Алоқа маълумотлари",
+    "change": "Ўзгартириш",
+    "email_label": "Email",
+    "saved": "Сақланди",
+    "profile_saved": "Профил маълумотлари янгиланди",
+    "phone_change_title": "Телефон рақамни ўзгартириш",
+    "phone_change_subtitle": "Хавфсизлик учун жорий паролингизни киритинг",
+    "phone_new": "Янги телефон рақам",
+    "phone_invalid": "Телефон рақам нотўғри",
+    "phone_saved": "Телефон рақам янгиланди",
+    "email_change_title": "Emailни ўзгартириш",
+    "email_change_subtitle": "Янги манзилга тасдиқлаш коди юборилади",
+    "email_new": "Янги email",
+    "email_invalid": "Email манзил нотўғри",
+    "email_same": "Бу сизнинг жорий emailингиз",
+    "email_code_sent": "{{email}} манзилига 6 хонали код юборилди",
+    "email_code": "Тасдиқлаш коди",
+    "send_code": "Код юбориш",
+    "confirm_code": "Тасдиқлаш",
+    "resend_code": "Кодни қайта юбориш",
+    "resend_in": "Қайта юбориш: {{seconds}} с",
+    "change_email_address": "Бошқа email киритиш",
+    "email_saved": "Email янгиланди ва тасдиқланди",
+    "change_password": "Паролни ўзгартириш",
+    "change_password_hint": "Ҳисобингизни ҳимояланг",
+    "not_set": "Кўрсатилмаган",
+    "logout_cta": "Ҳисобдан чиқиш"
   },
   "map": {
     "title": "Харита",
@@ -968,11 +1015,8 @@
       "fill_required": "Барча майдонларни тўлдиринг",
       "submit": "Рўйхатдан ўтиш",
       "have_account": "Аккаунтингиз борми?",
-      "consent_prefix": "Рўйхатдан ўтиш орқали",
-      "terms": "Фойдаланиш шартлари",
-      "consent_and": "ва",
-      "privacy": "Махфийлик сиёсати",
-      "consent_suffix": "га розилик билдирасиз."
+      "legal_consent": "Мен <terms>Фойдаланиш шартлари</terms> ва <privacy>Махфийлик сиёсати</privacy> билан танишдим ва уларга розиман.",
+      "legal_consent_a11y": "Мен Фойдаланиш шартлари ва Махфийлик сиёсати билан танишдим ва уларга розиман"
     },
     "email_check": {
       "valid": "Email тўғри",
@@ -1017,7 +1061,9 @@
       "resend_cooldown": "{{seconds}} сониядан кейин қайта юборинг",
       "rate_limited": "Жуда кўп уриниш. Кейинроқ уриниб кўринг",
       "network": "Интернет алоқаси йўқ. Қайта уриниб кўринг",
-      "generic": "Хатолик юз берди. Қайта уриниб кўринг"
+      "generic": "Хатолик юз берди. Қайта уриниб кўринг",
+      "legal_consent_required": "Рўйхатдан ўтиш учун Фойдаланиш шартлари ва Махфийлик сиёсатига розилик билдиринг.",
+      "legal_outdated": "Ҳужжатлар янгиланди. Илтимос, уларни қайта кўриб чиқинг ва розилик билдиринг."
     }
   },
   "crm": {
@@ -1639,7 +1685,16 @@
       "admin": "Админ",
       "role_manager": "Клиника менежери",
       "clinic_short": "Smile Dental",
-      "language": "Тил"
+      "language": "Тил",
+      "search_label": "Қидирув",
+      "open_search": "Қидирувни очиш",
+      "clear_search": "Қидирувни тозалаш",
+      "profile_menu": "Профил менюси",
+      "account": "Шахсий кабинет",
+      "account_hint": "Логин, парол ва email",
+      "switch_workspace": "Клиникани алмаштириш",
+      "breadcrumb": "Навигация йўли",
+      "search_placeholder": "Бемор: исм ёки телефон…"
     },
     "columns": {
       "time": "Вақт",
@@ -2214,6 +2269,14 @@
         "ALREADY_MEMBER": "Сиз бу клиникада аллақачон ходимсиз",
         "UNKNOWN": "Хатолик юз берди. Қайта уриниб кўринг"
       }
+    },
+    "theme": {
+      "label": "Мавзу",
+      "light": "Ёруғ",
+      "dark": "Қоронғи",
+      "system": "Тизим",
+      "switch_to_dark": "Қоронғи мавзуга ўтиш",
+      "switch_to_light": "Ёруғ мавзуга ўтиш"
     }
   },
   "clinicAuth": {
@@ -2297,6 +2360,7 @@
       "address": "Манзил",
       "open": "Очилиш",
       "close": "Ёпилиш",
+      "hours_hint": "Душанбадан шанбагача қўлланилади, якшанба — дам олиш куни. Ҳар бир кунни кейинроқ Созламаларда алоҳида ўзгартиришингиз мумкин.",
       "services_placeholder": "Масалан: терапия, имплантология, ортодонтия…",
       "doctors_placeholder": "Масалан: 3 стоматолог, 1 ортодонт…",
       "photos_hint": "Лого ва клиника фотосуратларини Settings бўлимида қўшасиз.",
@@ -2314,7 +2378,10 @@
       "ends": "Тугайди",
       "status": "Статус",
       "status_trial": "Trial",
-      "payment_note": "Тўлов ҳозирча қўлда. Муддат тугагач ORADENT билан боғланинг."
+      "payment_note": "Тўлов ҳозирча қўлда. Муддат тугагач ORADENT билан боғланинг.",
+      "days_short": "{{days}} кун",
+      "remaining": "{{days}} кун қолди",
+      "progress": "Синов муддати"
     },
     "expired": {
       "title": "Синов муддати якунланди",
@@ -2420,7 +2487,8 @@
     "version": "Версия",
     "print": "Чоп этиш",
     "back": "Орқага",
-    "fallback_notice": "Ушбу ҳужжатнинг расмий матни ҳозирча ўзбек тилида (лотин ёзувида) тақдим этилган."
+    "fallback_notice": "Ушбу ҳужжатнинг расмий матни ҳозирча ўзбек тилида (лотин ёзувида) тақдим этилган.",
+    "load_error": "Ҳужжатни юклаб бўлмади. Интернет алоқасини текшириб, қайта уриниб кўринг."
   },
   "service": {
     "consultation": "Консультация",

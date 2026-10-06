@@ -132,6 +132,8 @@ function RootNavigator() {
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
+        <Stack.Screen name="legal/terms" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="legal/privacy" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="(client)" />
         <Stack.Screen name="(doctor)" />
         <Stack.Screen name="(clinic)" />

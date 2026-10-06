@@ -475,7 +475,7 @@ function Switch({
       <span
         aria-hidden
         className={cn(
-          'inline-block rounded-full bg-white shadow-sm ring-1 ring-slate-900/5 transition-transform duration-200',
+          'inline-block rounded-full bg-frost shadow-sm ring-1 ring-slate-900/5 transition-transform duration-200',
           size === 'md' ? 'h-5 w-5' : 'h-4 w-4',
           checked
             ? size === 'md'

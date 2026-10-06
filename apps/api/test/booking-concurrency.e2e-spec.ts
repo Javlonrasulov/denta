@@ -218,6 +218,7 @@ describe('Booking concurrency (e2e)', () => {
           phone: `+99894${String(suffix).slice(-7)}`,
           email,
           password: 'Test1234',
+          acceptTerms: true,
         });
       expect(reg.status).toBeLessThan(400);
       patientToken =

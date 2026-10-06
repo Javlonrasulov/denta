@@ -1,9 +1,9 @@
-import { Pressable, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { useLoginTheme } from '@/components/auth/loginTheme';
+import { ScalePressable } from '@/components/doctor/dashboard/ScalePressable';
 import { LogOut } from '@/components/icons';
 import { Text } from '@/components/ui/Text';
 
@@ -12,61 +12,50 @@ export function ClientLogoutBlock({ onPress }: { onPress: () => void }) {
   const { colors, isDark } = useLoginTheme();
 
   return (
-    <Animated.View entering={FadeInDown.delay(120).duration(320)} style={{ gap: 8 }}>
-      <Text
-        maxFontSizeMultiplier={1}
+    <Animated.View
+      entering={FadeInDown.delay(120).duration(320)}
+      style={{ gap: 10, paddingTop: 8 }}
+    >
+      <ScalePressable
+        accessibilityLabel={t('profile.logout_cta')}
+        onPress={onPress}
         style={{
-          fontFamily: 'Geologica_600SemiBold',
-          fontSize: 11,
-          lineHeight: 14,
-          letterSpacing: 1.2,
-          color: colors.textMuted,
-          textTransform: 'uppercase',
-          paddingHorizontal: 4,
-        }}
-      >
-        {t('profile.section_session')}
-      </Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('profile.logout')}
-        onPress={() => {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          onPress();
-        }}
-        style={({ pressed }) => ({
-          borderRadius: 20,
+          height: 56,
+          borderRadius: 18,
           borderWidth: 1,
-          borderColor: isDark ? 'rgba(251,113,133,0.28)' : 'rgba(239,68,68,0.18)',
-          backgroundColor: pressed
-            ? isDark
-              ? 'rgba(251,113,133,0.16)'
-              : 'rgba(254,226,226,1)'
-            : isDark
-              ? 'rgba(251,113,133,0.1)'
-              : 'rgba(254,242,242,0.95)',
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 14,
-        })}
+          borderColor: isDark ? 'rgba(251,113,133,0.32)' : 'rgba(220,38,38,0.22)',
+          backgroundColor: isDark ? '#151D2E' : '#FFFFFF',
+          shadowColor: '#DC2626',
+          shadowOpacity: isDark ? 0 : 0.08,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: isDark ? 0 : 2,
+        }}
       >
         <View
           style={{
-            width: 42,
-            height: 42,
-            borderRadius: 14,
-            backgroundColor: isDark ? 'rgba(251,113,133,0.16)' : 'rgba(239,68,68,0.1)',
+            flex: 1,
+            flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 10,
           }}
         >
-          <LogOut size={18} color={colors.error} strokeWidth={1.9} />
-        </View>
-        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          <View
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 10,
+              backgroundColor: isDark ? 'rgba(251,113,133,0.16)' : 'rgba(239,68,68,0.1)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <LogOut size={16} color={colors.error} strokeWidth={2.1} />
+          </View>
           <Text
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.1}
             style={{
               fontFamily: 'GolosText_600SemiBold',
               fontSize: 15,
@@ -74,21 +63,24 @@ export function ClientLogoutBlock({ onPress }: { onPress: () => void }) {
               color: colors.error,
             }}
           >
-            {t('profile.logout')}
-          </Text>
-          <Text
-            numberOfLines={2}
-            style={{
-              fontFamily: 'GolosText_400Regular',
-              fontSize: 12,
-              lineHeight: 16,
-              color: isDark ? 'rgba(251,113,133,0.72)' : 'rgba(185,28,28,0.72)',
-            }}
-          >
-            {t('profile.logout_subtitle')}
+            {t('profile.logout_cta')}
           </Text>
         </View>
-      </Pressable>
+      </ScalePressable>
+
+      <Text
+        center
+        maxFontSizeMultiplier={1.1}
+        style={{
+          fontFamily: 'GolosText_400Regular',
+          fontSize: 12,
+          lineHeight: 16,
+          color: colors.textMuted,
+          paddingHorizontal: 16,
+        }}
+      >
+        {t('profile.logout_subtitle')}
+      </Text>
     </Animated.View>
   );
 }

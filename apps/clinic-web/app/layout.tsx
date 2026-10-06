@@ -1,9 +1,11 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Onest } from 'next/font/google';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { I18nProvider } from '@/components/i18n/I18nProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import './globals.css';
 
 const onest = Onest({
@@ -38,17 +40,29 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F5F7FB' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B1220' },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="uz" className={onest.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className={`${onest.className} font-sans antialiased`}>
-        <I18nProvider>
-          <AuthProvider>
-            <AuthGuard>{children}</AuthGuard>
-          </AuthProvider>
-        </I18nProvider>
+        <ThemeProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <AuthGuard>{children}</AuthGuard>
+            </AuthProvider>
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
